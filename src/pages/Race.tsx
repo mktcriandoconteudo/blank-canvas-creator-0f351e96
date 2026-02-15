@@ -27,6 +27,8 @@ const Race = () => {
   const { state, selectedCar, finishRace, loading } = useGameState();
   const playerStats = selectedCar ?? { speed: 70, acceleration: 60, engineHealth: 100, name: "Unknown", level: 1 };
 
+  const noFuel = !loading && state.fuelTanks <= 0;
+
   const [opponent] = useState(() => {
     const lvl = selectedCar?.level ?? 1;
     const base = 50 + lvl * 5;
@@ -93,14 +95,14 @@ const Race = () => {
 
   // Countdown
   useEffect(() => {
-    if (raceState !== "countdown") return;
+    if (noFuel || raceState !== "countdown") return;
     if (countdown <= 0) {
       setRaceState("racing");
       return;
     }
     const timer = setTimeout(() => setCountdown((c) => c - 1), 1000);
     return () => clearTimeout(timer);
-  }, [countdown, raceState]);
+  }, [countdown, raceState, noFuel]);
 
   // Start BGM when race begins — persists through finish, cleaned on unmount
   useEffect(() => {
@@ -491,6 +493,48 @@ const Race = () => {
         soundOn={soundOn}
         onToggleSound={toggleSound}
       />
+
+      {/* No fuel overlay */}
+      <AnimatePresence>
+        {noFuel && (
+          <motion.div
+            initial={{ opacity: 0 }}
+            animate={{ opacity: 1 }}
+            className="absolute inset-0 z-[30] flex flex-col items-center justify-center bg-background/90 backdrop-blur-xl"
+          >
+            <motion.div
+              initial={{ scale: 0.8, opacity: 0 }}
+              animate={{ scale: 1, opacity: 1 }}
+              transition={{ delay: 0.2 }}
+              className="flex flex-col items-center gap-6 rounded-2xl border border-primary/20 bg-card/50 p-8 backdrop-blur-xl sm:p-12"
+            >
+              <div className="flex h-20 w-20 items-center justify-center rounded-full border border-destructive/30 bg-destructive/10">
+                <Fuel className="h-10 w-10 text-destructive" />
+              </div>
+              <div className="text-center">
+                <h2 className="font-display text-2xl font-black uppercase tracking-wider text-foreground sm:text-3xl">
+                  Sem Combustível
+                </h2>
+                <p className="mt-2 max-w-xs font-body text-sm text-muted-foreground">
+                  Seus tanques estão vazios! Volte à garagem para reabastecer antes de correr.
+                </p>
+              </div>
+              <div className="flex items-center gap-2 rounded-lg border border-primary/15 bg-primary/5 px-4 py-2">
+                <Fuel className="h-4 w-4 text-primary" />
+                <span className="font-display text-sm text-primary">
+                  {state.fuelTanks}/5 Tanques
+                </span>
+              </div>
+              <button
+                onClick={() => navigate("/garage")}
+                className="rounded-xl bg-primary px-8 py-3 font-display text-sm font-bold uppercase tracking-wider text-primary-foreground transition-all hover:bg-primary/90 hover:shadow-[0_0_30px_hsl(185_80%_55%/0.3)] active:scale-95"
+              >
+                ⛽ Ir para Garagem
+              </button>
+            </motion.div>
+          </motion.div>
+        )}
+      </AnimatePresence>
     </motion.div>
   );
 };
