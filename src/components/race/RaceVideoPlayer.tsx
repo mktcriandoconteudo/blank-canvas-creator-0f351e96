@@ -14,37 +14,38 @@ const RaceVideoPlayer = ({ videos, finaleVideo, isActive, poster, nitroActive, i
   const [playingFinale, setPlayingFinale] = useState(false);
   const videoRef = useRef<HTMLVideoElement>(null);
   const finaleRef = useRef<HTMLVideoElement>(null);
+  const hasStarted = useRef(false);
 
-  // Play current video when active or index changes
+  // Start first video once when active
   useEffect(() => {
-    if (!isActive || playingFinale) return;
+    if (!isActive || playingFinale || hasStarted.current) return;
     const vid = videoRef.current;
     if (vid) {
-      vid.src = videos[currentIndex];
-      vid.load();
+      hasStarted.current = true;
       vid.play().catch(() => {});
     }
-  }, [isActive, currentIndex, playingFinale, videos]);
+  }, [isActive, playingFinale]);
+
+  // When index changes (after first video ends), swap src and play without load()
+  useEffect(() => {
+    if (!isActive || playingFinale || !hasStarted.current) return;
+    const vid = videoRef.current;
+    if (vid && vid.src !== videos[currentIndex]) {
+      vid.src = videos[currentIndex];
+      vid.play().catch(() => {});
+    }
+  }, [currentIndex, isActive, playingFinale, videos]);
 
   // When finale video is set, switch to it
   useEffect(() => {
     if (finaleVideo && !playingFinale) {
       setPlayingFinale(true);
-      // Pause current race video
       if (videoRef.current) videoRef.current.pause();
 
       const vid = finaleRef.current;
       if (vid) {
         vid.src = finaleVideo;
-        vid.load();
-        const tryPlay = () => {
-          vid.play().catch(() => {});
-        };
-        if (vid.readyState >= 3) {
-          tryPlay();
-        } else {
-          vid.addEventListener("canplay", tryPlay, { once: true });
-        }
+        vid.play().catch(() => {});
       }
     }
   }, [finaleVideo, playingFinale]);
@@ -62,17 +63,15 @@ const RaceVideoPlayer = ({ videos, finaleVideo, isActive, poster, nitroActive, i
         transition: "opacity 0.8s ease",
       }}
     >
-      {/* Single race video element — iOS only supports one playing at a time */}
       {!playingFinale && (
         <video
-          ref={(el) => {
-            (videoRef as any).current = el;
-            if (el) { el.muted = true; el.volume = 0; }
-          }}
+          ref={videoRef}
+          src={videos[0]}
           muted
           playsInline
           // @ts-ignore
           webkit-playsinline="true"
+          preload="auto"
           poster={poster}
           onEnded={handleEnded}
           className="absolute inset-0 w-full h-full object-cover"
@@ -84,12 +83,8 @@ const RaceVideoPlayer = ({ videos, finaleVideo, isActive, poster, nitroActive, i
         />
       )}
 
-      {/* Finale video (victory or defeat) */}
       <video
-        ref={(el) => {
-          (finaleRef as any).current = el;
-          if (el) { el.muted = true; el.volume = 0; }
-        }}
+        ref={finaleRef}
         muted
         playsInline
         // @ts-ignore
