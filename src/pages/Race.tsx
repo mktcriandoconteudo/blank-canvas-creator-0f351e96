@@ -5,18 +5,6 @@ import SpeedLinesCanvas from "@/components/race/SpeedLinesCanvas";
 import RaceResultModal from "@/components/race/RaceResultModal";
 import RaceVideoPlayer from "@/components/race/RaceVideoPlayer";
 import { useGameState } from "@/hooks/useGameState";
-import {
-  playCountdownBeep,
-  startEngine,
-  updateEngineRPM,
-  stopEngine,
-  playNitro,
-  playOvertake,
-  playVictory,
-  playDefeat,
-  setMuted,
-  isMuted,
-} from "@/lib/raceSounds";
 
 // Cinematic videos — starting grid + race clips + victory/defeat finales
 import raceBattleVideo1 from "@/assets/race-battle-video.mp4";
@@ -70,25 +58,22 @@ const Race = () => {
   finishRaceRef.current = finishRace;
   const bgmRef = useRef<HTMLAudioElement | null>(null);
 
-  // Countdown with beeps
+  // Countdown
   useEffect(() => {
     if (raceState !== "countdown") return;
     if (countdown <= 0) {
-      playCountdownBeep(true);
       setRaceState("racing");
-      startEngine();
       // Start background music
       if (!bgmRef.current) {
         bgmRef.current = new Audio(raceBgm);
         bgmRef.current.loop = true;
-        bgmRef.current.volume = 0.3;
+        bgmRef.current.volume = 0.4;
       }
       if (soundOn) {
         bgmRef.current.play().catch(() => {});
       }
       return;
     }
-    playCountdownBeep(false);
     const timer = setTimeout(() => setCountdown((c) => c - 1), 1000);
     return () => clearTimeout(timer);
   }, [countdown, raceState]);
@@ -125,7 +110,6 @@ const Race = () => {
     if (cur !== prevLeader.current && cur !== "tie") {
       setCameraShake(true);
       setTimeout(() => setCameraShake(false), 600);
-      playOvertake();
     }
     prevLeader.current = cur;
   }, [playerProgress, opponentProgress, raceState]);
@@ -136,18 +120,16 @@ const Race = () => {
     if (playerProgress >= FINISH_LINE || opponentProgress >= FINISH_LINE) {
       setRaceState("finished");
       setNitroActive(false);
-      stopEngine();
       // Fade out BGM
       if (bgmRef.current) {
         const audio = bgmRef.current;
         const fadeOut = setInterval(() => {
           if (audio.volume > 0.05) { audio.volume -= 0.05; }
-          else { clearInterval(fadeOut); audio.pause(); audio.volume = 0.3; }
+          else { clearInterval(fadeOut); audio.pause(); audio.volume = 0.4; }
         }, 100);
       }
       const won = playerProgress >= opponentProgress;
       setVictory(won);
-      if (won) playVictory(); else playDefeat();
       const result = finishRaceRef.current(won);
       setXpResult(result);
       setTimeout(() => setShowResult(true), 3500);
@@ -159,7 +141,6 @@ const Race = () => {
     setNitroActive(true);
     setNitroCharges((c) => c - 1);
     setCameraShake(true);
-    playNitro();
     setTimeout(() => setCameraShake(false), 400);
     setTimeout(() => setNitroActive(false), 2500);
   }, [nitroCharges, raceState, nitroActive]);
@@ -169,11 +150,6 @@ const Race = () => {
   const speedKmh = Math.round(180 + (playerProgress / 100) * 180 + (nitroActive ? 80 : 0));
   const isRacing = raceState === "racing";
 
-  // Update engine RPM based on speed
-  useEffect(() => {
-    if (raceState !== "racing") return;
-    updateEngineRPM(speedKmh, nitroActive);
-  });
 
   return (
     <motion.div
@@ -304,13 +280,10 @@ const Race = () => {
         onClick={() => {
           const next = !soundOn;
           setSoundOn(next);
-          setMuted(!next);
           if (!next) {
-            stopEngine();
             bgmRef.current?.pause();
           } else {
             if (raceState === "racing") {
-              startEngine();
               bgmRef.current?.play().catch(() => {});
             }
           }
