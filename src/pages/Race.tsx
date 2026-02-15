@@ -10,19 +10,19 @@ import { useGameState } from "@/hooks/useGameState";
 // Cinematic videos — starting grid + race clips + victory/defeat finales
 import raceBattleVideo1 from "@/assets/race-battle-video.mp4";
 import raceVictoryVideo from "@/assets/race-victory-video.mp4";
-import raceVictoryThunder from "@/assets/race-victory-thunder.mp4";
+import azulGanha from "@/assets/azul_ganha.mp4";
 import raceDefeatVideo from "@/assets/race-defeat-video.mp4";
-import raceDefeatThunder from "@/assets/race-defeat-thunder.mp4";
+import azulPerde from "@/assets/azul_perde.mp4";
 // raceStartVideo removed
 import raceScenePlayer from "@/assets/race-scene-main.jpg";
 import raceBgm from "@/assets/race-bgm.mp3";
 
 // Car-specific videos
 const CAR_VICTORY_VIDEOS: Record<string, string> = {
-  "thunder": raceDefeatThunder,
+  "thunder": azulGanha,
 };
 const CAR_DEFEAT_VIDEOS: Record<string, string> = {
-  "thunder": raceVictoryThunder,
+  "thunder": azulPerde,
 };
 
 
