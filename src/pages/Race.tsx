@@ -252,7 +252,7 @@ const Race = () => {
       {raceState !== "countdown" && (
         <RaceVideoPlayer
           videos={RACE_VIDEOS}
-          finaleVideo={raceState === "finished" ? (() => { const carKey = selectedCar?.name.toLowerCase().split(" ")[0] ?? ""; const hasCustom = !!(CAR_VICTORY_VIDEOS[carKey]); if (hasCustom) { return victory ? CAR_VICTORY_VIDEOS[carKey] : CAR_DEFEAT_VIDEOS[carKey]; } return victory ? raceDefeatVideo : raceVictoryVideo; })() : undefined}
+          finaleVideo={raceState === "finished" ? (() => { const carKey = selectedCar?.name.toLowerCase().split(" ")[0] ?? ""; const hasCustom = !!(CAR_VICTORY_VIDEOS[carKey]); console.log("[RACE VIDEO DEBUG]", { carName: selectedCar?.name, carKey, hasCustom, victory, willUseCustom: hasCustom }); if (hasCustom) { return victory ? CAR_VICTORY_VIDEOS[carKey] : CAR_DEFEAT_VIDEOS[carKey]; } return victory ? raceDefeatVideo : raceVictoryVideo; })() : undefined}
           isActive={true}
           poster={raceScenePlayer}
           nitroActive={nitroActive}
