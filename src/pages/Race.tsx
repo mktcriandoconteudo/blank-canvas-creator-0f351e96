@@ -190,7 +190,7 @@ const Race = () => {
     }
   }, []);
   const earnedNP = Math.round(((victory ? 150 : 20) * playerStats.engineHealth) / 100);
-  const speedKmh = Math.round(180 + (playerProgress / 100) * 180 + (nitroActive ? 80 : 0));
+  const speedKmh = raceState === "countdown" ? 0 : Math.round((playerProgress / 100) * 320 + (nitroActive ? 80 : 0));
   const isRacing = raceState === "racing";
 
 
@@ -213,7 +213,12 @@ const Race = () => {
               if (el) {
                 el.muted = true;
                 el.volume = 0;
-                el.play().catch(() => {});
+                el.setAttribute("playsinline", "true");
+                el.setAttribute("webkit-playsinline", "true");
+                // Force load + play for mobile
+                el.load();
+                const playPromise = el.play();
+                if (playPromise) playPromise.catch(() => {});
               }
             }}
             src={raceStartVideo}
@@ -221,8 +226,6 @@ const Race = () => {
             loop
             muted
             playsInline
-            // @ts-ignore
-            webkit-playsinline="true"
             preload="auto"
             poster={raceScenePlayer}
             className="absolute inset-0 w-full h-full object-cover"
