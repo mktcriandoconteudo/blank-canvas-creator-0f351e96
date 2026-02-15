@@ -5,10 +5,10 @@ import SpeedLinesCanvas from "@/components/race/SpeedLinesCanvas";
 import RaceResultModal from "@/components/race/RaceResultModal";
 import { useGameState } from "@/hooks/useGameState";
 
-// Cinematic scene images — cars are PART of the scene
+// Cinematic video + fallback images
+import raceDriveVideo from "@/assets/race-drive-video.mp4";
 import raceScenePlayer from "@/assets/race-scene-main.jpg";
 import raceSceneOpponent from "@/assets/race-scene-opponent.jpg";
-import raceSpeedBg from "@/assets/race-speed-bg.jpg";
 
 const FINISH_LINE = 100;
 const TICK_MS = 50;
@@ -135,50 +135,37 @@ const Race = () => {
       transition={{ duration: 0.4 }}
       style={{ background: "#020208" }}
     >
-      {/* ====== LAYER 1: Speed background (far, blurry road) ====== */}
-      <motion.div
-        className="absolute inset-0 z-[1]"
+      {/* ====== LAYER 1: Video background — real movement ====== */}
+      <div className="absolute inset-0 z-[1]">
+        <video
+          autoPlay
+          loop
+          muted
+          playsInline
+          poster={raceScenePlayer}
+          className="absolute inset-0 w-full h-full object-cover"
+          style={{
+            filter: `brightness(${nitroActive ? 1.3 : 0.9}) saturate(${nitroActive ? 1.5 : 1.2}) contrast(1.1)`,
+            transition: "filter 0.3s ease",
+            transform: `scale(${isRacing ? (nitroActive ? 1.12 : 1.05) : 1})`,
+          }}
+        >
+          <source src={raceDriveVideo} type="video/mp4" />
+        </video>
+      </div>
+
+      {/* ====== LAYER 2: Opponent scene overlay on overtake ====== */}
+      <div
+        className="absolute inset-0 z-[2]"
         style={{
-          backgroundImage: `url(${raceSpeedBg})`,
+          backgroundImage: `url(${raceSceneOpponent})`,
           backgroundSize: "cover",
-          backgroundPosition: `center ${-bgOffset * 0.08}px`,
-          filter: `brightness(${nitroActive ? 0.6 : 0.4}) blur(${nitroActive ? 2 : 0}px)`,
-          transition: "filter 0.5s ease",
+          backgroundPosition: "center",
+          opacity: showingOpponent ? 0.85 : 0,
+          transition: "opacity 0.8s ease",
+          filter: "brightness(1.1) saturate(1.2)",
         }}
       />
-
-      {/* ====== LAYER 2: Main cinematic scene (player chase cam) ====== */}
-      <motion.div
-        className="absolute inset-0 z-[2]"
-        animate={{
-          scale: isRacing ? (nitroActive ? 1.08 : 1.02) : 1,
-        }}
-        transition={{ duration: nitroActive ? 0.3 : 1, ease: "easeOut" }}
-      >
-        <div
-          className="absolute inset-0"
-          style={{
-            backgroundImage: `url(${raceScenePlayer})`,
-            backgroundSize: "cover",
-            backgroundPosition: "center center",
-            filter: `brightness(${nitroActive ? 1.3 : 1}) saturate(${nitroActive ? 1.4 : 1.1}) contrast(1.05)`,
-            transition: "filter 0.3s ease, opacity 0.8s ease",
-            opacity: showingOpponent ? 0 : 1,
-          }}
-        />
-        {/* Opponent scene — fades in on overtake */}
-        <div
-          className="absolute inset-0"
-          style={{
-            backgroundImage: `url(${raceSceneOpponent})`,
-            backgroundSize: "cover",
-            backgroundPosition: "center center",
-            filter: `brightness(${nitroActive ? 1.2 : 1}) saturate(1.2) contrast(1.05)`,
-            transition: "opacity 0.8s ease",
-            opacity: showingOpponent ? 1 : 0,
-          }}
-        />
-      </motion.div>
 
       {/* ====== LAYER 3: Cinematic vignette + grade ====== */}
       <div
