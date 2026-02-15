@@ -471,6 +471,18 @@ const Race = () => {
         leveledUp={xpResult.leveledUp}
         newLevel={xpResult.newLevel}
         onClose={handlePlayAgain}
+        soundOn={soundOn}
+        onToggleSound={() => {
+          const next = !soundOn;
+          setSoundOn(next);
+          soundOnRef.current = next;
+          if (!next) {
+            if (bgmRef.current) { bgmRef.current.pause(); }
+            if (bgmLoopRef.current) { bgmLoopRef.current.pause(); }
+          } else {
+            if (bgmLoopRef.current) { bgmLoopRef.current.play().catch(() => {}); }
+          }
+        }}
       />
     </motion.div>
   );

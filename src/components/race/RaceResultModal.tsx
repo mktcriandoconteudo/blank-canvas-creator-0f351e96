@@ -1,5 +1,5 @@
 import { motion, AnimatePresence } from "framer-motion";
-import { Trophy, Skull, Coins, Star, ArrowUp } from "lucide-react";
+import { Trophy, Skull, Coins, Star, ArrowUp, Volume2, VolumeX } from "lucide-react";
 import GlowButton from "@/components/garage/GlowButton";
 import { useNavigate } from "react-router-dom";
 
@@ -11,6 +11,8 @@ interface RaceResultModalProps {
   leveledUp: boolean;
   newLevel: number;
   onClose: () => void;
+  soundOn?: boolean;
+  onToggleSound?: () => void;
 }
 
 const Confetti = ({ count = 40 }: { count?: number }) => {
@@ -38,7 +40,7 @@ const Confetti = ({ count = 40 }: { count?: number }) => {
   );
 };
 
-const RaceResultModal = ({ isOpen, victory, nitroPoints, xpGained, leveledUp, newLevel, onClose }: RaceResultModalProps) => {
+const RaceResultModal = ({ isOpen, victory, nitroPoints, xpGained, leveledUp, newLevel, onClose, soundOn, onToggleSound }: RaceResultModalProps) => {
   const navigate = useNavigate();
 
   return (
@@ -140,14 +142,31 @@ const RaceResultModal = ({ isOpen, victory, nitroPoints, xpGained, leveledUp, ne
               initial={{ opacity: 0, y: 10 }}
               animate={{ opacity: 1, y: 0 }}
               transition={{ delay: 1 }}
-              className="mt-8 flex gap-3"
+              className="mt-8 flex flex-col gap-3"
             >
-              <GlowButton variant="purple" className="flex-1" onClick={() => navigate("/")}>
-                Garagem
-              </GlowButton>
-              <GlowButton variant="cyan" className="flex-1" onClick={onClose}>
-                Correr Novamente
-              </GlowButton>
+              <div className="flex gap-3">
+                <GlowButton variant="purple" className="flex-1" onClick={() => navigate("/")}>
+                  Garagem
+                </GlowButton>
+                <GlowButton variant="cyan" className="flex-1" onClick={onClose}>
+                  Correr Novamente
+                </GlowButton>
+              </div>
+              {onToggleSound && (
+                <button
+                  onClick={onToggleSound}
+                  className="mx-auto flex items-center gap-2 rounded-lg border border-primary/15 bg-background/15 px-4 py-2 backdrop-blur-xl transition-colors hover:bg-background/30"
+                >
+                  {soundOn ? (
+                    <Volume2 className="h-4 w-4 text-primary/70" />
+                  ) : (
+                    <VolumeX className="h-4 w-4 text-muted-foreground/50" />
+                  )}
+                  <span className="font-display text-[10px] uppercase tracking-wider text-muted-foreground">
+                    {soundOn ? "Som ligado" : "Som desligado"}
+                  </span>
+                </button>
+              )}
             </motion.div>
           </motion.div>
         </motion.div>
