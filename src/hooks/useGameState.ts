@@ -8,21 +8,22 @@ import {
   repairCar,
   saveUserToSupabase,
   saveCarToSupabase,
-  CarData,
 } from "@/lib/gameState";
-
-const DEFAULT_WALLET = "0x7f3a...e1b2";
+import { useAuth } from "@/hooks/useAuth";
 
 export const useGameState = () => {
+  const { user } = useAuth();
   const [state, setState] = useState<GameState | null>(null);
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
-    loadGameStateFromSupabase(DEFAULT_WALLET).then((loaded) => {
+    if (!user?.walletAddress) return;
+    setLoading(true);
+    loadGameStateFromSupabase(user.walletAddress).then((loaded) => {
       setState(loaded);
       setLoading(false);
     });
-  }, []);
+  }, [user?.walletAddress]);
 
   const selectedCar = state ? getSelectedCar(state) : undefined;
 
@@ -79,7 +80,7 @@ export const useGameState = () => {
       nitroPoints: 0,
       fuelTanks: 0,
       lastFuelRefill: "",
-      walletAddress: DEFAULT_WALLET,
+      walletAddress: user?.walletAddress ?? "",
     },
     selectedCar,
     finishRace,

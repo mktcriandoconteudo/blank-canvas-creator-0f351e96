@@ -1,5 +1,5 @@
 import { motion } from "framer-motion";
-import { Zap, Gauge, Wind, Shield, Wrench, Flag, Star, Plus, Coins, Volume2, VolumeX } from "lucide-react";
+import { Zap, Gauge, Wind, Shield, Wrench, Flag, Star, Plus, Coins, Volume2, VolumeX, LogOut, User } from "lucide-react";
 import { useNavigate } from "react-router-dom";
 import { useRef, useState, useEffect, useCallback } from "react";
 import garageScene from "@/assets/garage-scene.jpg";
@@ -7,12 +7,14 @@ import garageBgm from "@/assets/garagem-bgm.mp3";
 import StatBar from "@/components/garage/StatBar";
 import GlowButton from "@/components/garage/GlowButton";
 import { useGameState } from "@/hooks/useGameState";
+import { useAuth } from "@/hooks/useAuth";
 import { supabase } from "@/lib/supabase";
 
 
 const Index = () => {
   const navigate = useNavigate();
   const { state, selectedCar, addPoint, repair, updateState, loading } = useGameState();
+  const { user, signOut } = useAuth();
   const [garageSoundOn, setGarageSoundOn] = useState(true);
   const [refilling, setRefilling] = useState(false);
   const garageBgmRef = useRef<HTMLAudioElement | null>(null);
@@ -123,9 +125,18 @@ const Index = () => {
               <Coins className="h-4 w-4 text-neon-orange" />
               <span className="font-display text-[10px] text-foreground sm:text-xs">{state.nitroPoints} NP</span>
             </div>
-            <div className="hidden items-center gap-2 font-display text-xs uppercase tracking-wider text-muted-foreground sm:flex">
-              <div className="h-2 w-2 animate-pulse rounded-full bg-emerald-400" />
-              Garagem
+            <div className="flex items-center gap-2">
+              <div className="flex items-center gap-1.5 rounded-lg bg-muted/30 px-2 py-1 backdrop-blur-sm sm:px-3 sm:py-1.5">
+                <User className="h-4 w-4 text-primary" />
+                <span className="font-display text-[10px] text-foreground sm:text-xs">{user?.username ?? "Piloto"}</span>
+              </div>
+              <button
+                onClick={signOut}
+                className="flex items-center gap-1 rounded-lg bg-muted/30 px-2 py-1 backdrop-blur-sm transition-colors hover:bg-destructive/20 sm:px-3 sm:py-1.5"
+                title="Sair"
+              >
+                <LogOut className="h-4 w-4 text-muted-foreground" />
+              </button>
             </div>
           </div>
         </motion.header>
@@ -147,7 +158,7 @@ const Index = () => {
               <span className="text-primary text-glow-cyan">{selectedCar.name.split(" ").slice(1).join(" ")}</span>
             </h2>
             <p className="mt-2 font-body text-sm text-muted-foreground">
-              Token {selectedCar.tokenId} · {selectedCar.ownerWallet}
+              Token {selectedCar.tokenId} · Piloto: {user?.username ?? "—"}
             </p>
 
             {/* XP / Level badge */}
