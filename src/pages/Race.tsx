@@ -15,6 +15,7 @@ import raceDefeatVideo from "@/assets/race-defeat-video.mp4";
 import raceStartVideo from "@/assets/race-start-video.mp4";
 import raceScenePlayer from "@/assets/race-scene-main.jpg";
 import raceBgm from "@/assets/race-bgm.mp3";
+import raceBgmLoop from "@/assets/race-bgm-loop.mp3";
 
 const RACE_VIDEOS = [raceBattleVideo1, raceBattleVideo2, raceBattleVideo1];
 
@@ -58,7 +59,23 @@ const Race = () => {
   finishRaceRef.current = finishRace;
   const bgmRef = useRef<HTMLAudioElement | null>(null);
 
-  // Cleanup BGM on unmount
+  const bgmLoopRef = useRef<HTMLAudioElement | null>(null);
+
+  // Start background music loop immediately on mount
+  useEffect(() => {
+    const audio = new Audio(raceBgmLoop);
+    audio.loop = true;
+    audio.volume = 0.35;
+    bgmLoopRef.current = audio;
+    audio.play().catch(() => {});
+    return () => {
+      audio.pause();
+      audio.currentTime = 0;
+      bgmLoopRef.current = null;
+    };
+  }, []);
+
+  // Cleanup race BGM on unmount
   useEffect(() => {
     return () => {
       if (bgmRef.current) {
@@ -295,7 +312,9 @@ const Race = () => {
           soundOnRef.current = next;
           if (!next) {
             if (bgmRef.current) { bgmRef.current.pause(); }
+            if (bgmLoopRef.current) { bgmLoopRef.current.pause(); }
           } else {
+            if (bgmLoopRef.current) { bgmLoopRef.current.play().catch(() => {}); }
             if (raceState === "racing" && bgmRef.current) {
               bgmRef.current.play().catch(() => {});
             }
