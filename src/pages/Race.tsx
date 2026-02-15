@@ -37,7 +37,7 @@ const Race = () => {
     };
   });
 
-  const [raceState, setRaceState] = useState<"waiting" | "countdown" | "racing" | "finished">("waiting");
+  const [raceState, setRaceState] = useState<"countdown" | "racing" | "finished">("countdown");
   const [countdown, setCountdown] = useState(3);
   const [playerProgress, setPlayerProgress] = useState(0);
   const [opponentProgress, setOpponentProgress] = useState(0);
@@ -174,7 +174,7 @@ const Race = () => {
       <div
         className="absolute inset-0 z-[1]"
         style={{
-          opacity: raceState === "countdown" || raceState === "waiting" ? 1 : 0,
+          opacity: raceState === "countdown" ? 1 : 0,
           transition: "opacity 0.8s ease",
           pointerEvents: "none",
         }}
@@ -195,7 +195,7 @@ const Race = () => {
       <RaceVideoPlayer
         videos={RACE_VIDEOS}
         finaleVideo={raceState === "finished" ? (victory ? raceVictoryVideo : raceDefeatVideo) : undefined}
-        isActive={raceState !== "countdown" && raceState !== "waiting"}
+        isActive={raceState !== "countdown"}
         poster={raceScenePlayer}
         nitroActive={nitroActive}
         isRacing={isRacing}
@@ -418,29 +418,6 @@ const Race = () => {
               {playerProgress > opponentProgress ? "OVERTAKE!" : "OVERTAKEN!"}
             </span>
           </motion.div>
-        )}
-      </AnimatePresence>
-
-      {/* ====== Waiting: "Correr" button ====== */}
-      <AnimatePresence>
-        {raceState === "waiting" && (
-          <div className="absolute inset-0 z-[20] flex items-center justify-center">
-            <div className="absolute inset-0 bg-background/50 backdrop-blur-sm" />
-            <motion.button
-              initial={{ scale: 0.8, opacity: 0 }}
-              animate={{ scale: 1, opacity: 1 }}
-              exit={{ scale: 0.5, opacity: 0 }}
-              transition={{ duration: 0.4 }}
-              onClick={() => setRaceState("countdown")}
-              className="relative z-10 rounded-2xl border border-primary/40 bg-primary/20 px-12 py-5 font-display text-3xl font-black uppercase tracking-widest text-primary backdrop-blur-xl transition-all hover:bg-primary/30 hover:scale-105 active:scale-95"
-              style={{
-                textShadow: "0 0 30px hsl(185, 80%, 55% / 0.6)",
-                boxShadow: "0 0 40px hsl(185, 80%, 55% / 0.2), inset 0 0 20px hsl(185, 80%, 55% / 0.1)",
-              }}
-            >
-              🏁 Correr
-            </motion.button>
-          </div>
         )}
       </AnimatePresence>
 
