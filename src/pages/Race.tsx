@@ -19,10 +19,10 @@ import raceBgm from "@/assets/race-bgm.mp3";
 
 // Car-specific videos
 const CAR_VICTORY_VIDEOS: Record<string, string> = {
-  "thunder": raceVictoryThunder,
+  "thunder": raceDefeatThunder,
 };
 const CAR_DEFEAT_VIDEOS: Record<string, string> = {
-  "thunder": raceDefeatThunder,
+  "thunder": raceVictoryThunder,
 };
 
 
