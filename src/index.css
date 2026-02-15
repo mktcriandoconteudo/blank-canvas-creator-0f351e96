@@ -97,7 +97,7 @@
   }
 
   .dot-pattern {
-    background-image: radial-gradient(circle, hsl(185 80% 55% / 0.15) 1px, transparent 1px);
-    background-size: 16px 16px;
+    background-image: radial-gradient(circle, hsl(185 80% 55% / 0.25) 2.5px, transparent 2.5px);
+    background-size: 24px 24px;
   }
 }
