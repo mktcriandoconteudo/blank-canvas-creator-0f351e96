@@ -51,12 +51,21 @@ const Race = () => {
   const [soundOn, setSoundOn] = useState(true);
   const soundOnRef = useRef(true);
 
-
-
   const prevLeader = useRef<"player" | "opponent" | "tie">("tie");
   const finishRaceRef = useRef(finishRace);
   finishRaceRef.current = finishRace;
   const bgmRef = useRef<HTMLAudioElement | null>(null);
+
+  // Cleanup BGM on unmount
+  useEffect(() => {
+    return () => {
+      if (bgmRef.current) {
+        bgmRef.current.pause();
+        bgmRef.current.currentTime = 0;
+        bgmRef.current = null;
+      }
+    };
+  }, []);
 
   // Countdown
   useEffect(() => {
@@ -120,12 +129,12 @@ const Race = () => {
     if (playerProgress >= FINISH_LINE || opponentProgress >= FINISH_LINE) {
       setRaceState("finished");
       setNitroActive(false);
-      // Fade out BGM
+      // Fade out and stop BGM
       if (bgmRef.current) {
         const audio = bgmRef.current;
         const fadeOut = setInterval(() => {
           if (audio.volume > 0.05) { audio.volume -= 0.05; }
-          else { clearInterval(fadeOut); audio.pause(); audio.volume = 0.4; }
+          else { clearInterval(fadeOut); audio.pause(); audio.currentTime = 0; }
         }, 100);
       }
       const won = playerProgress >= opponentProgress;
