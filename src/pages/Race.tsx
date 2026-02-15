@@ -134,13 +134,11 @@ const Race = () => {
     if (playerProgress >= FINISH_LINE || opponentProgress >= FINISH_LINE) {
       setRaceState("finished");
       setNitroActive(false);
-      // Fade out and stop BGM
+      // Stop BGM immediately
       if (bgmRef.current) {
-        const audio = bgmRef.current;
-        const fadeOut = setInterval(() => {
-          if (audio.volume > 0.05) { audio.volume -= 0.05; }
-          else { clearInterval(fadeOut); audio.pause(); audio.currentTime = 0; }
-        }, 100);
+        bgmRef.current.pause();
+        bgmRef.current.currentTime = 0;
+        bgmRef.current = null;
       }
       const won = playerProgress >= opponentProgress;
       setVictory(won);
@@ -159,7 +157,7 @@ const Race = () => {
     setTimeout(() => setNitroActive(false), 2500);
   }, [nitroCharges, raceState, nitroActive]);
 
-  const handlePlayAgain = () => navigate("/");
+  const handlePlayAgain = () => window.location.reload();
   const earnedNP = Math.round(((victory ? 150 : 20) * playerStats.engineHealth) / 100);
   const speedKmh = Math.round(180 + (playerProgress / 100) * 180 + (nitroActive ? 80 : 0));
   const isRacing = raceState === "racing";
