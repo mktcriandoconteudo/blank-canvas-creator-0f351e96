@@ -240,7 +240,7 @@ const Race = () => {
       {raceState !== "countdown" && (
         <RaceVideoPlayer
           videos={RACE_VIDEOS}
-          finaleVideo={raceState === "finished" ? (victory ? raceVictoryVideo : raceDefeatVideo) : undefined}
+          finaleVideo={raceState === "finished" ? (victory ? raceDefeatVideo : raceVictoryVideo) : undefined}
           isActive={true}
           poster={raceScenePlayer}
           nitroActive={nitroActive}
