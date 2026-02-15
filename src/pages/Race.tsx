@@ -13,7 +13,7 @@ import raceVictoryVideo from "@/assets/race-victory-video.mp4";
 import raceVictoryThunder from "@/assets/race-victory-thunder.mp4";
 import raceDefeatVideo from "@/assets/race-defeat-video.mp4";
 import raceDefeatThunder from "@/assets/race-defeat-thunder.mp4";
-import raceStartVideo from "@/assets/race-start-video.mp4";
+// raceStartVideo removed
 import raceScenePlayer from "@/assets/race-scene-main.jpg";
 import raceBgm from "@/assets/race-bgm.mp3";
 
@@ -226,42 +226,10 @@ const Race = () => {
       transition={{ duration: 0.4 }}
       style={{ background: "#020208" }}
     >
-      {/* ====== LAYER 1: Start video (countdown) ====== */}
-      {raceState === "countdown" && (
-        <div
-          className="absolute inset-0 z-[1]"
-          style={{ pointerEvents: "none" }}
-        >
-          <video
-            ref={(el) => {
-              countdownVideoRef.current = el;
-              if (el && !el.src) {
-                el.muted = true;
-                el.volume = 0;
-                el.playsInline = true;
-                el.setAttribute("playsinline", "");
-                el.setAttribute("webkit-playsinline", "");
-                el.setAttribute("x5-playsinline", "");
-                el.setAttribute("x5-video-player-type", "h5");
-                el.src = raceStartVideo;
-                el.load();
-                el.play().catch(() => {});
-              }
-            }}
-            autoPlay
-            loop
-            muted
-            playsInline
-            preload="auto"
-            poster={raceScenePlayer}
-            className="absolute inset-0 w-full h-full object-cover"
-            style={{ filter: "brightness(0.85) saturate(1.2) contrast(1.1)" }}
-          />
-        </div>
-      )}
+      {/* Start video removed — race videos play from countdown */}
 
-      {/* ====== LAYER 2: Race videos (only after countdown) ====== */}
-      {raceState !== "countdown" && (
+      {/* ====== Race videos (plays from start) ====== */}
+      {(
         <RaceVideoPlayer
           videos={RACE_VIDEOS}
           finaleVideo={finaleVideoSrc}
