@@ -135,7 +135,7 @@ const Index = () => {
             initial={{ opacity: 0, y: 20 }}
             animate={{ opacity: 1, y: 0 }}
             transition={{ delay: 0.3 }}
-            className="max-w-md"
+            className="flex max-w-md flex-col items-center text-center lg:items-start lg:text-left"
           >
             <p className="font-display text-xs font-semibold uppercase tracking-[0.3em] text-primary/70">
               Classe Lendária
@@ -153,7 +153,7 @@ const Index = () => {
               initial={{ opacity: 0, y: 10 }}
               animate={{ opacity: 1, y: 0 }}
               transition={{ delay: 0.5 }}
-              className="mt-6 glass rounded-xl p-4 max-w-xs"
+              className="mt-6 glass rounded-xl p-4 max-w-xs w-full"
             >
               <div className="flex items-center justify-between mb-2">
                 <div className="flex items-center gap-2">
@@ -189,7 +189,7 @@ const Index = () => {
               <motion.div
                 initial={{ opacity: 0 }}
                 animate={{ opacity: 1 }}
-                className="mt-3 glass rounded-xl p-3 max-w-xs border-destructive/30"
+                className="mt-3 glass rounded-xl p-3 max-w-xs w-full border-destructive/30"
               >
                 <div className="flex items-center justify-between">
                   <span className="font-body text-xs text-destructive">⚠ Revisão necessária!</span>
