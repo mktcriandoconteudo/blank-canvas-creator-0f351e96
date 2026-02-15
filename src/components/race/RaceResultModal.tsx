@@ -145,7 +145,7 @@ const RaceResultModal = ({ isOpen, victory, nitroPoints, xpGained, leveledUp, ne
               className="mt-8 flex flex-col gap-3"
             >
               <div className="flex gap-3">
-                <GlowButton variant="purple" className="flex-1" onClick={() => navigate("/")}>
+                <GlowButton variant="purple" className="flex-1" onClick={() => navigate("/garage")}>
                   Garagem
                 </GlowButton>
                 <GlowButton variant="cyan" className="flex-1" onClick={onClose}>

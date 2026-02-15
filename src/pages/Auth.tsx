@@ -27,7 +27,7 @@ const Auth = () => {
         if (error) {
           setError(error.message);
         } else {
-          navigate("/");
+          navigate("/garage");
         }
       } else {
         if (!username.trim()) {
