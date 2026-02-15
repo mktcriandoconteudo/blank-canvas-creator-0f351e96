@@ -33,7 +33,6 @@ const RaceVideoPlayer = ({ videos, finaleVideo, isActive, poster, nitroActive, i
   useEffect(() => {
     if (finaleVideo && !playingFinale) {
       setPlayingFinale(true);
-      // Pause current race video
       videoRefs.current[currentIndex]?.pause();
       
       const vid = finaleRef.current;
@@ -43,7 +42,6 @@ const RaceVideoPlayer = ({ videos, finaleVideo, isActive, poster, nitroActive, i
         const tryPlay = () => {
           vid.play().catch(() => {});
         };
-        // Play as soon as it has enough data
         if (vid.readyState >= 3) {
           tryPlay();
         } else {
@@ -67,13 +65,17 @@ const RaceVideoPlayer = ({ videos, finaleVideo, isActive, poster, nitroActive, i
         transition: "opacity 0.8s ease",
       }}
     >
-      {/* Race battle videos */}
+      {/* Race battle videos — use src directly for better mobile compatibility */}
       {videos.map((src, i) => (
         <video
           key={i}
           ref={(el) => { videoRefs.current[i] = el; }}
+          src={src}
           muted
+          autoPlay={i === 0}
           playsInline
+          // @ts-ignore — needed for older iOS WebKit
+          webkit-playsinline="true"
           poster={i === 0 ? poster : undefined}
           preload="auto"
           onEnded={i === currentIndex ? handleEnded : undefined}
@@ -85,16 +87,16 @@ const RaceVideoPlayer = ({ videos, finaleVideo, isActive, poster, nitroActive, i
             opacity: !playingFinale && i === currentIndex ? 1 : 0,
             zIndex: i === currentIndex ? 2 : 1,
           }}
-        >
-          <source src={src} type="video/mp4" />
-        </video>
+        />
       ))}
 
-      {/* Finale video (victory or defeat) — always mounted for preload */}
+      {/* Finale video (victory or defeat) */}
       <video
         ref={finaleRef}
         muted
         playsInline
+        // @ts-ignore
+        webkit-playsinline="true"
         loop
         preload="none"
         className="absolute inset-0 w-full h-full object-cover"
