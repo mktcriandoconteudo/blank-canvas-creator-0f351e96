@@ -1,4 +1,5 @@
 import { motion, useScroll, useTransform } from "framer-motion";
+import { DotScreenShader } from "@/components/ui/dot-shader-background";
 import { useNavigate } from "react-router-dom";
 import { useRef } from "react";
 import {
@@ -119,7 +120,12 @@ const Landing = () => {
   const heroOpacity = useTransform(scrollYProgress, [0, 0.8], [1, 0]);
 
   return (
-    <div className="min-h-screen bg-background text-foreground">
+    <div className="relative min-h-screen bg-background text-foreground">
+      {/* Dot shader background */}
+      <div className="fixed inset-0 z-0">
+        <DotScreenShader dotColor="#00d4ff" bgColor="#0d1117" dotOpacity={0.03} />
+      </div>
+      <div className="relative z-10">
       {/* ─── NAV ─── */}
       <motion.nav
         initial={{ opacity: 0, y: -20 }}
@@ -627,6 +633,7 @@ const Landing = () => {
           </div>
         </div>
       </footer>
+      </div>
     </div>
   );
 };
