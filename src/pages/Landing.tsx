@@ -1,5 +1,6 @@
 import { motion, useScroll, useTransform } from "framer-motion";
 import { DotScreenShader } from "@/components/ui/dot-shader-background";
+import ShaderBackground from "@/components/ui/shader-background";
 import { useNavigate } from "react-router-dom";
 import { useRef } from "react";
 import {
@@ -162,10 +163,16 @@ const Landing = () => {
 
       {/* ─── HERO ─── */}
       <section ref={heroRef} className="relative flex min-h-screen items-end overflow-hidden pb-24 pt-16 sm:items-center sm:pb-0">
-        <motion.div style={{ y: heroY, scale: heroScale }} className="absolute inset-0">
-          <img src={landingHero} alt="TurboNitro Racing" className="h-full w-full object-cover object-center" />
-          <div className="absolute inset-0 bg-gradient-to-t from-background via-background/60 to-background/30" />
-          <div className="absolute inset-0 bg-gradient-to-r from-background/90 via-background/30 to-transparent" />
+        {/* Shader plasma lines behind hero */}
+        <div className="absolute inset-0 z-0">
+          <ShaderBackground />
+          <div className="absolute inset-0 bg-gradient-to-t from-background via-transparent to-background/40" />
+        </div>
+
+        <motion.div style={{ y: heroY, scale: heroScale }} className="absolute inset-0 z-[1]">
+          <img src={landingHero} alt="TurboNitro Racing" className="h-full w-full object-cover object-center mix-blend-screen opacity-40" />
+          <div className="absolute inset-0 bg-gradient-to-t from-background via-background/50 to-transparent" />
+          <div className="absolute inset-0 bg-gradient-to-r from-background/80 via-transparent to-background/60" />
         </motion.div>
 
         <motion.div style={{ opacity: heroOpacity }} className="relative z-10 mx-auto w-full max-w-7xl px-4 sm:px-8">
