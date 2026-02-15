@@ -1,0 +1,165 @@
+import { motion, AnimatePresence } from "framer-motion";
+import { Trophy, Skull, Coins } from "lucide-react";
+import GlowButton from "@/components/garage/GlowButton";
+import { useNavigate } from "react-router-dom";
+
+interface RaceResultModalProps {
+  isOpen: boolean;
+  victory: boolean;
+  nitroPoints: number;
+  onClose: () => void;
+}
+
+const Confetti = ({ count = 40 }: { count?: number }) => {
+  const colors = [
+    "hsl(185, 80%, 55%)",
+    "hsl(270, 60%, 60%)",
+    "hsl(150, 70%, 50%)",
+    "hsl(30, 90%, 55%)",
+    "hsl(50, 90%, 60%)",
+  ];
+
+  return (
+    <div className="pointer-events-none absolute inset-0 overflow-hidden">
+      {Array.from({ length: count }).map((_, i) => (
+        <motion.div
+          key={i}
+          initial={{
+            x: Math.random() * 100 + "%",
+            y: -20,
+            rotate: 0,
+            opacity: 1,
+          }}
+          animate={{
+            y: "120%",
+            rotate: Math.random() * 720 - 360,
+            opacity: [1, 1, 0],
+          }}
+          transition={{
+            duration: 2 + Math.random() * 2,
+            delay: Math.random() * 1,
+            ease: "easeIn",
+          }}
+          className="absolute h-3 w-2 rounded-sm"
+          style={{
+            backgroundColor: colors[i % colors.length],
+            left: `${Math.random() * 100}%`,
+          }}
+        />
+      ))}
+    </div>
+  );
+};
+
+const RaceResultModal = ({ isOpen, victory, nitroPoints, onClose }: RaceResultModalProps) => {
+  const navigate = useNavigate();
+
+  return (
+    <AnimatePresence>
+      {isOpen && (
+        <motion.div
+          initial={{ opacity: 0 }}
+          animate={{ opacity: 1 }}
+          exit={{ opacity: 0 }}
+          className="fixed inset-0 z-50 flex items-center justify-center bg-background/80 backdrop-blur-md"
+        >
+          {victory && <Confetti />}
+
+          <motion.div
+            initial={{ scale: 0.5, opacity: 0, y: 40 }}
+            animate={{ scale: 1, opacity: 1, y: 0 }}
+            exit={{ scale: 0.8, opacity: 0 }}
+            transition={{ type: "spring", damping: 15, stiffness: 200 }}
+            className="glass-strong relative mx-4 w-full max-w-md rounded-3xl p-10 text-center shadow-2xl"
+          >
+            {/* Icon */}
+            <motion.div
+              initial={{ scale: 0 }}
+              animate={{ scale: 1 }}
+              transition={{ delay: 0.3, type: "spring", stiffness: 300 }}
+              className={`mx-auto mb-6 flex h-24 w-24 items-center justify-center rounded-full ${
+                victory ? "bg-primary/20 glow-cyan" : "bg-destructive/20"
+              }`}
+            >
+              {victory ? (
+                <Trophy className="h-12 w-12 text-primary" />
+              ) : (
+                <Skull className="h-12 w-12 text-destructive" />
+              )}
+            </motion.div>
+
+            <motion.h2
+              initial={{ opacity: 0, y: 10 }}
+              animate={{ opacity: 1, y: 0 }}
+              transition={{ delay: 0.4 }}
+              className={`font-display text-4xl font-black uppercase tracking-wider ${
+                victory ? "text-primary text-glow-cyan" : "text-destructive"
+              }`}
+            >
+              {victory ? "Victory!" : "Defeat"}
+            </motion.h2>
+
+            <motion.p
+              initial={{ opacity: 0 }}
+              animate={{ opacity: 1 }}
+              transition={{ delay: 0.5 }}
+              className="mt-2 font-body text-muted-foreground"
+            >
+              {victory
+                ? "Você dominou a pista!"
+                : "Mais sorte na próxima corrida."}
+            </motion.p>
+
+            {/* NitroPoints */}
+            <motion.div
+              initial={{ opacity: 0, scale: 0.8 }}
+              animate={{ opacity: 1, scale: 1 }}
+              transition={{ delay: 0.6 }}
+              className="mx-auto mt-6 flex items-center justify-center gap-3 rounded-xl bg-muted/50 px-6 py-3"
+            >
+              <Coins className="h-5 w-5 text-neon-orange" />
+              <span className="font-display text-2xl font-bold text-foreground">
+                {victory ? "+" : ""}
+                {nitroPoints}
+              </span>
+              <span className="font-display text-xs uppercase tracking-wider text-muted-foreground">
+                NitroPoints
+              </span>
+            </motion.div>
+
+            {/* Car health warning */}
+            <motion.p
+              initial={{ opacity: 0 }}
+              animate={{ opacity: 1 }}
+              transition={{ delay: 0.7 }}
+              className="mt-4 font-body text-xs text-muted-foreground"
+            >
+              Saúde do motor: -5% · Durabilidade: -3%
+            </motion.p>
+
+            {/* Actions */}
+            <motion.div
+              initial={{ opacity: 0, y: 10 }}
+              animate={{ opacity: 1, y: 0 }}
+              transition={{ delay: 0.8 }}
+              className="mt-8 flex gap-3"
+            >
+              <GlowButton
+                variant="purple"
+                className="flex-1"
+                onClick={() => navigate("/")}
+              >
+                Garagem
+              </GlowButton>
+              <GlowButton variant="cyan" className="flex-1" onClick={onClose}>
+                Correr Novamente
+              </GlowButton>
+            </motion.div>
+          </motion.div>
+        </motion.div>
+      )}
+    </AnimatePresence>
+  );
+};
+
+export default RaceResultModal;
