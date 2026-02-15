@@ -2,25 +2,25 @@ import { motion, AnimatePresence } from "framer-motion";
 import { Zap, Gauge, Wind, Shield, Wrench, Flag, Star, Plus, Coins, Volume2, VolumeX, LogOut, User, Menu, X, ChevronLeft, ChevronRight, ChevronUp, ChevronDown } from "lucide-react";
 import { useNavigate } from "react-router-dom";
 import { useRef, useState, useEffect, useCallback } from "react";
-// garage scene no longer used as background
-import carPhantom from "@/assets/marketplace/car-phantom.jpg";
-import carBlaze from "@/assets/marketplace/car-blaze.jpg";
-import carEclipse from "@/assets/marketplace/car-eclipse.jpg";
-import carFrost from "@/assets/marketplace/car-frost.jpg";
-import carInferno from "@/assets/marketplace/car-inferno.jpg";
-import carSolar from "@/assets/marketplace/car-solar.jpg";
-import carThunder from "@/assets/marketplace/car-thunder.jpg";
-import carVenom from "@/assets/marketplace/car-venom.jpg";
+// HD garage background images
+import bgPhantom from "@/assets/garage-bg/car-phantom-bg.jpg";
+import bgBlaze from "@/assets/garage-bg/car-blaze-bg.jpg";
+import bgEclipse from "@/assets/garage-bg/car-eclipse-bg.jpg";
+import bgFrost from "@/assets/garage-bg/car-frost-bg.jpg";
+import bgInferno from "@/assets/garage-bg/car-inferno-bg.jpg";
+import bgSolar from "@/assets/garage-bg/car-solar-bg.jpg";
+import bgThunder from "@/assets/garage-bg/car-thunder-bg.jpg";
+import bgVenom from "@/assets/garage-bg/car-venom-bg.jpg";
 
 const CAR_IMAGES: Record<string, string> = {
-  "phantom": carPhantom,
-  "blaze": carBlaze,
-  "eclipse": carEclipse,
-  "frost": carFrost,
-  "inferno": carInferno,
-  "solar": carSolar,
-  "thunder": carThunder,
-  "venom": carVenom,
+  "phantom": bgPhantom,
+  "blaze": bgBlaze,
+  "eclipse": bgEclipse,
+  "frost": bgFrost,
+  "inferno": bgInferno,
+  "solar": bgSolar,
+  "thunder": bgThunder,
+  "venom": bgVenom,
 };
 
 const getCarImage = (car: { name: string; model: string }): string => {
