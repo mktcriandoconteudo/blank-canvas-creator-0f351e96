@@ -35,14 +35,26 @@ const RaceVideoPlayer = ({ videos, finaleVideo, isActive, poster, nitroActive, i
       setPlayingFinale(true);
       // Pause current race video
       videoRefs.current[currentIndex]?.pause();
-      setTimeout(() => {
-        finaleRef.current?.play().catch(() => {});
-      }, 100);
+      
+      const vid = finaleRef.current;
+      if (vid) {
+        vid.src = finaleVideo;
+        vid.load();
+        const tryPlay = () => {
+          vid.play().catch(() => {});
+        };
+        // Play as soon as it has enough data
+        if (vid.readyState >= 3) {
+          tryPlay();
+        } else {
+          vid.addEventListener("canplay", tryPlay, { once: true });
+        }
+      }
     }
   }, [finaleVideo, playingFinale, currentIndex]);
 
   const handleEnded = useCallback(() => {
-    if (playingFinale) return; // Don't cycle if playing finale
+    if (playingFinale) return;
     const next = (currentIndex + 1) % videos.length;
     setCurrentIndex(next);
   }, [currentIndex, videos.length, playingFinale]);
@@ -78,25 +90,21 @@ const RaceVideoPlayer = ({ videos, finaleVideo, isActive, poster, nitroActive, i
         </video>
       ))}
 
-      {/* Finale video (victory or defeat) */}
-      {finaleVideo && (
-        <video
-          ref={finaleRef}
-          muted
-          playsInline
-          loop
-          preload="auto"
-          className="absolute inset-0 w-full h-full object-cover"
-          style={{
-            filter: "brightness(1) saturate(1.2) contrast(1.1)",
-            transition: "opacity 0.5s ease",
-            opacity: playingFinale ? 1 : 0,
-            zIndex: 3,
-          }}
-        >
-          <source src={finaleVideo} type="video/mp4" />
-        </video>
-      )}
+      {/* Finale video (victory or defeat) — always mounted for preload */}
+      <video
+        ref={finaleRef}
+        muted
+        playsInline
+        loop
+        preload="none"
+        className="absolute inset-0 w-full h-full object-cover"
+        style={{
+          filter: "brightness(1.05) saturate(1.3) contrast(1.1)",
+          transition: "opacity 0.6s ease",
+          opacity: playingFinale ? 1 : 0,
+          zIndex: playingFinale ? 5 : 0,
+        }}
+      />
     </div>
   );
 };
