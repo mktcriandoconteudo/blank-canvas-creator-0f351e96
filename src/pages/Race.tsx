@@ -61,27 +61,18 @@ const Race = () => {
 
   const bgmLoopRef = useRef<HTMLAudioElement | null>(null);
 
-  // Start background music loop immediately on mount
-  useEffect(() => {
-    const audio = new Audio(raceBgmLoop);
-    audio.loop = true;
-    audio.volume = 0.35;
-    bgmLoopRef.current = audio;
-    audio.play().catch(() => {});
-    return () => {
-      audio.pause();
-      audio.currentTime = 0;
-      bgmLoopRef.current = null;
-    };
-  }, []);
-
-  // Cleanup race BGM on unmount
+  // Cleanup all audio on unmount
   useEffect(() => {
     return () => {
       if (bgmRef.current) {
         bgmRef.current.pause();
         bgmRef.current.currentTime = 0;
         bgmRef.current = null;
+      }
+      if (bgmLoopRef.current) {
+        bgmLoopRef.current.pause();
+        bgmLoopRef.current.currentTime = 0;
+        bgmLoopRef.current = null;
       }
     };
   }, []);
@@ -97,16 +88,28 @@ const Race = () => {
     return () => clearTimeout(timer);
   }, [countdown, raceState]);
 
-  // Start BGM only when race actually begins
+  // Start both BGMs only when race actually begins
   useEffect(() => {
     if (raceState !== "racing") return;
-    if (bgmRef.current) return; // already playing
     if (!soundOnRef.current) return;
-    const audio = new Audio(raceBgm);
-    audio.loop = true;
-    audio.volume = 0.4;
-    bgmRef.current = audio;
-    audio.play().catch(() => {});
+
+    // Race engine BGM
+    if (!bgmRef.current) {
+      const audio = new Audio(raceBgm);
+      audio.loop = true;
+      audio.volume = 0.4;
+      bgmRef.current = audio;
+      audio.play().catch(() => {});
+    }
+
+    // Background loop BGM
+    if (!bgmLoopRef.current) {
+      const audio = new Audio(raceBgmLoop);
+      audio.loop = true;
+      audio.volume = 0.35;
+      bgmLoopRef.current = audio;
+      audio.play().catch(() => {});
+    }
   }, [raceState]);
 
   // Race tick + parallax
@@ -151,11 +154,16 @@ const Race = () => {
     if (playerProgress >= FINISH_LINE || opponentProgress >= FINISH_LINE) {
       setRaceState("finished");
       setNitroActive(false);
-      // Stop BGM immediately
+      // Stop ALL audio immediately
       if (bgmRef.current) {
         bgmRef.current.pause();
         bgmRef.current.currentTime = 0;
         bgmRef.current = null;
+      }
+      if (bgmLoopRef.current) {
+        bgmLoopRef.current.pause();
+        bgmLoopRef.current.currentTime = 0;
+        bgmLoopRef.current = null;
       }
       const won = playerProgress >= opponentProgress;
       setVictory(won);
