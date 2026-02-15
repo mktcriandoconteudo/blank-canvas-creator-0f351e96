@@ -336,8 +336,8 @@ const Index = () => {
               )}
             </button>
 
-            <AnimatePresence mode="wait">
-              {showStats ? (
+            <AnimatePresence>
+              {showStats && (
                 <motion.div
                   key="stats"
                   initial={{ height: 0, opacity: 0 }}
@@ -463,77 +463,6 @@ const Index = () => {
                     <p className="mt-2 text-center font-body text-[10px] text-muted-foreground">
                       ⛽ {state.fuelTanks}/5 tanques · 🔧 Rev. em {Math.max(0, 5 - selectedCar.racesSinceRevision)} corridas
                     </p>
-                  </div>
-                </motion.div>
-              ) : (
-                <motion.div
-                  key="car-showcase"
-                  initial={{ opacity: 0, scale: 0.95 }}
-                  animate={{ opacity: 1, scale: 1 }}
-                  exit={{ opacity: 0, scale: 0.95 }}
-                  transition={{ duration: 0.3 }}
-                  className="flex flex-col items-center gap-4"
-                >
-                  {/* Car image with navigation arrows */}
-                  <div className="relative flex items-center gap-4">
-                    <button
-                      onClick={goToPrev}
-                      disabled={!hasPrev}
-                      className="flex h-12 w-12 shrink-0 items-center justify-center rounded-full border border-primary/20 bg-card/40 backdrop-blur-sm transition-all hover:bg-card/70 hover:border-primary/50 active:scale-90 disabled:opacity-20"
-                    >
-                      <ChevronLeft className="h-6 w-6 text-primary" />
-                    </button>
-
-                    <div className="relative w-56 h-40 sm:w-72 sm:h-52 overflow-hidden rounded-2xl border border-primary/15 shadow-[0_0_30px_hsl(185_80%_55%/0.15)]">
-                      <AnimatePresence mode="wait">
-                        <motion.img
-                          key={selectedCar.id}
-                          src={getCarImage(selectedCar)}
-                          alt={selectedCar.name}
-                          initial={{ opacity: 0, x: 50 }}
-                          animate={{ opacity: 1, x: 0 }}
-                          exit={{ opacity: 0, x: -50 }}
-                          transition={{ duration: 0.3 }}
-                          className="h-full w-full object-cover"
-                        />
-                      </AnimatePresence>
-                      {/* Overlay gradient */}
-                      <div className="absolute inset-0 bg-gradient-to-t from-background/60 via-transparent to-transparent" />
-                      <div className="absolute bottom-2 left-3 right-3">
-                        <p className="font-display text-xs font-bold text-primary">{selectedCar.name}</p>
-                        <p className="font-body text-[10px] text-muted-foreground">
-                          Lv.{selectedCar.level} · {carIndex + 1}/{state.cars.length}
-                        </p>
-                      </div>
-                    </div>
-
-                    <button
-                      onClick={goToNext}
-                      disabled={!hasNext}
-                      className="flex h-12 w-12 shrink-0 items-center justify-center rounded-full border border-primary/20 bg-card/40 backdrop-blur-sm transition-all hover:bg-card/70 hover:border-primary/50 active:scale-90 disabled:opacity-20"
-                    >
-                      <ChevronRight className="h-6 w-6 text-primary" />
-                    </button>
-                  </div>
-
-                  {/* Quick action buttons */}
-                  <div className="flex gap-3">
-                    {state.fuelTanks > 0 ? (
-                      <GlowButton
-                        variant="cyan"
-                        icon={<Flag className="h-4 w-4" />}
-                        onClick={() => navigate("/race")}
-                      >
-                        Iniciar Corrida
-                      </GlowButton>
-                    ) : (
-                      <button
-                        disabled
-                        className="rounded-xl border border-destructive/40 bg-destructive/10 px-6 py-3 font-display text-sm font-bold uppercase tracking-widest text-destructive/70 cursor-not-allowed"
-                      >
-                        ⛽ Sem Fuel
-                      </button>
-                    )}
                   </div>
                 </motion.div>
               )}
