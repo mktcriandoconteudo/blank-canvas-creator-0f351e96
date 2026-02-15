@@ -10,10 +10,16 @@ import { useGameState } from "@/hooks/useGameState";
 // Cinematic videos — starting grid + race clips + victory/defeat finales
 import raceBattleVideo1 from "@/assets/race-battle-video.mp4";
 import raceVictoryVideo from "@/assets/race-victory-video.mp4";
+import raceVictoryThunder from "@/assets/race-victory-thunder.mp4";
 import raceDefeatVideo from "@/assets/race-defeat-video.mp4";
 import raceStartVideo from "@/assets/race-start-video.mp4";
 import raceScenePlayer from "@/assets/race-scene-main.jpg";
 import raceBgm from "@/assets/race-bgm.mp3";
+
+// Car-specific victory videos
+const CAR_VICTORY_VIDEOS: Record<string, string> = {
+  "thunder": raceVictoryThunder,
+};
 
 
 const RACE_VIDEOS = [raceBattleVideo1];
@@ -242,7 +248,7 @@ const Race = () => {
       {raceState !== "countdown" && (
         <RaceVideoPlayer
           videos={RACE_VIDEOS}
-          finaleVideo={raceState === "finished" ? (victory ? raceDefeatVideo : raceVictoryVideo) : undefined}
+          finaleVideo={raceState === "finished" ? (victory ? raceDefeatVideo : (CAR_VICTORY_VIDEOS[selectedCar?.name.toLowerCase().split(" ")[0] ?? ""] ?? raceVictoryVideo)) : undefined}
           isActive={true}
           poster={raceScenePlayer}
           nitroActive={nitroActive}
