@@ -11,7 +11,7 @@ import { useGameState } from "@/hooks/useGameState";
 
 const Index = () => {
   const navigate = useNavigate();
-  const { state, selectedCar, addPoint, repair } = useGameState();
+  const { state, selectedCar, addPoint, repair, updateState } = useGameState();
   const [garageSoundOn, setGarageSoundOn] = useState(true);
   const garageBgmRef = useRef<HTMLAudioElement | null>(null);
 
@@ -226,20 +226,38 @@ const Index = () => {
                 <GlowButton variant="purple" icon={<Wrench className="h-4 w-4" />} className="flex-1">
                   Peças
                 </GlowButton>
-                <GlowButton
-                  variant="cyan"
-                  icon={<Flag className="h-4 w-4" />}
-                  className="flex-1"
-                  onClick={() => {
-                    if (state.fuelTanks <= 0) return;
-                    navigate("/race");
-                  }}
-                >
-                  {state.fuelTanks > 0 ? "Corrida" : "Sem Fuel"}
-                </GlowButton>
+                {state.fuelTanks > 0 ? (
+                  <GlowButton
+                    variant="cyan"
+                    icon={<Flag className="h-4 w-4" />}
+                    className="flex-1"
+                    onClick={() => navigate("/race")}
+                  >
+                    Iniciar Corrida
+                  </GlowButton>
+                ) : (
+                  <div className="flex-1 flex flex-col gap-1">
+                    <button
+                      disabled
+                      className="w-full rounded-xl border border-destructive/40 bg-destructive/10 px-8 py-4 font-display text-sm font-bold uppercase tracking-widest text-destructive/70 cursor-not-allowed"
+                    >
+                      ⛽ Sem Fuel
+                    </button>
+                  </div>
+                )}
               </div>
 
-              <p className="mt-3 text-center font-body text-[10px] text-muted-foreground">
+              {/* Admin: Reset Fuel */}
+              <button
+                onClick={() => {
+                  updateState((prev) => ({ ...prev, fuelTanks: 5 }));
+                }}
+                className="mt-2 w-full rounded-lg border border-neon-orange/30 bg-neon-orange/10 px-3 py-1.5 font-display text-[10px] uppercase tracking-wider text-neon-orange transition-colors hover:bg-neon-orange/20"
+              >
+                🔧 Admin: Resetar Fuel (5/5)
+              </button>
+
+              <p className="mt-2 text-center font-body text-[10px] text-muted-foreground">
                 ⛽ {state.fuelTanks}/5 tanques · 🔧 Rev. em {Math.max(0, 5 - selectedCar.racesSinceRevision)} corridas
               </p>
             </div>
