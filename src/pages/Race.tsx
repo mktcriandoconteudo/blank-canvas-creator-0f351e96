@@ -183,6 +183,19 @@ const Race = () => {
   }, [nitroCharges, raceState, nitroActive]);
 
   const handlePlayAgain = () => window.location.reload();
+
+  const toggleSound = useCallback(() => {
+    const next = !soundOnRef.current;
+    setSoundOn(next);
+    soundOnRef.current = next;
+    if (!next) {
+      if (bgmRef.current) { bgmRef.current.pause(); }
+      if (bgmLoopRef.current) { bgmLoopRef.current.pause(); }
+    } else {
+      if (bgmLoopRef.current) { bgmLoopRef.current.play().catch(() => {}); }
+      if (raceState === "racing" && bgmRef.current) { bgmRef.current.play().catch(() => {}); }
+    }
+  }, [raceState]);
   const earnedNP = Math.round(((victory ? 150 : 20) * playerStats.engineHealth) / 100);
   const speedKmh = Math.round(180 + (playerProgress / 100) * 180 + (nitroActive ? 80 : 0));
   const isRacing = raceState === "racing";
@@ -314,20 +327,7 @@ const Race = () => {
         initial={{ opacity: 0 }}
         animate={{ opacity: 1 }}
         transition={{ delay: 0.4 }}
-        onClick={() => {
-          const next = !soundOn;
-          setSoundOn(next);
-          soundOnRef.current = next;
-          if (!next) {
-            if (bgmRef.current) { bgmRef.current.pause(); }
-            if (bgmLoopRef.current) { bgmLoopRef.current.pause(); }
-          } else {
-            if (bgmLoopRef.current) { bgmLoopRef.current.play().catch(() => {}); }
-            if (raceState === "racing" && bgmRef.current) {
-              bgmRef.current.play().catch(() => {});
-            }
-          }
-        }}
+        onClick={toggleSound}
         className="absolute left-5 top-[22%] z-[10] flex h-8 w-8 items-center justify-center rounded-lg border border-primary/15 bg-background/15 backdrop-blur-xl transition-colors hover:bg-background/30"
       >
         {soundOn ? (
@@ -480,17 +480,7 @@ const Race = () => {
         newLevel={xpResult.newLevel}
         onClose={handlePlayAgain}
         soundOn={soundOn}
-        onToggleSound={() => {
-          const next = !soundOn;
-          setSoundOn(next);
-          soundOnRef.current = next;
-          if (!next) {
-            if (bgmRef.current) { bgmRef.current.pause(); }
-            if (bgmLoopRef.current) { bgmLoopRef.current.pause(); }
-          } else {
-            if (bgmLoopRef.current) { bgmLoopRef.current.play().catch(() => {}); }
-          }
-        }}
+        onToggleSound={toggleSound}
       />
     </motion.div>
   );
