@@ -170,10 +170,10 @@ const Landing = () => {
           <div className="absolute inset-0 bg-gradient-to-r from-background/60 via-transparent to-background/40" />
         </motion.div>
 
-        {/* Shader plasma lines on top of car */}
-        <div className="absolute inset-0 z-[1] mix-blend-screen">
+        {/* Shader plasma lines - top half only */}
+        <div className="absolute inset-x-0 top-0 h-[50%] z-[1] mix-blend-screen">
           <ShaderBackground />
-          <div className="absolute inset-0 bg-gradient-to-t from-background via-transparent to-background/40" />
+          <div className="absolute inset-0 bg-gradient-to-t from-black via-transparent to-transparent" />
         </div>
 
         <motion.div style={{ opacity: heroOpacity }} className="relative z-10 mx-auto w-full max-w-7xl px-4 sm:px-8">
