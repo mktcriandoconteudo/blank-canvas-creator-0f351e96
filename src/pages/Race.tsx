@@ -9,7 +9,6 @@ import { useGameState } from "@/hooks/useGameState";
 
 // Cinematic videos — starting grid + race clips + victory/defeat finales
 import raceBattleVideo1 from "@/assets/race-battle-video.mp4";
-import raceBattleVideo3 from "@/assets/race-battle-video-3.mp4";
 import raceVictoryVideo from "@/assets/race-victory-video.mp4";
 import raceDefeatVideo from "@/assets/race-defeat-video.mp4";
 import raceStartVideo from "@/assets/race-start-video.mp4";
@@ -17,7 +16,7 @@ import raceScenePlayer from "@/assets/race-scene-main.jpg";
 import raceBgm from "@/assets/race-bgm.mp3";
 
 
-const RACE_VIDEOS = [raceBattleVideo1, raceBattleVideo3, raceBattleVideo1];
+const RACE_VIDEOS = [raceBattleVideo1];
 
 
 const FINISH_LINE = 100;
