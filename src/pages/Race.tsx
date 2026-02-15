@@ -72,20 +72,23 @@ const Race = () => {
     if (raceState !== "countdown") return;
     if (countdown <= 0) {
       setRaceState("racing");
-      // Start background music
-      if (!bgmRef.current) {
-        bgmRef.current = new Audio(raceBgm);
-        bgmRef.current.loop = true;
-        bgmRef.current.volume = 0.4;
-      }
-      if (soundOnRef.current) {
-        bgmRef.current.play().catch(() => {});
-      }
       return;
     }
     const timer = setTimeout(() => setCountdown((c) => c - 1), 1000);
     return () => clearTimeout(timer);
   }, [countdown, raceState]);
+
+  // Start BGM only when race actually begins
+  useEffect(() => {
+    if (raceState !== "racing") return;
+    if (bgmRef.current) return; // already playing
+    if (!soundOnRef.current) return;
+    const audio = new Audio(raceBgm);
+    audio.loop = true;
+    audio.volume = 0.4;
+    bgmRef.current = audio;
+    audio.play().catch(() => {});
+  }, [raceState]);
 
   // Race tick + parallax
   useEffect(() => {
