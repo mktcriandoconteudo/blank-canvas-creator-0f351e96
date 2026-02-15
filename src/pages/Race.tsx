@@ -1,4 +1,5 @@
 import { useState, useEffect, useRef, useCallback } from "react";
+import { useNavigate } from "react-router-dom";
 import { motion, AnimatePresence } from "framer-motion";
 import { Fuel, Gauge, Wrench, Star, Zap, Volume2, VolumeX } from "lucide-react";
 import SpeedLinesCanvas from "@/components/race/SpeedLinesCanvas";
@@ -22,6 +23,7 @@ const FINISH_LINE = 100;
 const TICK_MS = 50;
 
 const Race = () => {
+  const navigate = useNavigate();
   const { state, selectedCar, finishRace } = useGameState();
   const playerStats = selectedCar ?? { speed: 70, acceleration: 60, engineHealth: 100, name: "Unknown", level: 1 };
 
@@ -157,7 +159,7 @@ const Race = () => {
     setTimeout(() => setNitroActive(false), 2500);
   }, [nitroCharges, raceState, nitroActive]);
 
-  const handlePlayAgain = () => window.location.reload();
+  const handlePlayAgain = () => navigate("/");
   const earnedNP = Math.round(((victory ? 150 : 20) * playerStats.engineHealth) / 100);
   const speedKmh = Math.round(180 + (playerProgress / 100) * 180 + (nitroActive ? 80 : 0));
   const isRacing = raceState === "racing";
