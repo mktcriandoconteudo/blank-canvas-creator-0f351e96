@@ -14,7 +14,7 @@ import raceVictoryVideo from "@/assets/race-battle-video-3.mp4";
 import raceDefeatVideo from "@/assets/race-defeat-video.mp4";
 import raceStartVideo from "@/assets/race-start-video.mp4";
 import raceScenePlayer from "@/assets/race-scene-main.jpg";
-import raceBgm from "@/assets/race-bgm.mp3";
+
 
 
 const RACE_VIDEOS = [raceBattleVideo1, raceBattleVideo2, raceBattleVideo1];
@@ -52,12 +52,11 @@ const Race = () => {
   const [nitroCharges, setNitroCharges] = useState(3);
   const [bgOffset, setBgOffset] = useState(0);
   const [soundOn, setSoundOn] = useState(false);
-  const soundOnRef = useRef(false);
 
   const prevLeader = useRef<"player" | "opponent" | "tie">("tie");
   const finishRaceRef = useRef(finishRace);
   finishRaceRef.current = finishRace;
-  const bgmRef = useRef<HTMLAudioElement | null>(null);
+  
 
   
   const countdownVideoRef = useRef<HTMLVideoElement | null>(null);
@@ -79,16 +78,6 @@ const Race = () => {
     };
   }, []);
 
-  // Cleanup all audio on unmount
-  useEffect(() => {
-    return () => {
-      if (bgmRef.current) {
-        bgmRef.current.pause();
-        bgmRef.current.currentTime = 0;
-        bgmRef.current = null;
-      }
-    };
-  }, []);
 
   // Countdown
   useEffect(() => {
@@ -101,19 +90,6 @@ const Race = () => {
     return () => clearTimeout(timer);
   }, [countdown, raceState]);
 
-  // Start bassloom-phantom-skid when race begins (persists after finish)
-  useEffect(() => {
-    if (raceState !== "racing") return;
-    setSoundOn(true);
-    soundOnRef.current = true;
-
-    const bgmAudio = new Audio(raceBgm);
-    bgmAudio.loop = true;
-    bgmAudio.volume = 0.4;
-    bgmRef.current = bgmAudio;
-    bgmAudio.play().catch(() => {});
-    // NO cleanup — bassloom persists through finish, cleaned on unmount
-  }, [raceState]);
 
 
   // Race tick + parallax
@@ -159,9 +135,6 @@ const Race = () => {
       setRaceState("finished");
       setNitroActive(false);
       
-      
-      // bassloom-phantom-skid continues — do NOT touch bgmRef here
-      
       const won = playerProgress >= opponentProgress;
       setVictory(won);
       const result = finishRaceRef.current(won);
@@ -182,14 +155,7 @@ const Race = () => {
   const handlePlayAgain = () => window.location.reload();
 
   const toggleSound = useCallback(() => {
-    const next = !soundOnRef.current;
-    setSoundOn(next);
-    soundOnRef.current = next;
-    if (!next) {
-      if (bgmRef.current) { bgmRef.current.pause(); }
-    } else {
-      if (bgmRef.current) { bgmRef.current.play().catch(() => {}); }
-    }
+    setSoundOn(prev => !prev);
   }, []);
   const earnedNP = Math.round(((victory ? 150 : 20) * playerStats.engineHealth) / 100);
   const speedKmh = Math.round(180 + (playerProgress / 100) * 180 + (nitroActive ? 80 : 0));
