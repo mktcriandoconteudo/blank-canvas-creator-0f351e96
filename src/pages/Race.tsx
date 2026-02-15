@@ -5,8 +5,9 @@ import SpeedLinesCanvas from "@/components/race/SpeedLinesCanvas";
 import RaceResultModal from "@/components/race/RaceResultModal";
 import { useGameState } from "@/hooks/useGameState";
 
-// Cinematic video — real race between cars
+// Cinematic videos — starting grid + race battle
 import raceBattleVideo from "@/assets/race-battle-video.mp4";
+import raceStartVideo from "@/assets/race-start-video.mp4";
 import raceScenePlayer from "@/assets/race-scene-main.jpg";
 import raceSceneOpponent from "@/assets/race-scene-opponent.jpg";
 
@@ -135,8 +136,35 @@ const Race = () => {
       transition={{ duration: 0.4 }}
       style={{ background: "#020208" }}
     >
-      {/* ====== LAYER 1: Video background — real movement ====== */}
-      <div className="absolute inset-0 z-[1]">
+      {/* ====== LAYER 1: Start video (countdown) ====== */}
+      <div
+        className="absolute inset-0 z-[1]"
+        style={{
+          opacity: raceState === "countdown" ? 1 : 0,
+          transition: "opacity 0.8s ease",
+          pointerEvents: "none",
+        }}
+      >
+        <video
+          autoPlay
+          loop
+          muted
+          playsInline
+          className="absolute inset-0 w-full h-full object-cover"
+          style={{ filter: "brightness(0.85) saturate(1.2) contrast(1.1)" }}
+        >
+          <source src={raceStartVideo} type="video/mp4" />
+        </video>
+      </div>
+
+      {/* ====== LAYER 2: Race video (during race) ====== */}
+      <div
+        className="absolute inset-0 z-[2]"
+        style={{
+          opacity: raceState !== "countdown" ? 1 : 0,
+          transition: "opacity 0.8s ease",
+        }}
+      >
         <video
           autoPlay
           loop
@@ -145,7 +173,7 @@ const Race = () => {
           poster={raceScenePlayer}
           className="absolute inset-0 w-full h-full object-cover"
           style={{
-            filter: `brightness(${nitroActive ? 1.3 : 0.9}) saturate(${nitroActive ? 1.5 : 1.2}) contrast(1.1)`,
+            filter: `brightness(${nitroActive ? 1.3 : 0.95}) saturate(${nitroActive ? 1.5 : 1.2}) contrast(1.1)`,
             transition: "filter 0.3s ease",
             transform: `scale(${isRacing ? (nitroActive ? 1.12 : 1.05) : 1})`,
           }}
@@ -154,15 +182,15 @@ const Race = () => {
         </video>
       </div>
 
-      {/* ====== LAYER 2: Opponent scene overlay on overtake ====== */}
+      {/* ====== LAYER 3: Opponent flash on overtake ====== */}
       <div
-        className="absolute inset-0 z-[2]"
+        className="absolute inset-0 z-[3]"
         style={{
           backgroundImage: `url(${raceSceneOpponent})`,
           backgroundSize: "cover",
           backgroundPosition: "center",
-          opacity: showingOpponent ? 0.85 : 0,
-          transition: "opacity 0.8s ease",
+          opacity: showingOpponent ? 0.7 : 0,
+          transition: "opacity 0.6s ease",
           filter: "brightness(1.1) saturate(1.2)",
         }}
       />
