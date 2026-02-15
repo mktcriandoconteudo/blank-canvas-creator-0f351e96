@@ -43,6 +43,9 @@ const Race = () => {
 
   const noFuel = !loading && state.fuelTanks <= 0;
 
+  // Pre-determine race outcome so Thunder Bolt can play the right video from the start
+  const [preWin] = useState(() => Math.random() > 0.45); // ~55% win chance
+  
   const [opponent] = useState(() => {
     const lvl = selectedCar?.level ?? 1;
     const base = 50 + lvl * 5;
@@ -179,6 +182,9 @@ const Race = () => {
     prevLeader.current = cur;
   }, [playerProgress, opponentProgress, raceState]);
 
+  // Check if current car is Thunder Bolt
+  const isThunder = carKeyRef.current === "thunder" || (selectedCar?.name ?? "").toLowerCase().startsWith("thunder");
+
   // Detect finish
   useEffect(() => {
     if (raceState !== "racing") return;
@@ -186,23 +192,27 @@ const Race = () => {
       setRaceState("finished");
       setNitroActive(false);
       
-      const won = playerProgress >= opponentProgress;
+      // For Thunder Bolt, use pre-determined result; for others, use actual race result
+      const won = isThunder ? preWin : playerProgress >= opponentProgress;
       setVictory(won);
 
-      // Determine finale video — try multiple sources for car name
       const carName = selectedCar?.name ?? playerStats.name ?? "";
       const carKey = carKeyRef.current || carName.toLowerCase().split(" ")[0];
-      // Update ref as fallback for future use
       if (!carKeyRef.current && carKey) carKeyRef.current = carKey;
       
-      const hasCustom = !!(CAR_VICTORY_VIDEOS[carKey]);
-      console.log("[RACE FINISH]", { carName, carKey, hasCustom, won, refValue: carKeyRef.current });
-      if (hasCustom) {
-        setFinaleVideoSrc(won ? CAR_VICTORY_VIDEOS[carKey] : CAR_DEFEAT_VIDEOS[carKey]);
-      } else {
-        // Default videos are inverted due to asset mismatch
-        setFinaleVideoSrc(won ? raceDefeatVideo : raceVictoryVideo);
+      console.log("[RACE FINISH]", { carName, carKey, isThunder, won, preWin });
+      
+      if (!isThunder) {
+        // Non-Thunder cars use finale video swap
+        const hasCustom = !!(CAR_VICTORY_VIDEOS[carKey]);
+        if (hasCustom) {
+          setFinaleVideoSrc(won ? CAR_VICTORY_VIDEOS[carKey] : CAR_DEFEAT_VIDEOS[carKey]);
+        } else {
+          setFinaleVideoSrc(won ? raceDefeatVideo : raceVictoryVideo);
+        }
       }
+      // Thunder Bolt doesn't need finaleVideoSrc — it already plays the right video from start
+      
       const result = finishRaceRef.current(won);
       setXpResult(result);
       setTimeout(() => setShowResult(true), 5500);
@@ -244,10 +254,9 @@ const Race = () => {
       style={{ background: "#020208" }}
     >
       {/* ====== Race videos ====== */}
-      {carKeyRef.current === "thunder" || (selectedCar?.name ?? "").toLowerCase().startsWith("thunder") ? (
+      {isThunder ? (
         <SimpleVideoPlayer
-          raceVideo={raceBattleVideo1}
-          finaleVideo={finaleVideoSrc}
+          videoSrc={preWin ? azulGanha : azulPerde}
           isActive={true}
           nitroActive={nitroActive}
           isRacing={isRacing}
