@@ -160,43 +160,45 @@ const RaceVideoPlayer = ({ videos, finaleVideo, isActive, poster, nitroActive, i
         transition: "opacity 0.8s ease",
       }}
     >
-      {/* Race video A */}
-      {!playingFinale && (
-        <video
-          ref={videoARef}
-          muted
-          playsInline
-          preload="auto"
-          onEnded={activeSlot === 0 ? handleEnded : undefined}
-          style={videoStyle(activeSlot === 0)}
-        />
-      )}
+      {/* Race video A — always in DOM, hidden when finale plays */}
+      <video
+        ref={videoARef}
+        muted
+        playsInline
+        preload="auto"
+        onEnded={activeSlot === 0 ? handleEnded : undefined}
+        style={{
+          ...videoStyle(activeSlot === 0 && !playingFinale),
+          zIndex: playingFinale ? 0 : 2,
+        }}
+      />
 
       {/* Race video B (preloaded, hidden until swap) */}
-      {!playingFinale && (
-        <video
-          ref={videoBRef}
-          muted
-          playsInline
-          preload="auto"
-          onEnded={activeSlot === 1 ? handleEnded : undefined}
-          style={videoStyle(activeSlot === 1)}
-        />
-      )}
+      <video
+        ref={videoBRef}
+        muted
+        playsInline
+        preload="auto"
+        onEnded={activeSlot === 1 ? handleEnded : undefined}
+        style={{
+          ...videoStyle(activeSlot === 1 && !playingFinale),
+          zIndex: playingFinale ? 0 : 2,
+        }}
+      />
 
-      {/* Finale video (victory or defeat) */}
+      {/* Finale video (victory or defeat) — always in DOM */}
       <video
         ref={finaleRef}
         muted
         playsInline
         loop
-        preload="auto"
+        preload="none"
         className="absolute inset-0 w-full h-full object-cover"
         style={{
           filter: "brightness(1.1) saturate(1.2) contrast(1.05)",
           transition: "opacity 0.5s ease",
           opacity: playingFinale ? 1 : 0,
-          zIndex: playingFinale ? 5 : 0,
+          zIndex: playingFinale ? 10 : 0,
           transform: "scale(1.02)",
         }}
       />
