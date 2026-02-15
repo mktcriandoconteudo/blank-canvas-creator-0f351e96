@@ -1,7 +1,9 @@
 import { motion } from "framer-motion";
-import { Zap, Gauge, Wind, Shield, Wrench, Flag, Star, Plus, Coins } from "lucide-react";
+import { Zap, Gauge, Wind, Shield, Wrench, Flag, Star, Plus, Coins, Volume2, VolumeX } from "lucide-react";
 import { useNavigate } from "react-router-dom";
+import { useRef, useState, useEffect, useCallback } from "react";
 import garageScene from "@/assets/garage-scene.jpg";
+import garageBgm from "@/assets/garagem-bgm.mp3";
 import StatBar from "@/components/garage/StatBar";
 import GlowButton from "@/components/garage/GlowButton";
 import { useGameState } from "@/hooks/useGameState";
@@ -10,6 +12,35 @@ import { useGameState } from "@/hooks/useGameState";
 const Index = () => {
   const navigate = useNavigate();
   const { state, selectedCar, addPoint, repair } = useGameState();
+  const [garageSoundOn, setGarageSoundOn] = useState(true);
+  const garageBgmRef = useRef<HTMLAudioElement | null>(null);
+
+  useEffect(() => {
+    const audio = new Audio(garageBgm);
+    audio.loop = true;
+    audio.volume = 0.5;
+    garageBgmRef.current = audio;
+    audio.play().catch(() => {});
+    return () => {
+      audio.pause();
+      audio.src = "";
+      garageBgmRef.current = null;
+    };
+  }, []);
+
+  const toggleGarageSound = useCallback(() => {
+    setGarageSoundOn(prev => {
+      const next = !prev;
+      if (garageBgmRef.current) {
+        if (next) {
+          garageBgmRef.current.play().catch(() => {});
+        } else {
+          garageBgmRef.current.pause();
+        }
+      }
+      return next;
+    });
+  }, []);
 
   if (!selectedCar) return null;
 
@@ -42,6 +73,19 @@ const Index = () => {
             TurboNitro
           </h1>
           <div className="flex items-center gap-4">
+            <button
+              onClick={toggleGarageSound}
+              className="flex items-center gap-2 rounded-lg bg-muted/30 px-3 py-1.5 backdrop-blur-sm transition-colors hover:bg-muted/50"
+            >
+              {garageSoundOn ? (
+                <Volume2 className="h-4 w-4 text-primary" />
+              ) : (
+                <VolumeX className="h-4 w-4 text-muted-foreground" />
+              )}
+              <span className="font-display text-[10px] uppercase tracking-wider text-muted-foreground">
+                {garageSoundOn ? "Som" : "Mudo"}
+              </span>
+            </button>
             <div className="flex items-center gap-2 rounded-lg bg-muted/30 px-3 py-1.5 backdrop-blur-sm">
               <Coins className="h-4 w-4 text-neon-orange" />
               <span className="font-display text-xs text-foreground">{state.nitroPoints} NP</span>
