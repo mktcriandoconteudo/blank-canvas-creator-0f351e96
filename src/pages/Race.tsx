@@ -101,7 +101,7 @@ const Race = () => {
     return () => clearTimeout(timer);
   }, [countdown, raceState]);
 
-  // Start BGM when race begins
+  // Start BGM when race begins — persists through finish, cleaned on unmount
   useEffect(() => {
     if (raceState !== "racing") return;
     setSoundOn(true);
@@ -112,12 +112,7 @@ const Race = () => {
     bgmAudio.volume = 0.4;
     bgmRef.current = bgmAudio;
     bgmAudio.play().catch(() => {});
-
-    return () => {
-      bgmAudio.pause();
-      bgmAudio.src = "";
-      bgmRef.current = null;
-    };
+    // NO cleanup here — audio persists through "finished" state
   }, [raceState]);
 
 
