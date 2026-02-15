@@ -20,11 +20,29 @@ const Index = () => {
     audio.loop = true;
     audio.volume = 0.5;
     garageBgmRef.current = audio;
-    audio.play().catch(() => {});
+
+    const tryPlay = () => {
+      audio.play().catch(() => {});
+    };
+
+    // Try immediately, and also on first user interaction (browser autoplay policy)
+    tryPlay();
+    const handleInteraction = () => {
+      if (garageBgmRef.current && garageSoundOn) {
+        garageBgmRef.current.play().catch(() => {});
+      }
+      document.removeEventListener("click", handleInteraction);
+      document.removeEventListener("touchstart", handleInteraction);
+    };
+    document.addEventListener("click", handleInteraction);
+    document.addEventListener("touchstart", handleInteraction);
+
     return () => {
       audio.pause();
       audio.src = "";
       garageBgmRef.current = null;
+      document.removeEventListener("click", handleInteraction);
+      document.removeEventListener("touchstart", handleInteraction);
     };
   }, []);
 
