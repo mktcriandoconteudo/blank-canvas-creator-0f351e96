@@ -1,17 +1,4 @@
-import { createClient } from "@supabase/supabase-js";
-import { supabase } from "@/integrations/supabase/client";
-
-const SUPABASE_URL = "https://cktbtbpyiqvgadseulpt.supabase.co";
-const SUPABASE_KEY = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImNrdGJ0YnB5aXF2Z2Fkc2V1bHB0Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzExMDY5OTEsImV4cCI6MjA4NjY4Mjk5MX0.YJfZ4y3UaTkcO0bnNdjYgZ-dNJ0u4jlK5zJxOxLUql0";
-
-// Create a client with wallet header for RLS-protected mutations
-function getWalletClient(wallet: string) {
-  return createClient(SUPABASE_URL, SUPABASE_KEY, {
-    global: {
-      headers: { "x-wallet-address": wallet },
-    },
-  });
-}
+import { supabase, getWalletClient } from "@/lib/supabase";
 
 export interface CarData {
   id: string;
