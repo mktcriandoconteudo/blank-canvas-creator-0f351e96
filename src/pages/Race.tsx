@@ -15,7 +15,7 @@ import raceDefeatVideo from "@/assets/race-defeat-video.mp4";
 import raceStartVideo from "@/assets/race-start-video.mp4";
 import raceScenePlayer from "@/assets/race-scene-main.jpg";
 import raceBgm from "@/assets/race-bgm.mp3";
-import raceBgmLoop from "@/assets/race-bgm-loop.mp3";
+
 
 const RACE_VIDEOS = [raceBattleVideo1, raceBattleVideo2, raceBattleVideo1];
 
@@ -59,7 +59,7 @@ const Race = () => {
   finishRaceRef.current = finishRace;
   const bgmRef = useRef<HTMLAudioElement | null>(null);
 
-  const bgmLoopRef = useRef<HTMLAudioElement | null>(null);
+  
   const countdownVideoRef = useRef<HTMLVideoElement | null>(null);
 
   // Force countdown video to play on first user interaction (iOS workaround)
@@ -86,11 +86,6 @@ const Race = () => {
         bgmRef.current.pause();
         bgmRef.current.currentTime = 0;
         bgmRef.current = null;
-      }
-      if (bgmLoopRef.current) {
-        bgmLoopRef.current.pause();
-        bgmLoopRef.current.currentTime = 0;
-        bgmLoopRef.current = null;
       }
     };
   }, []);
@@ -120,24 +115,6 @@ const Race = () => {
     // NO cleanup — bassloom persists through finish, cleaned on unmount
   }, [raceState]);
 
-  // Start karlosdearma ONLY during racing — cleanup kills it on state change
-  useEffect(() => {
-    if (raceState !== "racing") return;
-
-    const loopAudio = new Audio(raceBgmLoop);
-    loopAudio.loop = true;
-    loopAudio.volume = 0.35;
-    bgmLoopRef.current = loopAudio;
-    loopAudio.play().catch(() => {});
-    console.log("[karlosdearma] STARTED");
-
-    return () => {
-      console.log("[karlosdearma] CLEANUP — stopping");
-      loopAudio.pause();
-      loopAudio.src = "";
-      bgmLoopRef.current = null;
-    };
-  }, [raceState]);
 
   // Race tick + parallax
   useEffect(() => {
@@ -182,17 +159,6 @@ const Race = () => {
       setRaceState("finished");
       setNitroActive(false);
       
-      // STOP karlosdearma permanently
-      console.log("[FINISH] bgmLoopRef exists?", !!bgmLoopRef.current);
-      if (bgmLoopRef.current) {
-        const loopAudio = bgmLoopRef.current;
-        bgmLoopRef.current = null;
-        loopAudio.pause();
-        loopAudio.removeAttribute("src");
-        loopAudio.load(); // force browser to release
-        console.log("[FINISH] karlosdearma KILLED, paused:", loopAudio.paused);
-      }
-      console.log("[FINISH] bgmRef exists?", !!bgmRef.current, "paused:", bgmRef.current?.paused);
       
       // bassloom-phantom-skid continues — do NOT touch bgmRef here
       
@@ -217,20 +183,14 @@ const Race = () => {
 
   const toggleSound = useCallback(() => {
     const next = !soundOnRef.current;
-    console.log("[toggleSound] next:", next, "raceState:", raceState, "bgmLoop:", !!bgmLoopRef.current, "bgm:", !!bgmRef.current);
     setSoundOn(next);
     soundOnRef.current = next;
     if (!next) {
       if (bgmRef.current) { bgmRef.current.pause(); }
-      if (bgmLoopRef.current) { bgmLoopRef.current.pause(); }
     } else {
-      // Only play bgmLoop if it still exists AND we're racing (not finished)
-      if (bgmLoopRef.current && raceState === "racing") {
-        bgmLoopRef.current.play().catch(() => {});
-      }
       if (bgmRef.current) { bgmRef.current.play().catch(() => {}); }
     }
-  }, [raceState]);
+  }, []);
   const earnedNP = Math.round(((victory ? 150 : 20) * playerStats.engineHealth) / 100);
   const speedKmh = Math.round(180 + (playerProgress / 100) * 180 + (nitroActive ? 80 : 0));
   const isRacing = raceState === "racing";
