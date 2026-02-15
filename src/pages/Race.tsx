@@ -225,15 +225,16 @@ const Race = () => {
         }}
       >
         <video
+          src={raceStartVideo}
           autoPlay
           loop
           muted
           playsInline
+          // @ts-ignore
+          webkit-playsinline="true"
           className="absolute inset-0 w-full h-full object-cover"
           style={{ filter: "brightness(0.85) saturate(1.2) contrast(1.1)" }}
-        >
-          <source src={raceStartVideo} type="video/mp4" />
-        </video>
+        />
       </div>
 
       {/* ====== LAYER 2: Race videos in sequence (during race) ====== */}
