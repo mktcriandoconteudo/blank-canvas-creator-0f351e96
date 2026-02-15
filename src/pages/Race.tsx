@@ -175,13 +175,8 @@ const Race = () => {
     if (playerProgress >= FINISH_LINE || opponentProgress >= FINISH_LINE) {
       setRaceState("finished");
       setNitroActive(false);
-      // Stop race BGM permanently
-      if (bgmRef.current) {
-        bgmRef.current.pause();
-        bgmRef.current.currentTime = 0;
-        bgmRef.current = null;
-      }
-      // Pause loop BGM but keep the ref so the card button can toggle it
+      // Keep race BGM (bassloom-phantom-skid) playing after finish
+      // Only stop the loop BGM
       if (bgmLoopRef.current) {
         bgmLoopRef.current.pause();
         bgmLoopRef.current.currentTime = 0;
@@ -218,7 +213,7 @@ const Race = () => {
         console.log("[toggleSound] playing bgmLoop, paused:", bgmLoopRef.current.paused);
         bgmLoopRef.current.play().catch((e) => console.error("[toggleSound] bgmLoop play error:", e));
       }
-      if (raceState === "racing" && bgmRef.current) { bgmRef.current.play().catch(() => {}); }
+      if (bgmRef.current) { bgmRef.current.play().catch(() => {}); }
     }
   }, [raceState]);
   const earnedNP = Math.round(((victory ? 150 : 20) * playerStats.engineHealth) / 100);
