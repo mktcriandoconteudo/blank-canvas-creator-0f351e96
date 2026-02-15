@@ -160,9 +160,12 @@ export async function loadGameStateFromSupabase(wallet: string = DEFAULT_WALLET)
       .eq("wallet_address", wallet);
   }
 
+  const savedCarId = typeof window !== "undefined" ? localStorage.getItem("selectedCarId") : null;
+  const validSavedCar = savedCarId && cars.some((c) => c.id === savedCarId);
+
   return {
     cars,
-    selectedCarId: cars[0]?.id ?? null,
+    selectedCarId: validSavedCar ? savedCarId : (cars[0]?.id ?? null),
     nitroPoints: userData?.nitro_points ?? 500,
     fuelTanks,
     lastFuelRefill: lastRefill,
