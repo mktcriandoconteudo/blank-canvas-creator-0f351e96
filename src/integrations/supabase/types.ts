@@ -302,10 +302,12 @@ export type Database = {
       [_ in never]: never
     }
     Functions: {
-      refill_fuel: {
-        Args: { _car_id: string; _wallet_address: string }
-        Returns: boolean
-      }
+      refill_fuel:
+        | { Args: { _wallet_address: string }; Returns: boolean }
+        | {
+            Args: { _car_id: string; _wallet_address: string }
+            Returns: boolean
+          }
     }
     Enums: {
       [_ in never]: never

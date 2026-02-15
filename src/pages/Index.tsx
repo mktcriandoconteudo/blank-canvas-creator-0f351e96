@@ -7,12 +7,14 @@ import garageBgm from "@/assets/garagem-bgm.mp3";
 import StatBar from "@/components/garage/StatBar";
 import GlowButton from "@/components/garage/GlowButton";
 import { useGameState } from "@/hooks/useGameState";
+import { supabase } from "@/lib/supabase";
 
 
 const Index = () => {
   const navigate = useNavigate();
   const { state, selectedCar, addPoint, repair, updateState, loading } = useGameState();
   const [garageSoundOn, setGarageSoundOn] = useState(true);
+  const [refilling, setRefilling] = useState(false);
   const garageBgmRef = useRef<HTMLAudioElement | null>(null);
 
   const audioStartedRef = useRef(false);
@@ -279,14 +281,34 @@ const Index = () => {
                 )}
               </div>
 
-              <button
-                onClick={() => {
-                  updateState((prev) => ({ ...prev, fuelTanks: 5 }));
-                }}
-                className="mt-2 w-full rounded-lg border border-neon-orange/30 bg-neon-orange/10 px-3 py-1.5 font-display text-[10px] uppercase tracking-wider text-neon-orange transition-colors hover:bg-neon-orange/20"
-              >
-                🔧 Admin: Resetar Fuel (5/5)
-              </button>
+              {state.fuelTanks < 5 && state.nitroPoints >= 50 && (
+                <button
+                  disabled={refilling}
+                  onClick={async () => {
+                    setRefilling(true);
+                    try {
+                      const { data, error } = await supabase.rpc("refill_fuel", {
+                        _wallet_address: state.walletAddress,
+                      });
+                      if (error) throw error;
+                      if (data === true) {
+                        updateState((prev) => ({
+                          ...prev,
+                          fuelTanks: 5,
+                          nitroPoints: prev.nitroPoints - 50,
+                        }));
+                      }
+                    } catch (e) {
+                      console.error("Refill failed:", e);
+                    } finally {
+                      setRefilling(false);
+                    }
+                  }}
+                  className="mt-2 w-full rounded-lg border border-neon-green/30 bg-neon-green/10 px-3 py-2 font-display text-xs uppercase tracking-wider text-neon-green transition-colors hover:bg-neon-green/20 disabled:opacity-50"
+                >
+                  ⛽ Reabastecer (50 NP)
+                </button>
+              )}
 
               <p className="mt-2 text-center font-body text-[10px] text-muted-foreground">
                 ⛽ {state.fuelTanks}/5 tanques · 🔧 Rev. em {Math.max(0, 5 - selectedCar.racesSinceRevision)} corridas
