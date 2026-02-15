@@ -170,9 +170,9 @@ const Landing = () => {
         </div>
 
         <motion.div style={{ y: heroY, scale: heroScale }} className="absolute inset-0 z-[1]">
-          <img src={landingHero} alt="TurboNitro Racing" className="h-full w-full object-cover object-center mix-blend-screen opacity-70" />
-          <div className="absolute inset-0 bg-gradient-to-t from-background via-background/50 to-transparent" />
-          <div className="absolute inset-0 bg-gradient-to-r from-background/80 via-transparent to-background/60" />
+          <img src={landingHero} alt="TurboNitro Racing" className="h-full w-full object-cover object-center opacity-90" />
+          <div className="absolute inset-0 bg-gradient-to-t from-background via-background/20 to-transparent" />
+          <div className="absolute inset-0 bg-gradient-to-r from-background/60 via-transparent to-background/40" />
         </motion.div>
 
         <motion.div style={{ opacity: heroOpacity }} className="relative z-10 mx-auto w-full max-w-7xl px-4 sm:px-8">
