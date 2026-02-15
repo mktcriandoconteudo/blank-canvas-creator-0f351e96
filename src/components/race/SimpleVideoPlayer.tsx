@@ -45,7 +45,6 @@ const SimpleVideoPlayer = ({ videoSrc, isActive, nitroActive, isRacing }: Simple
         ref={videoRef}
         muted
         playsInline
-        loop
         className="absolute inset-0 w-full h-full object-cover"
         style={{
           filter: baseFilter,
