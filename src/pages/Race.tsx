@@ -3,12 +3,17 @@ import { motion, AnimatePresence } from "framer-motion";
 import { Fuel, Gauge, Wrench, Star, Zap } from "lucide-react";
 import SpeedLinesCanvas from "@/components/race/SpeedLinesCanvas";
 import RaceResultModal from "@/components/race/RaceResultModal";
+import RaceVideoPlayer from "@/components/race/RaceVideoPlayer";
 import { useGameState } from "@/hooks/useGameState";
 
-// Cinematic videos — starting grid + race battle
-import raceBattleVideo from "@/assets/race-battle-video.mp4";
+// Cinematic videos — starting grid + 3 race clips in sequence
+import raceBattleVideo1 from "@/assets/race-battle-video.mp4";
+import raceBattleVideo2 from "@/assets/race-battle-video-2.mp4";
+import raceBattleVideo3 from "@/assets/race-battle-video-3.mp4";
 import raceStartVideo from "@/assets/race-start-video.mp4";
 import raceScenePlayer from "@/assets/race-scene-main.jpg";
+
+const RACE_VIDEOS = [raceBattleVideo1, raceBattleVideo2, raceBattleVideo3];
 
 
 const FINISH_LINE = 100;
@@ -151,30 +156,14 @@ const Race = () => {
         </video>
       </div>
 
-      {/* ====== LAYER 2: Race video (during race) ====== */}
-      <div
-        className="absolute inset-0 z-[2]"
-        style={{
-          opacity: raceState !== "countdown" ? 1 : 0,
-          transition: "opacity 0.8s ease",
-        }}
-      >
-        <video
-          autoPlay
-          loop
-          muted
-          playsInline
-          poster={raceScenePlayer}
-          className="absolute inset-0 w-full h-full object-cover"
-          style={{
-            filter: `brightness(${nitroActive ? 1.3 : 0.95}) saturate(${nitroActive ? 1.5 : 1.2}) contrast(1.1)`,
-            transition: "filter 0.3s ease",
-            transform: `scale(${isRacing ? (nitroActive ? 1.12 : 1.05) : 1})`,
-          }}
-        >
-          <source src={raceBattleVideo} type="video/mp4" />
-        </video>
-      </div>
+      {/* ====== LAYER 2: Race videos in sequence (during race) ====== */}
+      <RaceVideoPlayer
+        videos={RACE_VIDEOS}
+        isActive={raceState !== "countdown"}
+        poster={raceScenePlayer}
+        nitroActive={nitroActive}
+        isRacing={isRacing}
+      />
 
 
 
