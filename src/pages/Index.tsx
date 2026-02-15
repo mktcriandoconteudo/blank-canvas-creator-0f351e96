@@ -238,15 +238,15 @@ const Index = () => {
                 <motion.div
                   initial={{ opacity: 0 }}
                   animate={{ opacity: 1 }}
-                  className="rounded-xl border border-destructive/30 bg-destructive/5 p-3"
+                  className="mt-4 rounded-xl border border-destructive/30 bg-destructive/10 p-3"
                 >
-                  <div className="flex items-center justify-between">
-                    <span className="font-body text-xs text-destructive">⚠ Revisão necessária!</span>
+                  <div className="flex flex-col gap-2 sm:flex-row sm:items-center sm:justify-between">
+                    <span className="font-display text-xs font-bold text-destructive">⚠ Revisão necessária!</span>
                     <button
                       onClick={() => repair(repairCost)}
-                      className="font-display text-xs text-primary hover:underline"
+                      className="w-full rounded-lg border border-primary/40 bg-primary/10 px-3 py-2 font-display text-xs font-bold text-primary transition-colors hover:bg-primary/20 sm:w-auto"
                     >
-                      Reparar ({repairCost} NP)
+                      🔧 Reparar ({repairCost} NP)
                     </button>
                   </div>
                 </motion.div>
