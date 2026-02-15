@@ -5,8 +5,8 @@ import SpeedLinesCanvas from "@/components/race/SpeedLinesCanvas";
 import RaceResultModal from "@/components/race/RaceResultModal";
 import { useGameState } from "@/hooks/useGameState";
 
-// Cinematic video + fallback images
-import raceDriveVideo from "@/assets/race-drive-video.mp4";
+// Cinematic video — real race between cars
+import raceBattleVideo from "@/assets/race-battle-video.mp4";
 import raceScenePlayer from "@/assets/race-scene-main.jpg";
 import raceSceneOpponent from "@/assets/race-scene-opponent.jpg";
 
@@ -150,7 +150,7 @@ const Race = () => {
             transform: `scale(${isRacing ? (nitroActive ? 1.12 : 1.05) : 1})`,
           }}
         >
-          <source src={raceDriveVideo} type="video/mp4" />
+          <source src={raceBattleVideo} type="video/mp4" />
         </video>
       </div>
 
