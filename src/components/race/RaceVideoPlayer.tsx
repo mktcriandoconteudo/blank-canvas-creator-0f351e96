@@ -12,29 +12,27 @@ interface RaceVideoPlayerProps {
 const RaceVideoPlayer = ({ videos, finaleVideo, isActive, poster, nitroActive, isRacing }: RaceVideoPlayerProps) => {
   const [currentIndex, setCurrentIndex] = useState(0);
   const [playingFinale, setPlayingFinale] = useState(false);
-  const videoRefs = useRef<(HTMLVideoElement | null)[]>([]);
+  const videoRef = useRef<HTMLVideoElement>(null);
   const finaleRef = useRef<HTMLVideoElement>(null);
 
-  // Pre-load all videos
+  // Play current video when active or index changes
   useEffect(() => {
-    videoRefs.current.forEach((v) => {
-      if (v) v.load();
-    });
-  }, []);
-
-  // When active, play current video
-  useEffect(() => {
-    if (isActive && !playingFinale && videoRefs.current[currentIndex]) {
-      videoRefs.current[currentIndex]?.play().catch(() => {});
+    if (!isActive || playingFinale) return;
+    const vid = videoRef.current;
+    if (vid) {
+      vid.src = videos[currentIndex];
+      vid.load();
+      vid.play().catch(() => {});
     }
-  }, [isActive, currentIndex, playingFinale]);
+  }, [isActive, currentIndex, playingFinale, videos]);
 
   // When finale video is set, switch to it
   useEffect(() => {
     if (finaleVideo && !playingFinale) {
       setPlayingFinale(true);
-      videoRefs.current[currentIndex]?.pause();
-      
+      // Pause current race video
+      if (videoRef.current) videoRef.current.pause();
+
       const vid = finaleRef.current;
       if (vid) {
         vid.src = finaleVideo;
@@ -49,13 +47,12 @@ const RaceVideoPlayer = ({ videos, finaleVideo, isActive, poster, nitroActive, i
         }
       }
     }
-  }, [finaleVideo, playingFinale, currentIndex]);
+  }, [finaleVideo, playingFinale]);
 
   const handleEnded = useCallback(() => {
     if (playingFinale) return;
-    const next = (currentIndex + 1) % videos.length;
-    setCurrentIndex(next);
-  }, [currentIndex, videos.length, playingFinale]);
+    setCurrentIndex((prev) => (prev + 1) % videos.length);
+  }, [videos.length, playingFinale]);
 
   return (
     <div
@@ -65,30 +62,24 @@ const RaceVideoPlayer = ({ videos, finaleVideo, isActive, poster, nitroActive, i
         transition: "opacity 0.8s ease",
       }}
     >
-      {/* Race battle videos — use src directly for better mobile compatibility */}
-      {videos.map((src, i) => (
+      {/* Single race video element — iOS only supports one playing at a time */}
+      {!playingFinale && (
         <video
-          key={i}
-          ref={(el) => { videoRefs.current[i] = el; }}
-          src={src}
+          ref={videoRef}
           muted
-          autoPlay={i === 0}
           playsInline
-          // @ts-ignore — needed for older iOS WebKit
+          // @ts-ignore
           webkit-playsinline="true"
-          poster={i === 0 ? poster : undefined}
-          preload="auto"
-          onEnded={i === currentIndex ? handleEnded : undefined}
+          poster={poster}
+          onEnded={handleEnded}
           className="absolute inset-0 w-full h-full object-cover"
           style={{
             filter: `brightness(${nitroActive ? 1.3 : 0.95}) saturate(${nitroActive ? 1.5 : 1.2}) contrast(1.1)`,
-            transition: "filter 0.3s ease, opacity 0.5s ease",
+            transition: "filter 0.3s ease",
             transform: `scale(${isRacing ? (nitroActive ? 1.12 : 1.05) : 1})`,
-            opacity: !playingFinale && i === currentIndex ? 1 : 0,
-            zIndex: i === currentIndex ? 2 : 1,
           }}
         />
-      ))}
+      )}
 
       {/* Finale video (victory or defeat) */}
       <video
