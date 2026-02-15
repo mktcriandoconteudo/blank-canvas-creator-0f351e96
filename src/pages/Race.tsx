@@ -12,13 +12,17 @@ import raceBattleVideo1 from "@/assets/race-battle-video.mp4";
 import raceVictoryVideo from "@/assets/race-victory-video.mp4";
 import raceVictoryThunder from "@/assets/race-victory-thunder.mp4";
 import raceDefeatVideo from "@/assets/race-defeat-video.mp4";
+import raceDefeatThunder from "@/assets/race-defeat-thunder.mp4";
 import raceStartVideo from "@/assets/race-start-video.mp4";
 import raceScenePlayer from "@/assets/race-scene-main.jpg";
 import raceBgm from "@/assets/race-bgm.mp3";
 
-// Car-specific victory videos
+// Car-specific videos
 const CAR_VICTORY_VIDEOS: Record<string, string> = {
   "thunder": raceVictoryThunder,
+};
+const CAR_DEFEAT_VIDEOS: Record<string, string> = {
+  "thunder": raceDefeatThunder,
 };
 
 
@@ -248,7 +252,7 @@ const Race = () => {
       {raceState !== "countdown" && (
         <RaceVideoPlayer
           videos={RACE_VIDEOS}
-          finaleVideo={raceState === "finished" ? (victory ? raceDefeatVideo : (CAR_VICTORY_VIDEOS[selectedCar?.name.toLowerCase().split(" ")[0] ?? ""] ?? raceVictoryVideo)) : undefined}
+          finaleVideo={raceState === "finished" ? (() => { const carKey = selectedCar?.name.toLowerCase().split(" ")[0] ?? ""; return victory ? (CAR_DEFEAT_VIDEOS[carKey] ?? raceDefeatVideo) : (CAR_VICTORY_VIDEOS[carKey] ?? raceVictoryVideo); })() : undefined}
           isActive={true}
           poster={raceScenePlayer}
           nitroActive={nitroActive}
