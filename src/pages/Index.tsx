@@ -184,24 +184,6 @@ const Index = () => {
               </div>
             </motion.div>
 
-            {/* Revision warning */}
-            {needsRevision && (
-              <motion.div
-                initial={{ opacity: 0 }}
-                animate={{ opacity: 1 }}
-                className="mt-3 glass rounded-xl p-3 max-w-xs w-full border-destructive/30"
-              >
-                <div className="flex items-center justify-between">
-                  <span className="font-body text-xs text-destructive">⚠ Revisão necessária!</span>
-                  <button
-                    onClick={() => repair(repairCost)}
-                    className="font-display text-xs text-primary hover:underline"
-                  >
-                    Reparar ({repairCost} NP)
-                  </button>
-                </div>
-              </motion.div>
-            )}
           </motion.div>
 
           {/* Right: Stats Panel */}
@@ -250,6 +232,25 @@ const Index = () => {
                   </div>
                 ))}
               </div>
+
+              {/* Revision warning — inside stats panel for mobile visibility */}
+              {needsRevision && (
+                <motion.div
+                  initial={{ opacity: 0 }}
+                  animate={{ opacity: 1 }}
+                  className="rounded-xl border border-destructive/30 bg-destructive/5 p-3"
+                >
+                  <div className="flex items-center justify-between">
+                    <span className="font-body text-xs text-destructive">⚠ Revisão necessária!</span>
+                    <button
+                      onClick={() => repair(repairCost)}
+                      className="font-display text-xs text-primary hover:underline"
+                    >
+                      Reparar ({repairCost} NP)
+                    </button>
+                  </div>
+                </motion.div>
+              )}
 
               <div className="my-5 h-px w-full bg-gradient-to-r from-transparent via-border to-transparent" />
 
