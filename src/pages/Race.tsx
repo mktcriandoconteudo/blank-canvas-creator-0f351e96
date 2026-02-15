@@ -5,6 +5,16 @@ import SpeedLinesCanvas from "@/components/race/SpeedLinesCanvas";
 import RaceResultModal from "@/components/race/RaceResultModal";
 import RaceVideoPlayer from "@/components/race/RaceVideoPlayer";
 import { useGameState } from "@/hooks/useGameState";
+import {
+  playCountdownBeep,
+  startEngine,
+  updateEngineRPM,
+  stopEngine,
+  playNitro,
+  playOvertake,
+  playVictory,
+  playDefeat,
+} from "@/lib/raceSounds";
 
 // Cinematic videos — starting grid + race clips + victory/defeat finales
 import raceBattleVideo1 from "@/assets/race-battle-video.mp4";
@@ -55,10 +65,16 @@ const Race = () => {
   const finishRaceRef = useRef(finishRace);
   finishRaceRef.current = finishRace;
 
-  // Countdown
+  // Countdown with beeps
   useEffect(() => {
     if (raceState !== "countdown") return;
-    if (countdown <= 0) { setRaceState("racing"); return; }
+    if (countdown <= 0) {
+      playCountdownBeep(true); // GO! beep
+      setRaceState("racing");
+      startEngine();
+      return;
+    }
+    playCountdownBeep(false);
     const timer = setTimeout(() => setCountdown((c) => c - 1), 1000);
     return () => clearTimeout(timer);
   }, [countdown, raceState]);
@@ -95,8 +111,7 @@ const Race = () => {
     if (cur !== prevLeader.current && cur !== "tie") {
       setCameraShake(true);
       setTimeout(() => setCameraShake(false), 600);
-
-
+      playOvertake();
     }
     prevLeader.current = cur;
   }, [playerProgress, opponentProgress, raceState]);
@@ -107,8 +122,10 @@ const Race = () => {
     if (playerProgress >= FINISH_LINE || opponentProgress >= FINISH_LINE) {
       setRaceState("finished");
       setNitroActive(false);
+      stopEngine();
       const won = playerProgress >= opponentProgress;
       setVictory(won);
+      if (won) playVictory(); else playDefeat();
       const result = finishRaceRef.current(won);
       setXpResult(result);
       setTimeout(() => setShowResult(true), 3500);
@@ -120,6 +137,7 @@ const Race = () => {
     setNitroActive(true);
     setNitroCharges((c) => c - 1);
     setCameraShake(true);
+    playNitro();
     setTimeout(() => setCameraShake(false), 400);
     setTimeout(() => setNitroActive(false), 2500);
   }, [nitroCharges, raceState, nitroActive]);
@@ -128,6 +146,12 @@ const Race = () => {
   const earnedNP = Math.round(((victory ? 150 : 20) * playerStats.engineHealth) / 100);
   const speedKmh = Math.round(180 + (playerProgress / 100) * 180 + (nitroActive ? 80 : 0));
   const isRacing = raceState === "racing";
+
+  // Update engine RPM based on speed
+  useEffect(() => {
+    if (raceState !== "racing") return;
+    updateEngineRPM(speedKmh, nitroActive);
+  });
 
   return (
     <motion.div
