@@ -1,36 +1,33 @@
 import { useState, useEffect, useRef } from "react";
 import { motion } from "framer-motion";
-import { Flag, Fuel, Gauge, Wrench } from "lucide-react";
+import { Flag, Fuel, Gauge, Wrench, Star } from "lucide-react";
 import NeonTrack from "@/components/race/NeonTrack";
 import OvertakeParticles from "@/components/race/OvertakeParticles";
 import RaceResultModal from "@/components/race/RaceResultModal";
 import carPlayerImg from "@/assets/car-player.png";
 import carOpponentImg from "@/assets/car-opponent.png";
-
-interface CarStats {
-  speed: number;
-  acceleration: number;
-  name: string;
-  health: number;
-}
+import raceBg from "@/assets/race-bg.jpg";
+import { useGameState } from "@/hooks/useGameState";
 
 const FINISH_LINE = 100;
 const TICK_MS = 50;
 
 const Race = () => {
+  const { state, selectedCar, finishRace } = useGameState();
 
-  // Car attributes (would come from game state / Supabase)
-  const [player] = useState<CarStats>({
-    speed: 87,
-    acceleration: 72,
-    name: "Phantom X9",
-    health: 92,
-  });
-  const [opponent] = useState<CarStats>({
-    speed: 78,
-    acceleration: 80,
-    name: "Viper MK3",
-    health: 100,
+  const playerStats = selectedCar ?? { speed: 70, acceleration: 60, engineHealth: 100, name: "Unknown", level: 1 };
+
+  // Random opponent scaled to player level
+  const [opponent] = useState(() => {
+    const lvl = selectedCar?.level ?? 1;
+    const base = 50 + lvl * 5;
+    return {
+      speed: Math.min(100, base + Math.round(Math.random() * 20 - 10)),
+      acceleration: Math.min(100, base + Math.round(Math.random() * 20 - 10)),
+      name: ["Viper MK3", "Shadow GT", "Blaze R8", "Neon Fury"][Math.floor(Math.random() * 4)],
+      health: 100,
+      level: Math.max(1, lvl + Math.floor(Math.random() * 3 - 1)),
+    };
   });
 
   const [raceState, setRaceState] = useState<"countdown" | "racing" | "finished">("countdown");
@@ -40,15 +37,9 @@ const Race = () => {
   const [overtakeTriggered, setOvertakeTriggered] = useState(false);
   const [showResult, setShowResult] = useState(false);
   const [victory, setVictory] = useState(false);
-  const [fuelUsed, setFuelUsed] = useState(0);
+  const [xpResult, setXpResult] = useState({ leveledUp: false, newLevel: 0 });
 
   const prevLeader = useRef<"player" | "opponent" | "tie">("tie");
-
-  // ROI formula: adjusted earnings based on car health
-  const calculateNitroPoints = (won: boolean, health: number) => {
-    const base = won ? 150 : 20;
-    return Math.round((base * health) / 100);
-  };
 
   // Countdown
   useEffect(() => {
@@ -67,44 +58,37 @@ const Race = () => {
 
     const interval = setInterval(() => {
       setPlayerProgress((prev) => {
-        const randomFactor = 0.8 + Math.random() * 0.4;
-        const speedEffect = (player.speed / 100) * 0.6;
-        const accelEffect = (player.acceleration / 100) * 0.4;
-        const healthMod = player.health / 100;
-        const delta = (speedEffect + accelEffect) * randomFactor * healthMod * 0.35;
-        return Math.min(prev + delta, FINISH_LINE);
+        const r = 0.8 + Math.random() * 0.4;
+        const s = (playerStats.speed / 100) * 0.6;
+        const a = ((selectedCar?.acceleration ?? 60) / 100) * 0.4;
+        const h = playerStats.engineHealth / 100;
+        return Math.min(prev + (s + a) * r * h * 0.35, FINISH_LINE);
       });
 
       setOpponentProgress((prev) => {
-        const randomFactor = 0.8 + Math.random() * 0.4;
-        const speedEffect = (opponent.speed / 100) * 0.6;
-        const accelEffect = (opponent.acceleration / 100) * 0.4;
-        const healthMod = opponent.health / 100;
-        const delta = (speedEffect + accelEffect) * randomFactor * healthMod * 0.35;
-        return Math.min(prev + delta, FINISH_LINE);
+        const r = 0.8 + Math.random() * 0.4;
+        const s = (opponent.speed / 100) * 0.6;
+        const a = (opponent.acceleration / 100) * 0.4;
+        const h = opponent.health / 100;
+        return Math.min(prev + (s + a) * r * h * 0.35, FINISH_LINE);
       });
-
-      setFuelUsed((f) => f + 1);
     }, TICK_MS);
 
     return () => clearInterval(interval);
-  }, [raceState, player, opponent]);
+  }, [raceState, playerStats, selectedCar, opponent]);
 
   // Detect overtake
   useEffect(() => {
     if (raceState !== "racing") return;
-    const currentLeader =
-      playerProgress > opponentProgress + 1
-        ? "player"
-        : opponentProgress > playerProgress + 1
-        ? "opponent"
+    const cur =
+      playerProgress > opponentProgress + 1 ? "player"
+        : opponentProgress > playerProgress + 1 ? "opponent"
         : "tie";
-
-    if (currentLeader !== "tie" && currentLeader !== prevLeader.current && prevLeader.current !== "tie") {
+    if (cur !== "tie" && cur !== prevLeader.current && prevLeader.current !== "tie") {
       setOvertakeTriggered(true);
       setTimeout(() => setOvertakeTriggered(false), 600);
     }
-    prevLeader.current = currentLeader;
+    prevLeader.current = cur;
   }, [playerProgress, opponentProgress, raceState]);
 
   // Detect finish
@@ -114,24 +98,26 @@ const Race = () => {
       setRaceState("finished");
       const won = playerProgress >= opponentProgress;
       setVictory(won);
+      const result = finishRace(won);
+      setXpResult(result);
       setTimeout(() => setShowResult(true), 800);
     }
-  }, [playerProgress, opponentProgress, raceState]);
+  }, [playerProgress, opponentProgress, raceState, finishRace]);
 
-  const resetRace = () => {
-    setRaceState("countdown");
-    setCountdown(3);
-    setPlayerProgress(0);
-    setOpponentProgress(0);
-    setShowResult(false);
-    setFuelUsed(0);
-    prevLeader.current = "tie";
+  const handlePlayAgain = () => {
+    window.location.reload();
   };
 
-  const trackWidth = 85; // percentage of container for car movement
+  const trackWidth = 85;
+
+  const earnedNP = Math.round(((victory ? 150 : 20) * playerStats.engineHealth) / 100);
 
   return (
     <div className="relative flex min-h-screen flex-col overflow-hidden bg-background">
+      {/* Cinematic background */}
+      <div className="absolute inset-0 bg-cover bg-center bg-no-repeat opacity-30" style={{ backgroundImage: `url(${raceBg})` }} />
+      <div className="absolute inset-0 bg-gradient-to-t from-background via-background/60 to-background/40" />
+
       {/* Header */}
       <motion.header
         initial={{ opacity: 0, y: -20 }}
@@ -143,15 +129,21 @@ const Race = () => {
         </h1>
         <div className="flex items-center gap-4">
           <div className="flex items-center gap-2 rounded-lg bg-muted/30 px-3 py-1.5 backdrop-blur-sm">
+            <Star className="h-4 w-4 text-neon-orange" />
+            <span className="font-display text-xs text-foreground">
+              Lv.{selectedCar?.level ?? 1}
+            </span>
+          </div>
+          <div className="flex items-center gap-2 rounded-lg bg-muted/30 px-3 py-1.5 backdrop-blur-sm">
             <Fuel className="h-4 w-4 text-neon-orange" />
             <span className="font-display text-xs text-foreground">
-              {Math.max(0, 5 - Math.floor(fuelUsed / 100))}/5 Tanques
+              {state.fuelTanks}/5
             </span>
           </div>
           <div className="flex items-center gap-2 rounded-lg bg-muted/30 px-3 py-1.5 backdrop-blur-sm">
             <Wrench className="h-4 w-4 text-primary" />
             <span className="font-display text-xs text-foreground">
-              Corrida 3/5
+              Rev. {Math.max(0, 5 - (selectedCar?.racesSinceRevision ?? 0))}
             </span>
           </div>
         </div>
@@ -160,91 +152,53 @@ const Race = () => {
       {/* Progress bars */}
       <div className="relative z-20 px-6 pb-4">
         <div className="glass rounded-xl p-4">
-          <div className="mb-3 flex items-center justify-between">
+          <div className="mb-2 flex items-center justify-between">
             <span className="font-display text-xs uppercase tracking-wider text-primary">
-              {player.name}
+              {playerStats.name} <span className="text-muted-foreground">(Lv.{selectedCar?.level ?? 1})</span>
             </span>
-            <span className="font-display text-xs text-muted-foreground">
-              {Math.round(playerProgress)}%
-            </span>
+            <span className="font-display text-xs text-muted-foreground">{Math.round(playerProgress)}%</span>
           </div>
-          <div className="relative mb-4 h-3 overflow-hidden rounded-full bg-muted/50">
+          <div className="relative mb-3 h-3 overflow-hidden rounded-full bg-muted/50">
             <motion.div
               className="absolute inset-y-0 left-0 rounded-full bg-gradient-to-r from-cyan-500 to-blue-500"
               style={{ width: `${playerProgress}%` }}
-              transition={{ duration: 0.1 }}
             />
           </div>
-
-          <div className="mb-3 flex items-center justify-between">
+          <div className="mb-2 flex items-center justify-between">
             <span className="font-display text-xs uppercase tracking-wider text-destructive">
-              {opponent.name}
+              {opponent.name} <span className="text-muted-foreground">(Lv.{opponent.level})</span>
             </span>
-            <span className="font-display text-xs text-muted-foreground">
-              {Math.round(opponentProgress)}%
-            </span>
+            <span className="font-display text-xs text-muted-foreground">{Math.round(opponentProgress)}%</span>
           </div>
           <div className="relative h-3 overflow-hidden rounded-full bg-muted/50">
             <motion.div
               className="absolute inset-y-0 left-0 rounded-full bg-gradient-to-r from-red-500 to-orange-500"
               style={{ width: `${opponentProgress}%` }}
-              transition={{ duration: 0.1 }}
             />
           </div>
         </div>
       </div>
 
-      {/* Track area */}
+      {/* Track */}
       <div className="relative z-10 flex-1">
         <NeonTrack />
 
-        {/* Finish line */}
-        <div
-          className="absolute top-[25%] h-[60%] w-1 bg-foreground/50"
-          style={{ left: "92%", boxShadow: "0 0 10px hsl(0 0% 100% / 0.3)" }}
-        >
+        <div className="absolute top-[25%] h-[60%] w-1 bg-foreground/50" style={{ left: "92%", boxShadow: "0 0 10px hsl(0 0% 100% / 0.3)" }}>
           <Flag className="absolute -left-3 -top-6 h-6 w-6 text-foreground" />
         </div>
 
         {/* Player car */}
         <motion.div
           className="absolute z-10"
-          style={{
-            top: "30%",
-            left: `${5 + (playerProgress / FINISH_LINE) * trackWidth}%`,
-          }}
-          animate={{
-            rotate: raceState === "racing" ? [0, -0.5, 0.5, 0] : 0,
-          }}
-          transition={{
-            duration: 0.3,
-            repeat: raceState === "racing" ? Infinity : 0,
-          }}
+          style={{ top: "30%", left: `${5 + (playerProgress / FINISH_LINE) * trackWidth}%` }}
+          animate={{ rotate: raceState === "racing" ? [0, -0.5, 0.5, 0] : 0 }}
+          transition={{ duration: 0.3, repeat: raceState === "racing" ? Infinity : 0 }}
         >
-          <img
-            src={carPlayerImg}
-            alt="Player car"
-            className="h-16 w-16 -rotate-90 object-contain"
-            style={{
-              mixBlendMode: "lighten",
-              filter: "drop-shadow(0 0 12px hsl(185 80% 55% / 0.5))",
-            }}
-          />
-          {/* Exhaust trail */}
+          <img src={carPlayerImg} alt="Player" className="h-16 w-16 -rotate-90 object-contain" style={{ mixBlendMode: "lighten", filter: "drop-shadow(0 0 12px hsl(185 80% 55% / 0.5))" }} />
           {raceState === "racing" && (
             <div className="absolute -left-8 top-1/2 -translate-y-1/2">
               {[0, 1, 2].map((i) => (
-                <motion.div
-                  key={i}
-                  className="absolute h-1 rounded-full bg-primary/40"
-                  animate={{ width: [4, 20, 0], opacity: [0.8, 0.3, 0] }}
-                  transition={{
-                    duration: 0.4,
-                    delay: i * 0.12,
-                    repeat: Infinity,
-                  }}
-                  style={{ top: `${(i - 1) * 5}px` }}
-                />
+                <motion.div key={i} className="absolute h-1 rounded-full bg-primary/40" animate={{ width: [4, 20, 0], opacity: [0.8, 0.3, 0] }} transition={{ duration: 0.4, delay: i * 0.12, repeat: Infinity }} style={{ top: `${(i - 1) * 5}px` }} />
               ))}
             </div>
           )}
@@ -253,61 +207,28 @@ const Race = () => {
         {/* Opponent car */}
         <motion.div
           className="absolute z-10"
-          style={{
-            top: "58%",
-            left: `${5 + (opponentProgress / FINISH_LINE) * trackWidth}%`,
-          }}
-          animate={{
-            rotate: raceState === "racing" ? [0, 0.5, -0.5, 0] : 0,
-          }}
-          transition={{
-            duration: 0.3,
-            repeat: raceState === "racing" ? Infinity : 0,
-          }}
+          style={{ top: "58%", left: `${5 + (opponentProgress / FINISH_LINE) * trackWidth}%` }}
+          animate={{ rotate: raceState === "racing" ? [0, 0.5, -0.5, 0] : 0 }}
+          transition={{ duration: 0.3, repeat: raceState === "racing" ? Infinity : 0 }}
         >
-          <img
-            src={carOpponentImg}
-            alt="Opponent car"
-            className="h-16 w-16 -rotate-90 object-contain"
-            style={{
-              mixBlendMode: "lighten",
-              filter: "drop-shadow(0 0 12px hsl(0 70% 55% / 0.5))",
-            }}
-          />
+          <img src={carOpponentImg} alt="Opponent" className="h-16 w-16 -rotate-90 object-contain" style={{ mixBlendMode: "lighten", filter: "drop-shadow(0 0 12px hsl(0 70% 55% / 0.5))" }} />
           {raceState === "racing" && (
             <div className="absolute -left-8 top-1/2 -translate-y-1/2">
               {[0, 1, 2].map((i) => (
-                <motion.div
-                  key={i}
-                  className="absolute h-1 rounded-full bg-destructive/40"
-                  animate={{ width: [4, 20, 0], opacity: [0.8, 0.3, 0] }}
-                  transition={{
-                    duration: 0.4,
-                    delay: i * 0.12,
-                    repeat: Infinity,
-                  }}
-                  style={{ top: `${(i - 1) * 5}px` }}
-                />
+                <motion.div key={i} className="absolute h-1 rounded-full bg-destructive/40" animate={{ width: [4, 20, 0], opacity: [0.8, 0.3, 0] }} transition={{ duration: 0.4, delay: i * 0.12, repeat: Infinity }} style={{ top: `${(i - 1) * 5}px` }} />
               ))}
             </div>
           )}
         </motion.div>
 
-        {/* Overtake particles */}
-        <OvertakeParticles
-          trigger={overtakeTriggered}
-          x={Math.min(playerProgress, opponentProgress) * 8}
-          y={200}
-        />
+        <OvertakeParticles trigger={overtakeTriggered} x={Math.min(playerProgress, opponentProgress) * 8} y={200} />
 
-        {/* Countdown overlay */}
         {raceState === "countdown" && (
           <div className="absolute inset-0 z-30 flex items-center justify-center">
             <motion.div
               key={countdown}
               initial={{ scale: 3, opacity: 0 }}
               animate={{ scale: 1, opacity: 1 }}
-              exit={{ scale: 0.5, opacity: 0 }}
               transition={{ duration: 0.5, ease: "easeOut" }}
               className="font-display text-8xl font-black text-primary text-glow-cyan"
             >
@@ -317,7 +238,7 @@ const Race = () => {
         )}
       </div>
 
-      {/* Bottom bar — economy info */}
+      {/* Bottom bar */}
       <motion.div
         initial={{ opacity: 0, y: 20 }}
         animate={{ opacity: 1, y: 0 }}
@@ -329,33 +250,30 @@ const Race = () => {
             <div className="flex items-center gap-2">
               <Gauge className="h-4 w-4 text-primary" />
               <span className="font-body text-xs text-muted-foreground">
-                Saúde Motor: <span className="text-foreground">{player.health}%</span>
+                Motor: <span className={playerStats.engineHealth < 30 ? "text-destructive" : "text-foreground"}>{playerStats.engineHealth}%</span>
               </span>
             </div>
-            <div className="text-xs text-muted-foreground font-body">
-              Revisão em: <span className="text-neon-orange">2 corridas</span>
-            </div>
+            <span className="text-xs text-muted-foreground font-body">
+              XP: +{victory ? 80 : 25} ao final
+            </span>
           </div>
           <div className="font-display text-xs text-muted-foreground">
-            ROI: {Math.round((calculateNitroPoints(true, player.health) / 150) * 100)}%
+            ROI: {Math.round(playerStats.engineHealth)}%
           </div>
         </div>
       </motion.div>
 
-      {/* Result modal */}
       <RaceResultModal
         isOpen={showResult}
         victory={victory}
-        nitroPoints={calculateNitroPoints(victory, player.health)}
-        onClose={resetRace}
+        nitroPoints={earnedNP}
+        xpGained={victory ? 80 : 25}
+        leveledUp={xpResult.leveledUp}
+        newLevel={xpResult.newLevel}
+        onClose={handlePlayAgain}
       />
     </div>
   );
-};
-
-// Helper function exported for economy calculations
-export const calculateROI = (earnings: number, carHealth: number) => {
-  return (earnings * carHealth) / 100;
 };
 
 export default Race;

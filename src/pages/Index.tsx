@@ -1,53 +1,61 @@
 import { motion } from "framer-motion";
-import { Zap, Gauge, Wind, Shield, Wrench, Flag } from "lucide-react";
+import { Zap, Gauge, Wind, Shield, Wrench, Flag, Star, Plus, Coins } from "lucide-react";
 import { useNavigate } from "react-router-dom";
 import garageScene from "@/assets/garage-scene.jpg";
 import StatBar from "@/components/garage/StatBar";
 import GlowButton from "@/components/garage/GlowButton";
+import { useGameState } from "@/hooks/useGameState";
 
-const carStats = [
-  { label: "Velocidade", value: 87, icon: <Gauge className="h-4 w-4" />, gradient: "bg-gradient-to-r from-cyan-500 to-blue-500" },
-  { label: "Aceleração", value: 72, icon: <Zap className="h-4 w-4" />, gradient: "bg-gradient-to-r from-violet-500 to-purple-500" },
-  { label: "Drift", value: 65, icon: <Wind className="h-4 w-4" />, gradient: "bg-gradient-to-r from-emerald-500 to-teal-500" },
-  { label: "Durabilidade", value: 91, icon: <Shield className="h-4 w-4" />, gradient: "bg-gradient-to-r from-amber-500 to-orange-500" },
-];
 
 const Index = () => {
   const navigate = useNavigate();
+  const { state, selectedCar, addPoint, repair } = useGameState();
+
+  if (!selectedCar) return null;
+
+  const xpPercent = (selectedCar.xp / selectedCar.xpToNext) * 100;
+  const needsRevision = selectedCar.racesSinceRevision >= 5;
+  const repairCost = 50 + selectedCar.level * 10;
+
+  const stats = [
+    { label: "Velocidade", key: "speed" as const, value: selectedCar.speed, icon: <Gauge className="h-4 w-4" />, gradient: "bg-gradient-to-r from-cyan-500 to-blue-500" },
+    { label: "Aceleração", key: "acceleration" as const, value: selectedCar.acceleration, icon: <Zap className="h-4 w-4" />, gradient: "bg-gradient-to-r from-violet-500 to-purple-500" },
+    { label: "Handling", key: "handling" as const, value: selectedCar.handling, icon: <Wind className="h-4 w-4" />, gradient: "bg-gradient-to-r from-emerald-500 to-teal-500" },
+    { label: "Durabilidade", key: "durability" as const, value: selectedCar.durability, icon: <Shield className="h-4 w-4" />, gradient: "bg-gradient-to-r from-amber-500 to-orange-500" },
+  ];
 
   return (
     <div className="relative min-h-screen overflow-hidden bg-background">
-      {/* Full scene background — car already in garage */}
-      <div
-        className="absolute inset-0 bg-cover bg-center bg-no-repeat"
-        style={{ backgroundImage: `url(${garageScene})` }}
-      />
-      {/* Darken right side for readability of stats panel */}
+      <div className="absolute inset-0 bg-cover bg-center bg-no-repeat" style={{ backgroundImage: `url(${garageScene})` }} />
       <div className="absolute inset-0 bg-gradient-to-l from-background/70 via-transparent to-transparent" />
-      {/* Subtle top/bottom vignette */}
       <div className="absolute inset-0 bg-gradient-to-b from-background/40 via-transparent to-background/50" />
 
-      {/* Content */}
       <div className="relative z-10 flex min-h-screen flex-col">
         {/* Header */}
         <motion.header
           initial={{ opacity: 0, y: -20 }}
           animate={{ opacity: 1, y: 0 }}
           transition={{ duration: 0.5 }}
-          className="flex items-center justify-between px-8 py-6"
+          className="flex items-center justify-between px-8 py-4"
         >
           <h1 className="font-display text-2xl font-black uppercase tracking-widest text-primary text-glow-cyan">
             TurboNitro
           </h1>
-          <div className="flex items-center gap-2 font-display text-xs uppercase tracking-wider text-muted-foreground">
-            <div className="h-2 w-2 animate-pulse rounded-full bg-emerald-400" />
-            Garagem
+          <div className="flex items-center gap-4">
+            <div className="flex items-center gap-2 rounded-lg bg-muted/30 px-3 py-1.5 backdrop-blur-sm">
+              <Coins className="h-4 w-4 text-neon-orange" />
+              <span className="font-display text-xs text-foreground">{state.nitroPoints} NP</span>
+            </div>
+            <div className="flex items-center gap-2 font-display text-xs uppercase tracking-wider text-muted-foreground">
+              <div className="h-2 w-2 animate-pulse rounded-full bg-emerald-400" />
+              Garagem
+            </div>
           </div>
         </motion.header>
 
         {/* Main */}
-        <main className="flex flex-1 items-end justify-between gap-10 px-8 pb-10 lg:items-center lg:px-16">
-          {/* Left: Car info overlaid on scene */}
+        <main className="flex flex-1 items-end justify-between gap-8 px-8 pb-8 lg:items-center lg:px-16">
+          {/* Left: Car info */}
           <motion.div
             initial={{ opacity: 0, y: 20 }}
             animate={{ opacity: 1, y: 0 }}
@@ -58,11 +66,67 @@ const Index = () => {
               Classe Lendária
             </p>
             <h2 className="font-display text-5xl font-black uppercase tracking-tight text-foreground lg:text-6xl">
-              Phantom <span className="text-primary text-glow-cyan">X9</span>
+              {selectedCar.name.split(" ")[0]}{" "}
+              <span className="text-primary text-glow-cyan">{selectedCar.name.split(" ").slice(1).join(" ")}</span>
             </h2>
             <p className="mt-2 font-body text-sm text-muted-foreground">
-              Token #4829 · Proprietário: 0x7f3a...e1b2
+              Token {selectedCar.tokenId} · {selectedCar.ownerWallet}
             </p>
+
+            {/* XP / Level badge */}
+            <motion.div
+              initial={{ opacity: 0, y: 10 }}
+              animate={{ opacity: 1, y: 0 }}
+              transition={{ delay: 0.5 }}
+              className="mt-6 glass rounded-xl p-4 max-w-xs"
+            >
+              <div className="flex items-center justify-between mb-2">
+                <div className="flex items-center gap-2">
+                  <Star className="h-4 w-4 text-neon-orange" />
+                  <span className="font-display text-sm font-bold text-foreground">
+                    Nível {selectedCar.level}
+                  </span>
+                </div>
+                <span className="font-display text-xs text-muted-foreground">
+                  {selectedCar.xp}/{selectedCar.xpToNext} XP
+                </span>
+              </div>
+              <div className="relative h-2 w-full overflow-hidden rounded-full bg-muted/50">
+                <motion.div
+                  initial={{ width: 0 }}
+                  animate={{ width: `${xpPercent}%` }}
+                  transition={{ duration: 1, delay: 0.6 }}
+                  className="absolute inset-y-0 left-0 rounded-full bg-gradient-to-r from-neon-orange to-yellow-400"
+                />
+              </div>
+              <div className="mt-2 flex items-center justify-between text-xs font-body text-muted-foreground">
+                <span>{selectedCar.wins}W · {selectedCar.racesCount}R</span>
+                {selectedCar.attributePoints > 0 && (
+                  <span className="text-neon-green font-display font-bold animate-pulse">
+                    +{selectedCar.attributePoints} pontos!
+                  </span>
+                )}
+              </div>
+            </motion.div>
+
+            {/* Revision warning */}
+            {needsRevision && (
+              <motion.div
+                initial={{ opacity: 0 }}
+                animate={{ opacity: 1 }}
+                className="mt-3 glass rounded-xl p-3 max-w-xs border-destructive/30"
+              >
+                <div className="flex items-center justify-between">
+                  <span className="font-body text-xs text-destructive">⚠ Revisão necessária!</span>
+                  <button
+                    onClick={() => repair(repairCost)}
+                    className="font-display text-xs text-primary hover:underline"
+                  >
+                    Reparar ({repairCost} NP)
+                  </button>
+                </div>
+              </motion.div>
+            )}
           </motion.div>
 
           {/* Right: Stats Panel */}
@@ -73,33 +137,67 @@ const Index = () => {
             className="w-full max-w-xs"
           >
             <div className="glass-strong rounded-2xl p-6 shadow-2xl">
-              <h3 className="mb-4 font-display text-[10px] font-bold uppercase tracking-[0.3em] text-muted-foreground">
-                Atributos do Veículo
-              </h3>
+              <div className="flex items-center justify-between mb-4">
+                <h3 className="font-display text-[10px] font-bold uppercase tracking-[0.3em] text-muted-foreground">
+                  Atributos
+                </h3>
+                <div className="flex items-center gap-1 text-xs">
+                  <Shield className="h-3 w-3 text-muted-foreground" />
+                  <span className="font-body text-muted-foreground">
+                    Motor: <span className={selectedCar.engineHealth < 30 ? "text-destructive" : "text-foreground"}>{selectedCar.engineHealth}%</span>
+                  </span>
+                </div>
+              </div>
 
               <div className="space-y-3">
-                {carStats.map((stat, i) => (
-                  <StatBar
-                    key={stat.label}
-                    label={stat.label}
-                    value={stat.value}
-                    gradient={stat.gradient}
-                    delay={0.5 + i * 0.15}
-                    icon={stat.icon}
-                  />
+                {stats.map((stat, i) => (
+                  <div key={stat.label} className="flex items-center gap-2">
+                    <div className="flex-1">
+                      <StatBar
+                        label={stat.label}
+                        value={stat.value}
+                        gradient={stat.gradient}
+                        delay={0.5 + i * 0.15}
+                        icon={stat.icon}
+                      />
+                    </div>
+                    {selectedCar.attributePoints > 0 && (
+                      <motion.button
+                        initial={{ scale: 0 }}
+                        animate={{ scale: 1 }}
+                        transition={{ delay: 0.8 + i * 0.1 }}
+                        onClick={() => addPoint(stat.key)}
+                        className="mt-4 flex h-6 w-6 shrink-0 items-center justify-center rounded-full border border-neon-green/50 bg-neon-green/10 text-neon-green transition-all hover:bg-neon-green/30 hover:scale-110"
+                      >
+                        <Plus className="h-3 w-3" />
+                      </motion.button>
+                    )}
+                  </div>
                 ))}
               </div>
 
               <div className="my-5 h-px w-full bg-gradient-to-r from-transparent via-border to-transparent" />
 
-              <div className="flex flex-col gap-4 sm:flex-row">
+              <div className="flex flex-col gap-3 sm:flex-row">
                 <GlowButton variant="purple" icon={<Wrench className="h-4 w-4" />} className="flex-1">
-                  Equipar Peças
+                  Peças
                 </GlowButton>
-                <GlowButton variant="cyan" icon={<Flag className="h-4 w-4" />} className="flex-1" onClick={() => navigate("/race")}>
-                  Iniciar Corrida
+                <GlowButton
+                  variant="cyan"
+                  icon={<Flag className="h-4 w-4" />}
+                  className="flex-1"
+                  onClick={() => {
+                    if (state.fuelTanks <= 0) return;
+                    navigate("/race");
+                  }}
+                >
+                  {state.fuelTanks > 0 ? "Corrida" : "Sem Fuel"}
                 </GlowButton>
               </div>
+
+              <p className="mt-3 text-center font-body text-[10px] text-muted-foreground">
+                ⛽ {state.fuelTanks}/5 tanques · 🔧 Rev. em {Math.max(0, 5 - selectedCar.racesSinceRevision)} corridas
+              </p>
             </div>
           </motion.div>
         </main>

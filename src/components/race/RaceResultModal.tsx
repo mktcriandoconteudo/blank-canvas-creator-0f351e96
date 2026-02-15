@@ -1,5 +1,5 @@
 import { motion, AnimatePresence } from "framer-motion";
-import { Trophy, Skull, Coins } from "lucide-react";
+import { Trophy, Skull, Coins, Star, ArrowUp } from "lucide-react";
 import GlowButton from "@/components/garage/GlowButton";
 import { useNavigate } from "react-router-dom";
 
@@ -7,6 +7,9 @@ interface RaceResultModalProps {
   isOpen: boolean;
   victory: boolean;
   nitroPoints: number;
+  xpGained: number;
+  leveledUp: boolean;
+  newLevel: number;
   onClose: () => void;
 }
 
@@ -24,34 +27,18 @@ const Confetti = ({ count = 40 }: { count?: number }) => {
       {Array.from({ length: count }).map((_, i) => (
         <motion.div
           key={i}
-          initial={{
-            x: Math.random() * 100 + "%",
-            y: -20,
-            rotate: 0,
-            opacity: 1,
-          }}
-          animate={{
-            y: "120%",
-            rotate: Math.random() * 720 - 360,
-            opacity: [1, 1, 0],
-          }}
-          transition={{
-            duration: 2 + Math.random() * 2,
-            delay: Math.random() * 1,
-            ease: "easeIn",
-          }}
+          initial={{ x: Math.random() * 100 + "%", y: -20, rotate: 0, opacity: 1 }}
+          animate={{ y: "120%", rotate: Math.random() * 720 - 360, opacity: [1, 1, 0] }}
+          transition={{ duration: 2 + Math.random() * 2, delay: Math.random() * 1, ease: "easeIn" }}
           className="absolute h-3 w-2 rounded-sm"
-          style={{
-            backgroundColor: colors[i % colors.length],
-            left: `${Math.random() * 100}%`,
-          }}
+          style={{ backgroundColor: colors[i % colors.length], left: `${Math.random() * 100}%` }}
         />
       ))}
     </div>
   );
 };
 
-const RaceResultModal = ({ isOpen, victory, nitroPoints, onClose }: RaceResultModalProps) => {
+const RaceResultModal = ({ isOpen, victory, nitroPoints, xpGained, leveledUp, newLevel, onClose }: RaceResultModalProps) => {
   const navigate = useNavigate();
 
   return (
@@ -81,11 +68,7 @@ const RaceResultModal = ({ isOpen, victory, nitroPoints, onClose }: RaceResultMo
                 victory ? "bg-primary/20 glow-cyan" : "bg-destructive/20"
               }`}
             >
-              {victory ? (
-                <Trophy className="h-12 w-12 text-primary" />
-              ) : (
-                <Skull className="h-12 w-12 text-destructive" />
-              )}
+              {victory ? <Trophy className="h-12 w-12 text-primary" /> : <Skull className="h-12 w-12 text-destructive" />}
             </motion.div>
 
             <motion.h2
@@ -105,50 +88,61 @@ const RaceResultModal = ({ isOpen, victory, nitroPoints, onClose }: RaceResultMo
               transition={{ delay: 0.5 }}
               className="mt-2 font-body text-muted-foreground"
             >
-              {victory
-                ? "Você dominou a pista!"
-                : "Mais sorte na próxima corrida."}
+              {victory ? "Você dominou a pista!" : "Mais sorte na próxima corrida."}
             </motion.p>
 
-            {/* NitroPoints */}
+            {/* Rewards row */}
             <motion.div
               initial={{ opacity: 0, scale: 0.8 }}
               animate={{ opacity: 1, scale: 1 }}
               transition={{ delay: 0.6 }}
-              className="mx-auto mt-6 flex items-center justify-center gap-3 rounded-xl bg-muted/50 px-6 py-3"
+              className="mx-auto mt-6 flex items-center justify-center gap-6"
             >
-              <Coins className="h-5 w-5 text-neon-orange" />
-              <span className="font-display text-2xl font-bold text-foreground">
-                {victory ? "+" : ""}
-                {nitroPoints}
-              </span>
-              <span className="font-display text-xs uppercase tracking-wider text-muted-foreground">
-                NitroPoints
-              </span>
+              <div className="flex flex-col items-center gap-1 rounded-xl bg-muted/50 px-5 py-3">
+                <Coins className="h-5 w-5 text-neon-orange" />
+                <span className="font-display text-xl font-bold text-foreground">
+                  {victory ? "+" : ""}{nitroPoints}
+                </span>
+                <span className="font-display text-[10px] uppercase tracking-wider text-muted-foreground">NP</span>
+              </div>
+              <div className="flex flex-col items-center gap-1 rounded-xl bg-muted/50 px-5 py-3">
+                <Star className="h-5 w-5 text-neon-green" />
+                <span className="font-display text-xl font-bold text-foreground">+{xpGained}</span>
+                <span className="font-display text-[10px] uppercase tracking-wider text-muted-foreground">XP</span>
+              </div>
             </motion.div>
 
-            {/* Car health warning */}
+            {/* Level up banner */}
+            {leveledUp && (
+              <motion.div
+                initial={{ opacity: 0, y: 10, scale: 0.8 }}
+                animate={{ opacity: 1, y: 0, scale: 1 }}
+                transition={{ delay: 0.8, type: "spring" }}
+                className="mx-auto mt-4 flex items-center justify-center gap-2 rounded-full bg-neon-green/15 border border-neon-green/30 px-6 py-2"
+              >
+                <ArrowUp className="h-4 w-4 text-neon-green" />
+                <span className="font-display text-sm font-bold text-neon-green">
+                  NÍVEL {newLevel}! +3 pontos de atributo
+                </span>
+              </motion.div>
+            )}
+
             <motion.p
               initial={{ opacity: 0 }}
               animate={{ opacity: 1 }}
-              transition={{ delay: 0.7 }}
+              transition={{ delay: 0.9 }}
               className="mt-4 font-body text-xs text-muted-foreground"
             >
-              Saúde do motor: -5% · Durabilidade: -3%
+              Motor: -{victory ? 3 : 5}% · Durabilidade: -{victory ? 2 : 4}%
             </motion.p>
 
-            {/* Actions */}
             <motion.div
               initial={{ opacity: 0, y: 10 }}
               animate={{ opacity: 1, y: 0 }}
-              transition={{ delay: 0.8 }}
+              transition={{ delay: 1 }}
               className="mt-8 flex gap-3"
             >
-              <GlowButton
-                variant="purple"
-                className="flex-1"
-                onClick={() => navigate("/")}
-              >
+              <GlowButton variant="purple" className="flex-1" onClick={() => navigate("/")}>
                 Garagem
               </GlowButton>
               <GlowButton variant="cyan" className="flex-1" onClick={onClose}>
