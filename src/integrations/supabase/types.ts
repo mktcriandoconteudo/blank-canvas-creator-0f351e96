@@ -61,51 +61,69 @@ export type Database = {
       cars: {
         Row: {
           acceleration_base: number
+          attribute_points: number
           created_at: string
           durability: number
           engine_health: number
           handling_base: number
           id: string
+          level: number
           model: string
           name: string
           owner_wallet: string
+          races_count: number
+          races_since_revision: number
           speed_base: number
           token_id: string
           total_km: number
           updated_at: string
           wins: number
+          xp: number
+          xp_to_next: number
         }
         Insert: {
           acceleration_base?: number
+          attribute_points?: number
           created_at?: string
           durability?: number
           engine_health?: number
           handling_base?: number
           id?: string
+          level?: number
           model?: string
           name?: string
           owner_wallet: string
+          races_count?: number
+          races_since_revision?: number
           speed_base?: number
           token_id: string
           total_km?: number
           updated_at?: string
           wins?: number
+          xp?: number
+          xp_to_next?: number
         }
         Update: {
           acceleration_base?: number
+          attribute_points?: number
           created_at?: string
           durability?: number
           engine_health?: number
           handling_base?: number
           id?: string
+          level?: number
           model?: string
           name?: string
           owner_wallet?: string
+          races_count?: number
+          races_since_revision?: number
           speed_base?: number
           token_id?: string
           total_km?: number
           updated_at?: string
           wins?: number
+          xp?: number
+          xp_to_next?: number
         }
         Relationships: [
           {
@@ -238,7 +256,10 @@ export type Database = {
         Row: {
           avatar_url: string | null
           created_at: string
+          fuel_tanks: number
           id: string
+          last_fuel_refill: string
+          nitro_points: number
           total_losses: number
           total_races: number
           total_wins: number
@@ -249,7 +270,10 @@ export type Database = {
         Insert: {
           avatar_url?: string | null
           created_at?: string
+          fuel_tanks?: number
           id?: string
+          last_fuel_refill?: string
+          nitro_points?: number
           total_losses?: number
           total_races?: number
           total_wins?: number
@@ -260,7 +284,10 @@ export type Database = {
         Update: {
           avatar_url?: string | null
           created_at?: string
+          fuel_tanks?: number
           id?: string
+          last_fuel_refill?: string
+          nitro_points?: number
           total_losses?: number
           total_races?: number
           total_wins?: number

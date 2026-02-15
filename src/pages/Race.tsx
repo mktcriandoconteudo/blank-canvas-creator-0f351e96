@@ -25,7 +25,7 @@ const TICK_MS = 50;
 
 const Race = () => {
   const navigate = useNavigate();
-  const { state, selectedCar, finishRace } = useGameState();
+  const { state, selectedCar, finishRace, loading } = useGameState();
   const playerStats = selectedCar ?? { speed: 70, acceleration: 60, engineHealth: 100, name: "Unknown", level: 1 };
 
   const [opponent] = useState(() => {
