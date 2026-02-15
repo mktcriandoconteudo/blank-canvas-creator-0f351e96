@@ -63,8 +63,15 @@ const Race = () => {
   const [nitroActive, setNitroActive] = useState(false);
   const [nitroCharges, setNitroCharges] = useState(3);
   const [bgOffset, setBgOffset] = useState(0);
-  // Capture car key at mount so it doesn't change during the race
+  // Capture car key — update when selectedCar loads
   const carKeyRef = useRef(selectedCar?.name.toLowerCase().split(" ")[0] ?? "");
+  useEffect(() => {
+    if (selectedCar?.name) {
+      const key = selectedCar.name.toLowerCase().split(" ")[0];
+      carKeyRef.current = key;
+      console.log("[RACE] carKey locked:", key);
+    }
+  }, [selectedCar?.name]);
   const [soundOn, setSoundOn] = useState(false);
   const soundOnRef = useRef(false);
 
