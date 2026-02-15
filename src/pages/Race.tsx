@@ -1,13 +1,14 @@
-import { useState, useEffect, useRef } from "react";
+import { useState, useEffect, useRef, useCallback } from "react";
 import { motion, AnimatePresence } from "framer-motion";
 import { Fuel, Gauge, Wrench, Star, Zap } from "lucide-react";
 import SpeedLinesCanvas from "@/components/race/SpeedLinesCanvas";
 import RaceResultModal from "@/components/race/RaceResultModal";
 import { useGameState } from "@/hooks/useGameState";
-import raceHighwayBg from "@/assets/race-highway-bg.jpg";
-import citySkyline from "@/assets/city-skyline.jpg";
-import carPlayerSide from "@/assets/car-player-side.png";
-import carOpponentSide from "@/assets/car-opponent-side.png";
+
+// Cinematic scene images — cars are PART of the scene
+import raceScenePlayer from "@/assets/race-scene-main.jpg";
+import raceSceneOpponent from "@/assets/race-scene-opponent.jpg";
+import raceSpeedBg from "@/assets/race-speed-bg.jpg";
 
 const FINISH_LINE = 100;
 const TICK_MS = 50;
@@ -39,6 +40,9 @@ const Race = () => {
   const [nitroActive, setNitroActive] = useState(false);
   const [nitroCharges, setNitroCharges] = useState(3);
   const [bgOffset, setBgOffset] = useState(0);
+
+  // Who's visually "dominant" — determines which cinematic scene shows
+  const [showingOpponent, setShowingOpponent] = useState(false);
 
   const prevLeader = useRef<"player" | "opponent" | "tie">("tie");
   const finishRaceRef = useRef(finishRace);
@@ -76,14 +80,22 @@ const Race = () => {
     return () => clearInterval(interval);
   }, [raceState, playerStats, selectedCar, opponent, nitroActive]);
 
-  // Detect overtake
+  // Detect overtake — switch cinematic camera
   useEffect(() => {
     if (raceState !== "racing") return;
-    const cur = playerProgress > opponentProgress + 1 ? "player"
-      : opponentProgress > playerProgress + 1 ? "opponent" : "tie";
-    if (cur !== "tie" && cur !== prevLeader.current && prevLeader.current !== "tie") {
+    const cur = playerProgress > opponentProgress + 3 ? "player"
+      : opponentProgress > playerProgress + 3 ? "opponent" : "tie";
+    if (cur !== prevLeader.current && cur !== "tie") {
       setCameraShake(true);
-      setTimeout(() => setCameraShake(false), 500);
+      setTimeout(() => setCameraShake(false), 600);
+      // Briefly flash opponent scene on overtake
+      if (cur === "opponent") {
+        setShowingOpponent(true);
+        setTimeout(() => setShowingOpponent(false), 2500);
+      } else if (prevLeader.current === "opponent") {
+        setShowingOpponent(true);
+        setTimeout(() => setShowingOpponent(false), 1500);
+      }
     }
     prevLeader.current = cur;
   }, [playerProgress, opponentProgress, raceState]);
@@ -102,205 +114,130 @@ const Race = () => {
     }
   }, [playerProgress, opponentProgress, raceState]);
 
-  const activateNitro = () => {
+  const activateNitro = useCallback(() => {
     if (nitroCharges <= 0 || raceState !== "racing" || nitroActive) return;
     setNitroActive(true);
     setNitroCharges((c) => c - 1);
     setCameraShake(true);
-    setTimeout(() => setCameraShake(false), 300);
+    setTimeout(() => setCameraShake(false), 400);
     setTimeout(() => setNitroActive(false), 2500);
-  };
+  }, [nitroCharges, raceState, nitroActive]);
 
   const handlePlayAgain = () => window.location.reload();
   const earnedNP = Math.round(((victory ? 150 : 20) * playerStats.engineHealth) / 100);
   const speedKmh = Math.round(180 + (playerProgress / 100) * 180 + (nitroActive ? 80 : 0));
   const isRacing = raceState === "racing";
 
-  // Car vertical positioning based on who's ahead
-  const playerAheadBy = playerProgress - opponentProgress;
-  const playerCarY = 58; // % from top — player car in lower area
-  const opponentCarY = 32; // % from top — opponent car in upper area (further ahead visually)
-
   return (
     <motion.div
-      className="relative h-screen w-screen overflow-hidden"
-      animate={cameraShake ? { x: [0, -6, 6, -3, 3, 0], y: [0, 3, -3, 2, -1, 0] } : {}}
-      transition={{ duration: 0.35 }}
+      className="relative h-screen w-screen overflow-hidden select-none"
+      animate={cameraShake ? { x: [0, -8, 8, -4, 4, 0], y: [0, 4, -4, 2, -1, 0] } : {}}
+      transition={{ duration: 0.4 }}
       style={{ background: "#020208" }}
     >
-      {/* ====== LAYER 1: City skyline (far parallax) ====== */}
-      <div
-        className="absolute top-0 left-0 right-0 h-[45%] z-[1]"
+      {/* ====== LAYER 1: Speed background (far, blurry road) ====== */}
+      <motion.div
+        className="absolute inset-0 z-[1]"
         style={{
-          backgroundImage: `url(${citySkyline})`,
+          backgroundImage: `url(${raceSpeedBg})`,
           backgroundSize: "cover",
-          backgroundPosition: `${-bgOffset * 0.15}px center`,
-          filter: "brightness(0.7) saturate(1.3)",
+          backgroundPosition: `center ${-bgOffset * 0.08}px`,
+          filter: `brightness(${nitroActive ? 0.6 : 0.4}) blur(${nitroActive ? 2 : 0}px)`,
+          transition: "filter 0.5s ease",
         }}
       />
-      {/* City overlay gradient */}
-      <div className="absolute top-0 left-0 right-0 h-[45%] z-[1] bg-gradient-to-b from-transparent via-transparent to-[#020208]" />
 
-      {/* ====== LAYER 2: Highway road (main parallax) ====== */}
-      <div
+      {/* ====== LAYER 2: Main cinematic scene (player chase cam) ====== */}
+      <motion.div
         className="absolute inset-0 z-[2]"
+        animate={{
+          scale: isRacing ? (nitroActive ? 1.08 : 1.02) : 1,
+        }}
+        transition={{ duration: nitroActive ? 0.3 : 1, ease: "easeOut" }}
+      >
+        <div
+          className="absolute inset-0"
+          style={{
+            backgroundImage: `url(${raceScenePlayer})`,
+            backgroundSize: "cover",
+            backgroundPosition: "center center",
+            filter: `brightness(${nitroActive ? 1.3 : 1}) saturate(${nitroActive ? 1.4 : 1.1}) contrast(1.05)`,
+            transition: "filter 0.3s ease, opacity 0.8s ease",
+            opacity: showingOpponent ? 0 : 1,
+          }}
+        />
+        {/* Opponent scene — fades in on overtake */}
+        <div
+          className="absolute inset-0"
+          style={{
+            backgroundImage: `url(${raceSceneOpponent})`,
+            backgroundSize: "cover",
+            backgroundPosition: "center center",
+            filter: `brightness(${nitroActive ? 1.2 : 1}) saturate(1.2) contrast(1.05)`,
+            transition: "opacity 0.8s ease",
+            opacity: showingOpponent ? 1 : 0,
+          }}
+        />
+      </motion.div>
+
+      {/* ====== LAYER 3: Cinematic vignette + grade ====== */}
+      <div
+        className="pointer-events-none absolute inset-0 z-[3]"
         style={{
-          backgroundImage: `url(${raceHighwayBg})`,
-          backgroundSize: "cover",
-          backgroundPosition: `${-bgOffset * 0.5}px center`,
-          filter: `brightness(${nitroActive ? 1.2 : 0.85}) saturate(${nitroActive ? 1.5 : 1.2}) contrast(1.1)`,
-          transition: "filter 0.3s ease",
+          background: `
+            radial-gradient(ellipse at 50% 80%, transparent 30%, rgba(0,0,0,0.5) 100%),
+            linear-gradient(to top, rgba(0,0,0,0.4) 0%, transparent 40%, transparent 60%, rgba(0,0,0,0.3) 100%)
+          `,
         }}
       />
-      {/* Road darkening overlay */}
-      <div className="absolute inset-0 z-[2] bg-gradient-to-t from-[#020208]/70 via-transparent to-[#020208]/40" />
 
-      {/* ====== LAYER 3: Speed lines + rain (canvas) ====== */}
+      {/* ====== LAYER 4: Cinematic letterbox bars ====== */}
+      <div className="pointer-events-none absolute top-0 left-0 right-0 h-[8%] z-[4] bg-gradient-to-b from-black/80 to-transparent" />
+      <div className="pointer-events-none absolute bottom-0 left-0 right-0 h-[8%] z-[4] bg-gradient-to-t from-black/80 to-transparent" />
+
+      {/* ====== LAYER 5: Speed lines + rain (canvas) ====== */}
       <SpeedLinesCanvas
         speed={speedKmh / 30}
         isRacing={isRacing}
         nitroActive={nitroActive}
       />
 
-      {/* ====== LAYER 4: Cars ====== */}
-      {/* Player car */}
-      <motion.div
-        className="absolute z-[6]"
-        style={{
-          bottom: `${100 - playerCarY - 20}%`,
-          left: "10%",
-          width: "45%",
-          maxWidth: "550px",
-        }}
-        animate={isRacing ? {
-          x: [0, -3, 3, -1, 1, 0],
-          y: [0, -2, 2, -1, 0],
-          rotate: [0, -0.3, 0.3, -0.15, 0],
-        } : {}}
-        transition={{
-          duration: 0.4,
-          repeat: isRacing ? Infinity : 0,
-          ease: "linear",
-        }}
-      >
-        <img
-          src={carPlayerSide}
-          alt="Player car"
-          className="w-full h-auto"
-          style={{
-            mixBlendMode: "screen",
-            filter: `
-              brightness(${nitroActive ? 1.6 : 1.3})
-              saturate(${nitroActive ? 1.5 : 1.2})
-              drop-shadow(0 0 30px hsl(185, 80%, 55% / 0.5))
-            `,
-            transition: "filter 0.3s ease",
-          }}
-        />
-        {/* Underglow reflection on road */}
-        <div
-          className="absolute -bottom-4 left-[10%] right-[10%] h-8 rounded-full"
-          style={{
-            background: `radial-gradient(ellipse, hsl(185, 80%, 55% / ${nitroActive ? 0.5 : 0.25}), transparent 70%)`,
-            filter: "blur(12px)",
-          }}
-        />
-        {/* Nitro flames */}
-        <AnimatePresence>
-          {nitroActive && (
-            <motion.div
-              initial={{ opacity: 0, scaleX: 0 }}
-              animate={{ opacity: 1, scaleX: 1 }}
-              exit={{ opacity: 0, scaleX: 0 }}
-              className="absolute right-[-15%] top-[35%] w-[25%] h-[30%]"
-              style={{
-                background: "radial-gradient(ellipse at right, hsl(210, 100%, 60% / 0.9), hsl(185, 100%, 50% / 0.4), transparent)",
-                filter: "blur(6px)",
-                transformOrigin: "right center",
-              }}
-            >
-              <motion.div
-                animate={{ opacity: [0.7, 1, 0.5, 1], scaleX: [1, 1.3, 0.9, 1.1] }}
-                transition={{ duration: 0.15, repeat: Infinity }}
-                className="absolute inset-0"
-                style={{
-                  background: "radial-gradient(ellipse at right, hsl(210, 100%, 80% / 0.8), transparent)",
-                  filter: "blur(4px)",
-                }}
-              />
-            </motion.div>
-          )}
-        </AnimatePresence>
-      </motion.div>
-
-      {/* Opponent car */}
-      <motion.div
-        className="absolute z-[4]"
-        style={{
-          top: `${opponentCarY}%`,
-          right: `${8 + (playerAheadBy > 0 ? playerAheadBy * 0.5 : 0)}%`,
-          width: "35%",
-          maxWidth: "420px",
-          opacity: 0.9,
-        }}
-        animate={isRacing ? {
-          x: [0, 2, -2, 1, 0],
-          y: [0, -1, 1, 0],
-        } : {}}
-        transition={{
-          duration: 0.5,
-          repeat: isRacing ? Infinity : 0,
-          ease: "linear",
-        }}
-      >
-        <img
-          src={carOpponentSide}
-          alt="Opponent car"
-          className="w-full h-auto"
-          style={{
-            mixBlendMode: "screen",
-            filter: `
-              brightness(1.3)
-              saturate(1.2)
-              drop-shadow(0 0 25px hsl(0, 70%, 55% / 0.5))
-            `,
-            transform: `scale(${1 - playerAheadBy * 0.003})`,
-          }}
-        />
-        {/* Underglow */}
-        <div
-          className="absolute -bottom-3 left-[15%] right-[15%] h-6 rounded-full"
-          style={{
-            background: "radial-gradient(ellipse, hsl(0, 70%, 55% / 0.2), transparent 70%)",
-            filter: "blur(10px)",
-          }}
-        />
-      </motion.div>
-
-      {/* ====== LAYER 5: Nitro flash overlay ====== */}
+      {/* ====== LAYER 6: Nitro flash overlay ====== */}
       <AnimatePresence>
         {nitroActive && (
           <motion.div
             initial={{ opacity: 0 }}
-            animate={{ opacity: [0, 0.2, 0.05, 0.15, 0.05] }}
+            animate={{ opacity: [0, 0.35, 0.1, 0.25, 0.1] }}
             exit={{ opacity: 0 }}
-            transition={{ duration: 0.4 }}
-            className="pointer-events-none absolute inset-0 z-[7]"
+            transition={{ duration: 0.5 }}
+            className="pointer-events-none absolute inset-0 z-[8]"
             style={{
-              background: "radial-gradient(ellipse at 30% 70%, hsl(210, 100%, 60% / 0.2), transparent 60%)",
+              background: "radial-gradient(ellipse at 50% 60%, hsl(210, 100%, 60% / 0.25), hsl(185, 80%, 50% / 0.1), transparent 70%)",
             }}
           />
         )}
       </AnimatePresence>
 
-      {/* ====== LAYER 6: HUD Overlay ====== */}
+      {/* ====== LAYER 7: Motion blur on edges when racing ====== */}
+      {isRacing && (
+        <div
+          className="pointer-events-none absolute inset-0 z-[6]"
+          style={{
+            background: `
+              linear-gradient(to right, rgba(0,0,0,${nitroActive ? 0.5 : 0.3}) 0%, transparent 15%, transparent 85%, rgba(0,0,0,${nitroActive ? 0.5 : 0.3}) 100%)
+            `,
+          }}
+        />
+      )}
+
+      {/* ====== HUD OVERLAY ====== */}
 
       {/* Top-left: Logo + stats */}
       <motion.div
         initial={{ opacity: 0, x: -30 }}
         animate={{ opacity: 1, x: 0 }}
         transition={{ delay: 0.3 }}
-        className="absolute left-5 top-5 z-[10]"
+        className="absolute left-5 top-[10%] z-[10]"
       >
         <div className="rounded-xl border border-primary/15 bg-background/15 px-4 py-2.5 backdrop-blur-xl">
           <h1 className="font-display text-xs font-black uppercase tracking-[0.3em] text-primary text-glow-cyan">
@@ -328,10 +265,9 @@ const Race = () => {
         initial={{ opacity: 0, x: 30 }}
         animate={{ opacity: 1, x: 0 }}
         transition={{ delay: 0.4 }}
-        className="absolute right-5 top-5 z-[10]"
+        className="absolute right-5 top-[10%] z-[10]"
       >
         <div className="rounded-xl border border-primary/15 bg-background/15 px-4 py-2.5 backdrop-blur-xl min-w-[180px]">
-          {/* Player */}
           <div className="mb-1.5 flex items-center justify-between">
             <span className="font-display text-[10px] uppercase tracking-wider text-primary">{playerStats.name}</span>
             <span className="font-display text-sm font-bold text-primary">{Math.round(playerProgress)}%</span>
@@ -346,7 +282,6 @@ const Race = () => {
               }}
             />
           </div>
-          {/* Opponent */}
           <div className="mb-1.5 flex items-center justify-between">
             <span className="font-display text-[10px] uppercase tracking-wider text-destructive">{opponent.name}</span>
             <span className="font-display text-sm font-bold text-destructive">{Math.round(opponentProgress)}%</span>
@@ -369,7 +304,7 @@ const Race = () => {
         initial={{ opacity: 0, y: 30 }}
         animate={{ opacity: 1, y: 0 }}
         transition={{ delay: 0.5 }}
-        className="absolute bottom-6 left-6 z-[10]"
+        className="absolute bottom-[10%] left-6 z-[10]"
       >
         <div className="flex items-end gap-1.5">
           <motion.span
@@ -397,7 +332,7 @@ const Race = () => {
         initial={{ opacity: 0, y: 30 }}
         animate={{ opacity: 1, y: 0 }}
         transition={{ delay: 0.6 }}
-        className="absolute bottom-6 right-6 z-[10]"
+        className="absolute bottom-[10%] right-6 z-[10]"
       >
         <button
           onClick={activateNitro}
@@ -417,11 +352,30 @@ const Race = () => {
         </button>
       </motion.div>
 
+      {/* Center: Overtake flash text */}
+      <AnimatePresence>
+        {cameraShake && isRacing && (
+          <motion.div
+            initial={{ opacity: 0, scale: 2 }}
+            animate={{ opacity: [0, 1, 0], scale: [2, 1, 0.8] }}
+            exit={{ opacity: 0 }}
+            transition={{ duration: 0.6 }}
+            className="absolute inset-0 z-[9] flex items-center justify-center pointer-events-none"
+          >
+            <span
+              className="font-display text-5xl font-black uppercase text-primary/80"
+              style={{ textShadow: "0 0 40px hsl(185, 80%, 55% / 0.8)" }}
+            >
+              {playerProgress > opponentProgress ? "OVERTAKE!" : "OVERTAKEN!"}
+            </span>
+          </motion.div>
+        )}
+      </AnimatePresence>
+
       {/* ====== Countdown ====== */}
       <AnimatePresence>
         {raceState === "countdown" && (
           <div className="absolute inset-0 z-[20] flex items-center justify-center">
-            {/* Darken overlay during countdown */}
             <div className="absolute inset-0 bg-background/40 backdrop-blur-sm" />
             <motion.div
               key={countdown}
