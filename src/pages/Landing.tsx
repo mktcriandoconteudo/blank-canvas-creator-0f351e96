@@ -1,5 +1,4 @@
 import { motion, useScroll, useTransform } from "framer-motion";
-import { DotScreenShader } from "@/components/ui/dot-shader-background";
 import ShaderBackground from "@/components/ui/shader-background";
 import { useNavigate } from "react-router-dom";
 import { useRef } from "react";
@@ -39,6 +38,7 @@ const FeatureCard = ({
     transition={{ duration: 0.5, delay }}
     className="group relative overflow-hidden rounded-2xl border border-border/30 bg-card/40 backdrop-blur-xl transition-all duration-500 hover:border-primary/40 hover:shadow-[0_0_40px_hsl(185_80%_55%/0.1)]"
   >
+    <div className="pointer-events-none absolute inset-0 z-0 dot-pattern opacity-40" />
     {image && (
       <div className="relative h-44 overflow-hidden">
         <img src={image} alt={title} className="h-full w-full object-cover transition-transform duration-700 group-hover:scale-110" />
@@ -68,6 +68,7 @@ const RarityCard = ({
     transition={{ duration: 0.4, delay }}
     className={`relative overflow-hidden rounded-2xl border border-border/30 bg-card/50 p-5 backdrop-blur-xl transition-all hover:scale-105 ${color}`}
   >
+    <div className="pointer-events-none absolute inset-0 z-0 dot-pattern opacity-30" />
     <div className="mb-2 font-display text-xs uppercase tracking-[0.3em] text-muted-foreground">Raridade</div>
     <div className="font-display text-xl font-black text-foreground">{rarity}</div>
     <div className="mt-3 space-y-1 font-body text-xs text-muted-foreground">
@@ -88,12 +89,13 @@ const RoadmapStep = ({
     whileInView={{ opacity: 1, x: 0 }}
     viewport={{ once: true }}
     transition={{ duration: 0.5, delay }}
-    className={`relative rounded-2xl border p-5 backdrop-blur-xl transition-all ${
+    className={`relative overflow-hidden rounded-2xl border p-5 backdrop-blur-xl transition-all ${
       active
         ? "border-primary/50 bg-primary/5 shadow-[0_0_30px_hsl(185_80%_55%/0.1)]"
         : "border-border/20 bg-card/30"
     }`}
   >
+    <div className="pointer-events-none absolute inset-0 z-0 dot-pattern opacity-30" />
     <div className={`mb-1 font-display text-[10px] uppercase tracking-[0.3em] ${active ? "text-primary" : "text-muted-foreground"}`}>
       {phase}
     </div>
@@ -122,10 +124,6 @@ const Landing = () => {
 
   return (
     <div className="relative min-h-screen bg-background text-foreground">
-      {/* Dot shader background */}
-      <div className="fixed inset-0 z-0">
-        <DotScreenShader dotColor="#00d4ff" bgColor="#0d1117" dotOpacity={0.03} />
-      </div>
       <div className="relative z-10">
       {/* ─── NAV ─── */}
       <motion.nav
@@ -424,8 +422,9 @@ const Landing = () => {
                 whileInView={{ opacity: 1, y: 0 }}
                 viewport={{ once: true }}
                 transition={{ delay: i * 0.1 }}
-                className="rounded-2xl border border-border/20 bg-card/30 p-6 text-center backdrop-blur-xl"
+                className="relative overflow-hidden rounded-2xl border border-border/20 bg-card/30 p-6 text-center backdrop-blur-xl"
               >
+                <div className="pointer-events-none absolute inset-0 z-0 dot-pattern opacity-30" />
                 <div className="mx-auto mb-3 flex h-10 w-10 items-center justify-center rounded-xl bg-primary/10 text-primary">
                   {stat.icon}
                 </div>
@@ -479,8 +478,9 @@ const Landing = () => {
                 whileInView={{ opacity: 1, y: 0 }}
                 viewport={{ once: true }}
                 transition={{ delay: i * 0.15 }}
-                className="relative rounded-2xl border border-border/20 bg-card/30 p-8 text-center backdrop-blur-xl"
+                className="relative overflow-hidden rounded-2xl border border-border/20 bg-card/30 p-8 text-center backdrop-blur-xl"
               >
+                <div className="pointer-events-none absolute inset-0 z-0 dot-pattern opacity-30" />
                 <div className="absolute -top-4 left-1/2 -translate-x-1/2 rounded-full bg-primary px-4 py-1 font-display text-xs font-bold text-primary-foreground">
                   {item.step}
                 </div>
