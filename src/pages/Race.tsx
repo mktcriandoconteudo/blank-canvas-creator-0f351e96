@@ -213,6 +213,8 @@ const Race = () => {
             ref={(el) => {
               countdownVideoRef.current = el;
               if (el) {
+                el.muted = true;
+                el.volume = 0;
                 el.play().catch(() => {});
               }
             }}
