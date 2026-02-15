@@ -1,6 +1,6 @@
 import { useState } from "react";
 import { motion } from "framer-motion";
-import { Zap, Mail, Lock, User, LogIn, UserPlus } from "lucide-react";
+import { Mail, Lock, User, LogIn, UserPlus } from "lucide-react";
 import { useAuth } from "@/hooks/useAuth";
 import { useNavigate } from "react-router-dom";
 import garageScene from "@/assets/garage-scene.jpg";
@@ -75,7 +75,7 @@ const Auth = () => {
               animate={{ opacity: 1 }}
               className="glass-strong rounded-2xl p-6 text-center"
             >
-              <Zap className="mx-auto mb-3 h-8 w-8 text-neon-green" />
+              <UserPlus className="mx-auto mb-3 h-8 w-8 text-neon-green" />
               <h2 className="font-display text-lg font-bold text-foreground">Conta criada!</h2>
               <p className="mt-2 font-body text-sm text-muted-foreground">
                 Verifique seu email para confirmar a conta, depois faça login.
