@@ -65,7 +65,10 @@ const RaceVideoPlayer = ({ videos, finaleVideo, isActive, poster, nitroActive, i
       {/* Single race video element — iOS only supports one playing at a time */}
       {!playingFinale && (
         <video
-          ref={videoRef}
+          ref={(el) => {
+            (videoRef as any).current = el;
+            if (el) { el.muted = true; el.volume = 0; }
+          }}
           muted
           playsInline
           // @ts-ignore
@@ -83,7 +86,10 @@ const RaceVideoPlayer = ({ videos, finaleVideo, isActive, poster, nitroActive, i
 
       {/* Finale video (victory or defeat) */}
       <video
-        ref={finaleRef}
+        ref={(el) => {
+          (finaleRef as any).current = el;
+          if (el) { el.muted = true; el.volume = 0; }
+        }}
         muted
         playsInline
         // @ts-ignore
