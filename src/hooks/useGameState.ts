@@ -73,6 +73,13 @@ export const useGameState = () => {
     });
   }, []);
 
+  const selectCar = useCallback((carId: string) => {
+    setState((prev) => {
+      if (!prev) return prev;
+      return { ...prev, selectedCarId: carId };
+    });
+  }, []);
+
   return {
     state: state ?? {
       cars: [],
@@ -87,6 +94,7 @@ export const useGameState = () => {
     addPoint,
     repair,
     updateState,
+    selectCar,
     loading,
   };
 };
