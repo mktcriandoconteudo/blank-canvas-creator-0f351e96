@@ -20,9 +20,9 @@ const Index = () => {
         style={{ backgroundImage: `url(${garageScene})` }}
       />
       {/* Darken right side for readability of stats panel */}
-      <div className="absolute inset-0 bg-gradient-to-l from-background/80 via-background/30 to-transparent" />
+      <div className="absolute inset-0 bg-gradient-to-l from-background/70 via-transparent to-transparent" />
       {/* Subtle top/bottom vignette */}
-      <div className="absolute inset-0 bg-gradient-to-b from-background/60 via-transparent to-background/70" />
+      <div className="absolute inset-0 bg-gradient-to-b from-background/40 via-transparent to-background/50" />
 
       {/* Content */}
       <div className="relative z-10 flex min-h-screen flex-col">
@@ -67,14 +67,14 @@ const Index = () => {
             initial={{ opacity: 0, x: 40 }}
             animate={{ opacity: 1, x: 0 }}
             transition={{ duration: 0.6, delay: 0.4 }}
-            className="w-full max-w-sm"
+            className="w-full max-w-xs"
           >
-            <div className="glass-strong rounded-2xl p-8 shadow-2xl">
-              <h3 className="mb-6 font-display text-xs font-bold uppercase tracking-[0.3em] text-muted-foreground">
+            <div className="glass-strong rounded-2xl p-6 shadow-2xl">
+              <h3 className="mb-4 font-display text-[10px] font-bold uppercase tracking-[0.3em] text-muted-foreground">
                 Atributos do Veículo
               </h3>
 
-              <div className="space-y-5">
+              <div className="space-y-3">
                 {carStats.map((stat, i) => (
                   <StatBar
                     key={stat.label}
@@ -87,7 +87,7 @@ const Index = () => {
                 ))}
               </div>
 
-              <div className="my-8 h-px w-full bg-gradient-to-r from-transparent via-border to-transparent" />
+              <div className="my-5 h-px w-full bg-gradient-to-r from-transparent via-border to-transparent" />
 
               <div className="flex flex-col gap-4 sm:flex-row">
                 <GlowButton variant="purple" icon={<Wrench className="h-4 w-4" />} className="flex-1">
