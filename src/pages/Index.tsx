@@ -279,32 +279,14 @@ const Index = () => {
                 )}
               </div>
 
-              {/* Admin buttons */}
-              <div className="mt-2 flex flex-col gap-1">
-                <button
-                  onClick={() => {
-                    updateState((prev) => ({ ...prev, fuelTanks: 5 }));
-                  }}
-                  className="w-full rounded-lg border border-neon-orange/30 bg-neon-orange/10 px-3 py-1.5 font-display text-[10px] uppercase tracking-wider text-neon-orange transition-colors hover:bg-neon-orange/20"
-                >
-                  🔧 Admin: Resetar Fuel (5/5)
-                </button>
-                <button
-                  onClick={() => {
-                    updateState((prev) => ({
-                      ...prev,
-                      cars: prev.cars.map((c) =>
-                        c.id === prev.selectedCarId
-                          ? { ...c, racesSinceRevision: 5, engineHealth: 20 }
-                          : c
-                      ),
-                    }));
-                  }}
-                  className="w-full rounded-lg border border-destructive/30 bg-destructive/10 px-3 py-1.5 font-display text-[10px] uppercase tracking-wider text-destructive transition-colors hover:bg-destructive/20"
-                >
-                  🔧 Admin: Forçar Revisão
-                </button>
-              </div>
+              <button
+                onClick={() => {
+                  updateState((prev) => ({ ...prev, fuelTanks: 5 }));
+                }}
+                className="mt-2 w-full rounded-lg border border-neon-orange/30 bg-neon-orange/10 px-3 py-1.5 font-display text-[10px] uppercase tracking-wider text-neon-orange transition-colors hover:bg-neon-orange/20"
+              >
+                🔧 Admin: Resetar Fuel (5/5)
+              </button>
 
               <p className="mt-2 text-center font-body text-[10px] text-muted-foreground">
                 ⛽ {state.fuelTanks}/5 tanques · 🔧 Rev. em {Math.max(0, 5 - selectedCar.racesSinceRevision)} corridas
