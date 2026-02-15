@@ -1,4 +1,5 @@
 import { motion, useScroll, useTransform } from "framer-motion";
+import { DotScreenShader } from "@/components/ui/dot-shader-background";
 import ShaderBackground from "@/components/ui/shader-background";
 import { useNavigate } from "react-router-dom";
 import { useRef } from "react";
@@ -38,7 +39,7 @@ const FeatureCard = ({
     transition={{ duration: 0.5, delay }}
     className="group relative overflow-hidden rounded-2xl border border-border/30 bg-card/40 backdrop-blur-xl transition-all duration-500 hover:border-primary/40 hover:shadow-[0_0_40px_hsl(185_80%_55%/0.1)]"
   >
-    <div className="pointer-events-none absolute inset-0 z-0 dot-pattern opacity-40" />
+    {/* dot pattern visible through card */}
     {image && (
       <div className="relative h-44 overflow-hidden">
         <img src={image} alt={title} className="h-full w-full object-cover transition-transform duration-700 group-hover:scale-110" />
@@ -68,7 +69,7 @@ const RarityCard = ({
     transition={{ duration: 0.4, delay }}
     className={`relative overflow-hidden rounded-2xl border border-border/30 bg-card/50 p-5 backdrop-blur-xl transition-all hover:scale-105 ${color}`}
   >
-    <div className="pointer-events-none absolute inset-0 z-0 dot-pattern opacity-30" />
+    {/* dot pattern visible through card */}
     <div className="mb-2 font-display text-xs uppercase tracking-[0.3em] text-muted-foreground">Raridade</div>
     <div className="font-display text-xl font-black text-foreground">{rarity}</div>
     <div className="mt-3 space-y-1 font-body text-xs text-muted-foreground">
@@ -95,7 +96,6 @@ const RoadmapStep = ({
         : "border-border/20 bg-card/30"
     }`}
   >
-    <div className="pointer-events-none absolute inset-0 z-0 dot-pattern opacity-30" />
     <div className={`mb-1 font-display text-[10px] uppercase tracking-[0.3em] ${active ? "text-primary" : "text-muted-foreground"}`}>
       {phase}
     </div>
@@ -258,7 +258,10 @@ const Landing = () => {
 
       {/* ─── FEATURES ─── */}
       <section id="features" className="relative py-24 sm:py-32">
-        <div className="mx-auto max-w-7xl px-4 sm:px-8">
+        <div className="pointer-events-none absolute inset-0 z-0">
+          <DotScreenShader dotColor="#00d4ff" bgColor="#0d1117" dotOpacity={0.04} />
+        </div>
+        <div className="relative z-10 mx-auto max-w-7xl px-4 sm:px-8">
           <motion.div
             initial={{ opacity: 0, y: 20 }}
             whileInView={{ opacity: 1, y: 0 }}
@@ -395,8 +398,11 @@ const Landing = () => {
 
       {/* ─── STATS ─── */}
       <section id="stats" className="relative py-24 sm:py-32">
+        <div className="pointer-events-none absolute inset-0 z-0">
+          <DotScreenShader dotColor="#00d4ff" bgColor="#0d1117" dotOpacity={0.04} />
+        </div>
         <div className="absolute inset-0 bg-gradient-to-r from-primary/[0.03] via-transparent to-accent/[0.03]" />
-        <div className="relative mx-auto max-w-5xl px-4 sm:px-8">
+        <div className="relative z-10 mx-auto max-w-5xl px-4 sm:px-8">
           <motion.div
             initial={{ opacity: 0, y: 20 }}
             whileInView={{ opacity: 1, y: 0 }}
@@ -424,7 +430,6 @@ const Landing = () => {
                 transition={{ delay: i * 0.1 }}
                 className="relative overflow-hidden rounded-2xl border border-border/20 bg-card/30 p-6 text-center backdrop-blur-xl"
               >
-                <div className="pointer-events-none absolute inset-0 z-0 dot-pattern opacity-30" />
                 <div className="mx-auto mb-3 flex h-10 w-10 items-center justify-center rounded-xl bg-primary/10 text-primary">
                   {stat.icon}
                 </div>
@@ -438,7 +443,10 @@ const Landing = () => {
 
       {/* ─── HOW IT WORKS ─── */}
       <section className="relative py-24 sm:py-32">
-        <div className="mx-auto max-w-5xl px-4 sm:px-8">
+        <div className="pointer-events-none absolute inset-0 z-0">
+          <DotScreenShader dotColor="#00d4ff" bgColor="#0d1117" dotOpacity={0.04} />
+        </div>
+        <div className="relative z-10 mx-auto max-w-5xl px-4 sm:px-8">
           <motion.div
             initial={{ opacity: 0, y: 20 }}
             whileInView={{ opacity: 1, y: 0 }}
@@ -480,7 +488,7 @@ const Landing = () => {
                 transition={{ delay: i * 0.15 }}
                 className="relative overflow-hidden rounded-2xl border border-border/20 bg-card/30 p-8 text-center backdrop-blur-xl"
               >
-                <div className="pointer-events-none absolute inset-0 z-0 dot-pattern opacity-30" />
+                
                 <div className="absolute -top-4 left-1/2 -translate-x-1/2 rounded-full bg-primary px-4 py-1 font-display text-xs font-bold text-primary-foreground">
                   {item.step}
                 </div>
@@ -497,8 +505,11 @@ const Landing = () => {
 
       {/* ─── ROADMAP ─── */}
       <section id="roadmap" className="relative py-24 sm:py-32">
+        <div className="pointer-events-none absolute inset-0 z-0">
+          <DotScreenShader dotColor="#00d4ff" bgColor="#0d1117" dotOpacity={0.04} />
+        </div>
         <div className="absolute inset-0 bg-gradient-to-b from-transparent via-accent/[0.02] to-transparent" />
-        <div className="relative mx-auto max-w-4xl px-4 sm:px-8">
+        <div className="relative z-10 mx-auto max-w-4xl px-4 sm:px-8">
           <motion.div
             initial={{ opacity: 0, y: 20 }}
             whileInView={{ opacity: 1, y: 0 }}
