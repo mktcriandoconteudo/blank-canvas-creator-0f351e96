@@ -185,10 +185,14 @@ const Race = () => {
       const won = playerProgress >= opponentProgress;
       setVictory(won);
 
-      // Determine finale video immediately with the correct won value
-      const carKey = carKeyRef.current;
+      // Determine finale video — try multiple sources for car name
+      const carName = selectedCar?.name ?? playerStats.name ?? "";
+      const carKey = carKeyRef.current || carName.toLowerCase().split(" ")[0];
+      // Update ref as fallback for future use
+      if (!carKeyRef.current && carKey) carKeyRef.current = carKey;
+      
       const hasCustom = !!(CAR_VICTORY_VIDEOS[carKey]);
-      console.log("[RACE FINISH]", { carName: selectedCar?.name, carKey, hasCustom, won });
+      console.log("[RACE FINISH]", { carName, carKey, hasCustom, won, refValue: carKeyRef.current });
       if (hasCustom) {
         setFinaleVideoSrc(won ? CAR_VICTORY_VIDEOS[carKey] : CAR_DEFEAT_VIDEOS[carKey]);
       } else {
