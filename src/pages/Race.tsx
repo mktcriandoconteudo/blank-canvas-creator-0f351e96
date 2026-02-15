@@ -60,6 +60,24 @@ const Race = () => {
   const bgmRef = useRef<HTMLAudioElement | null>(null);
 
   const bgmLoopRef = useRef<HTMLAudioElement | null>(null);
+  const countdownVideoRef = useRef<HTMLVideoElement | null>(null);
+
+  // Force countdown video to play on first user interaction (iOS workaround)
+  useEffect(() => {
+    const tryPlayCountdown = () => {
+      if (countdownVideoRef.current && countdownVideoRef.current.paused) {
+        countdownVideoRef.current.play().catch(() => {});
+      }
+      document.removeEventListener("touchstart", tryPlayCountdown);
+      document.removeEventListener("click", tryPlayCountdown);
+    };
+    document.addEventListener("touchstart", tryPlayCountdown, { once: true });
+    document.addEventListener("click", tryPlayCountdown, { once: true });
+    return () => {
+      document.removeEventListener("touchstart", tryPlayCountdown);
+      document.removeEventListener("click", tryPlayCountdown);
+    };
+  }, []);
 
   // Cleanup all audio on unmount
   useEffect(() => {
@@ -215,13 +233,19 @@ const Race = () => {
       transition={{ duration: 0.4 }}
       style={{ background: "#020208" }}
     >
-      {/* ====== LAYER 1: Start video (countdown only) ====== */}
+      {/* ====== LAYER 1: Start video (countdown) ====== */}
       {raceState === "countdown" && (
         <div
           className="absolute inset-0 z-[1]"
           style={{ pointerEvents: "none" }}
         >
           <video
+            ref={(el) => {
+              countdownVideoRef.current = el;
+              if (el) {
+                el.play().catch(() => {});
+              }
+            }}
             src={raceStartVideo}
             autoPlay
             loop
@@ -229,6 +253,8 @@ const Race = () => {
             playsInline
             // @ts-ignore
             webkit-playsinline="true"
+            preload="auto"
+            poster={raceScenePlayer}
             className="absolute inset-0 w-full h-full object-cover"
             style={{ filter: "brightness(0.85) saturate(1.2) contrast(1.1)" }}
           />
