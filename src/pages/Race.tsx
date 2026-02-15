@@ -25,6 +25,7 @@ import raceVictoryVideo from "@/assets/race-battle-video-3.mp4";
 import raceDefeatVideo from "@/assets/race-defeat-video.mp4";
 import raceStartVideo from "@/assets/race-start-video.mp4";
 import raceScenePlayer from "@/assets/race-scene-main.jpg";
+import raceBgm from "@/assets/race-bgm.mp3";
 
 const RACE_VIDEOS = [raceBattleVideo1, raceBattleVideo2, raceBattleVideo1];
 
@@ -67,14 +68,24 @@ const Race = () => {
   const prevLeader = useRef<"player" | "opponent" | "tie">("tie");
   const finishRaceRef = useRef(finishRace);
   finishRaceRef.current = finishRace;
+  const bgmRef = useRef<HTMLAudioElement | null>(null);
 
   // Countdown with beeps
   useEffect(() => {
     if (raceState !== "countdown") return;
     if (countdown <= 0) {
-      playCountdownBeep(true); // GO! beep
+      playCountdownBeep(true);
       setRaceState("racing");
       startEngine();
+      // Start background music
+      if (!bgmRef.current) {
+        bgmRef.current = new Audio(raceBgm);
+        bgmRef.current.loop = true;
+        bgmRef.current.volume = 0.3;
+      }
+      if (soundOn) {
+        bgmRef.current.play().catch(() => {});
+      }
       return;
     }
     playCountdownBeep(false);
@@ -126,6 +137,14 @@ const Race = () => {
       setRaceState("finished");
       setNitroActive(false);
       stopEngine();
+      // Fade out BGM
+      if (bgmRef.current) {
+        const audio = bgmRef.current;
+        const fadeOut = setInterval(() => {
+          if (audio.volume > 0.05) { audio.volume -= 0.05; }
+          else { clearInterval(fadeOut); audio.pause(); audio.volume = 0.3; }
+        }, 100);
+      }
       const won = playerProgress >= opponentProgress;
       setVictory(won);
       if (won) playVictory(); else playDefeat();
@@ -286,7 +305,15 @@ const Race = () => {
           const next = !soundOn;
           setSoundOn(next);
           setMuted(!next);
-          if (!next) stopEngine();
+          if (!next) {
+            stopEngine();
+            bgmRef.current?.pause();
+          } else {
+            if (raceState === "racing") {
+              startEngine();
+              bgmRef.current?.play().catch(() => {});
+            }
+          }
         }}
         className="absolute left-5 top-[22%] z-[10] flex h-8 w-8 items-center justify-center rounded-lg border border-primary/15 bg-background/15 backdrop-blur-xl transition-colors hover:bg-background/30"
       >
