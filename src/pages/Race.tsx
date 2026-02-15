@@ -63,6 +63,8 @@ const Race = () => {
   const [nitroActive, setNitroActive] = useState(false);
   const [nitroCharges, setNitroCharges] = useState(3);
   const [bgOffset, setBgOffset] = useState(0);
+  // Capture car key at mount so it doesn't change during the race
+  const carKeyRef = useRef(selectedCar?.name.toLowerCase().split(" ")[0] ?? "");
   const [soundOn, setSoundOn] = useState(false);
   const soundOnRef = useRef(false);
 
@@ -177,7 +179,7 @@ const Race = () => {
       setVictory(won);
 
       // Determine finale video immediately with the correct won value
-      const carKey = selectedCar?.name.toLowerCase().split(" ")[0] ?? "";
+      const carKey = carKeyRef.current;
       const hasCustom = !!(CAR_VICTORY_VIDEOS[carKey]);
       console.log("[RACE FINISH]", { carName: selectedCar?.name, carKey, hasCustom, won });
       if (hasCustom) {
