@@ -254,6 +254,7 @@ export type Database = {
       }
       users: {
         Row: {
+          auth_id: string | null
           avatar_url: string | null
           created_at: string
           fuel_tanks: number
@@ -268,6 +269,7 @@ export type Database = {
           wallet_address: string
         }
         Insert: {
+          auth_id?: string | null
           avatar_url?: string | null
           created_at?: string
           fuel_tanks?: number
@@ -282,6 +284,7 @@ export type Database = {
           wallet_address: string
         }
         Update: {
+          auth_id?: string | null
           avatar_url?: string | null
           created_at?: string
           fuel_tanks?: number
