@@ -1,6 +1,6 @@
 import { useState, useEffect, useRef, useCallback } from "react";
 import { motion, AnimatePresence } from "framer-motion";
-import { Fuel, Gauge, Wrench, Star, Zap } from "lucide-react";
+import { Fuel, Gauge, Wrench, Star, Zap, Volume2, VolumeX } from "lucide-react";
 import SpeedLinesCanvas from "@/components/race/SpeedLinesCanvas";
 import RaceResultModal from "@/components/race/RaceResultModal";
 import RaceVideoPlayer from "@/components/race/RaceVideoPlayer";
@@ -14,6 +14,8 @@ import {
   playOvertake,
   playVictory,
   playDefeat,
+  setMuted,
+  isMuted,
 } from "@/lib/raceSounds";
 
 // Cinematic videos — starting grid + race clips + victory/defeat finales
@@ -57,6 +59,7 @@ const Race = () => {
   const [nitroActive, setNitroActive] = useState(false);
   const [nitroCharges, setNitroCharges] = useState(3);
   const [bgOffset, setBgOffset] = useState(0);
+  const [soundOn, setSoundOn] = useState(true);
 
 
 
@@ -274,7 +277,26 @@ const Race = () => {
         </div>
       </motion.div>
 
-      {/* Top-right: Race progress */}
+      {/* Sound toggle */}
+      <motion.button
+        initial={{ opacity: 0 }}
+        animate={{ opacity: 1 }}
+        transition={{ delay: 0.4 }}
+        onClick={() => {
+          const next = !soundOn;
+          setSoundOn(next);
+          setMuted(!next);
+          if (!next) stopEngine();
+        }}
+        className="absolute left-5 top-[22%] z-[10] flex h-8 w-8 items-center justify-center rounded-lg border border-primary/15 bg-background/15 backdrop-blur-xl transition-colors hover:bg-background/30"
+      >
+        {soundOn ? (
+          <Volume2 className="h-4 w-4 text-primary/70" />
+        ) : (
+          <VolumeX className="h-4 w-4 text-muted-foreground/50" />
+        )}
+      </motion.button>
+
       <motion.div
         initial={{ opacity: 0, x: 30 }}
         animate={{ opacity: 1, x: 0 }}

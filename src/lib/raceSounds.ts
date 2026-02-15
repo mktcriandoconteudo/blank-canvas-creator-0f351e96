@@ -2,6 +2,10 @@
 // No external dependencies needed
 
 let audioCtx: AudioContext | null = null;
+let muted = false;
+
+export function setMuted(val: boolean) { muted = val; }
+export function isMuted() { return muted; }
 
 function getCtx(): AudioContext {
   if (!audioCtx) {
@@ -13,8 +17,13 @@ function getCtx(): AudioContext {
   return audioCtx;
 }
 
+function shouldPlay(): boolean {
+  return !muted;
+}
+
 // ─── Countdown beep ───
 export function playCountdownBeep(isFinal = false) {
+  if (!shouldPlay()) return;
   const ctx = getCtx();
   const osc = ctx.createOscillator();
   const gain = ctx.createGain();
@@ -37,6 +46,7 @@ let engineNoise: AudioBufferSourceNode | null = null;
 let engineNoiseGain: GainNode | null = null;
 
 export function startEngine() {
+  if (!shouldPlay()) return;
   const ctx = getCtx();
 
   // Low rumble oscillator
@@ -99,6 +109,7 @@ export function stopEngine() {
 
 // ─── Nitro boost ───
 export function playNitro() {
+  if (!shouldPlay()) return;
   const ctx = getCtx();
   const osc = ctx.createOscillator();
   const gain = ctx.createGain();
@@ -150,6 +161,7 @@ export function playNitro() {
 
 // ─── Overtake whoosh ───
 export function playOvertake() {
+  if (!shouldPlay()) return;
   const ctx = getCtx();
   const bufferSize = ctx.sampleRate;
   const noiseBuffer = ctx.createBuffer(1, bufferSize, ctx.sampleRate);
@@ -180,6 +192,7 @@ export function playOvertake() {
 
 // ─── Victory fanfare ───
 export function playVictory() {
+  if (!shouldPlay()) return;
   const ctx = getCtx();
   const notes = [523.25, 659.25, 783.99, 1046.5]; // C5, E5, G5, C6
   const delays = [0, 0.15, 0.3, 0.5];
@@ -200,6 +213,7 @@ export function playVictory() {
 
 // ─── Defeat sound ───
 export function playDefeat() {
+  if (!shouldPlay()) return;
   const ctx = getCtx();
   const osc = ctx.createOscillator();
   const gain = ctx.createGain();
