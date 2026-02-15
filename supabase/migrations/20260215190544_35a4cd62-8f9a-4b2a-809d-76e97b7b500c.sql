@@ -1,0 +1,3 @@
+-- Disable email confirmation requirement
+-- This is done via Supabase Auth config, not a migration.
+-- We need to update the config.toml instead.

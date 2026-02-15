@@ -39,7 +39,13 @@ const Auth = () => {
         if (error) {
           setError(error.message);
         } else {
-          setSignupSuccess(true);
+          // Auto-login after signup (no email confirmation needed)
+          const { error: loginError } = await signIn(email, password);
+          if (loginError) {
+            setSignupSuccess(true);
+          } else {
+            navigate("/garage");
+          }
         }
       }
     } finally {
