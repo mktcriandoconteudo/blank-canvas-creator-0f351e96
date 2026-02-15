@@ -62,20 +62,22 @@ const Race = () => {
   
   const countdownVideoRef = useRef<HTMLVideoElement | null>(null);
 
-  // Force countdown video to play on first user interaction (iOS workaround)
+  // Force video playback on first user interaction (iOS + Android workaround)
   useEffect(() => {
-    const tryPlayCountdown = () => {
+    const tryPlay = () => {
       if (countdownVideoRef.current && countdownVideoRef.current.paused) {
+        countdownVideoRef.current.load();
         countdownVideoRef.current.play().catch(() => {});
       }
-      document.removeEventListener("touchstart", tryPlayCountdown);
-      document.removeEventListener("click", tryPlayCountdown);
     };
-    document.addEventListener("touchstart", tryPlayCountdown, { once: true });
-    document.addEventListener("click", tryPlayCountdown, { once: true });
+    // Try immediately
+    tryPlay();
+    // Also listen for user gesture
+    document.addEventListener("touchstart", tryPlay, { once: true });
+    document.addEventListener("click", tryPlay, { once: true });
     return () => {
-      document.removeEventListener("touchstart", tryPlayCountdown);
-      document.removeEventListener("click", tryPlayCountdown);
+      document.removeEventListener("touchstart", tryPlay);
+      document.removeEventListener("click", tryPlay);
     };
   }, []);
 
@@ -210,18 +212,19 @@ const Race = () => {
           <video
             ref={(el) => {
               countdownVideoRef.current = el;
-              if (el) {
+              if (el && !el.src) {
                 el.muted = true;
                 el.volume = 0;
-                el.setAttribute("playsinline", "true");
-                el.setAttribute("webkit-playsinline", "true");
-                // Force load + play for mobile
+                el.playsInline = true;
+                el.setAttribute("playsinline", "");
+                el.setAttribute("webkit-playsinline", "");
+                el.setAttribute("x5-playsinline", "");
+                el.setAttribute("x5-video-player-type", "h5");
+                el.src = raceStartVideo;
                 el.load();
-                const playPromise = el.play();
-                if (playPromise) playPromise.catch(() => {});
+                el.play().catch(() => {});
               }
             }}
-            src={raceStartVideo}
             autoPlay
             loop
             muted
