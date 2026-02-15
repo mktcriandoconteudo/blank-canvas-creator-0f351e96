@@ -57,6 +57,7 @@ const Race = () => {
   const [opponentProgress, setOpponentProgress] = useState(0);
   const [showResult, setShowResult] = useState(false);
   const [victory, setVictory] = useState(false);
+  const [finaleVideoSrc, setFinaleVideoSrc] = useState<string | undefined>(undefined);
   const [xpResult, setXpResult] = useState({ leveledUp: false, newLevel: 0 });
   const [cameraShake, setCameraShake] = useState(false);
   const [nitroActive, setNitroActive] = useState(false);
@@ -174,6 +175,17 @@ const Race = () => {
       
       const won = playerProgress >= opponentProgress;
       setVictory(won);
+
+      // Determine finale video immediately with the correct won value
+      const carKey = selectedCar?.name.toLowerCase().split(" ")[0] ?? "";
+      const hasCustom = !!(CAR_VICTORY_VIDEOS[carKey]);
+      console.log("[RACE FINISH]", { carName: selectedCar?.name, carKey, hasCustom, won });
+      if (hasCustom) {
+        setFinaleVideoSrc(won ? CAR_VICTORY_VIDEOS[carKey] : CAR_DEFEAT_VIDEOS[carKey]);
+      } else {
+        // Default videos are inverted due to asset mismatch
+        setFinaleVideoSrc(won ? raceDefeatVideo : raceVictoryVideo);
+      }
       const result = finishRaceRef.current(won);
       setXpResult(result);
       setTimeout(() => setShowResult(true), 5500);
@@ -252,7 +264,7 @@ const Race = () => {
       {raceState !== "countdown" && (
         <RaceVideoPlayer
           videos={RACE_VIDEOS}
-          finaleVideo={raceState === "finished" ? (() => { const carKey = selectedCar?.name.toLowerCase().split(" ")[0] ?? ""; const hasCustom = !!(CAR_VICTORY_VIDEOS[carKey]); console.log("[RACE VIDEO DEBUG]", { carName: selectedCar?.name, carKey, hasCustom, victory, willUseCustom: hasCustom }); if (hasCustom) { return victory ? CAR_VICTORY_VIDEOS[carKey] : CAR_DEFEAT_VIDEOS[carKey]; } return victory ? raceDefeatVideo : raceVictoryVideo; })() : undefined}
+          finaleVideo={finaleVideoSrc}
           isActive={true}
           poster={raceScenePlayer}
           nitroActive={nitroActive}
