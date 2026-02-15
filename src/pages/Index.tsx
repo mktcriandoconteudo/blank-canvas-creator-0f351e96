@@ -48,7 +48,7 @@ const Index = () => {
   const [garageSoundOn, setGarageSoundOn] = useState(true);
   const [refilling, setRefilling] = useState(false);
   const [menuOpen, setMenuOpen] = useState(false);
-  const [showStats, setShowStats] = useState(true);
+  const [showStats, setShowStats] = useState(window.innerWidth >= 768);
   const garageBgmRef = useRef<HTMLAudioElement | null>(null);
 
   const audioStartedRef = useRef(false);
@@ -237,39 +237,23 @@ const Index = () => {
         </motion.header>
 
         {/* Main */}
-        <main className="flex flex-1 flex-col gap-4 overflow-y-auto px-4 pb-4 sm:pb-8 lg:flex-row lg:items-center lg:justify-between lg:gap-8 lg:px-16">
+        <main className="flex flex-1 flex-col gap-3 overflow-y-auto px-4 pb-24 sm:pb-8 lg:flex-row lg:items-center lg:justify-between lg:gap-8 lg:px-16">
           {/* Left: Car info + car navigation */}
           <motion.div
             initial={{ opacity: 0, y: 20 }}
             animate={{ opacity: 1, y: 0 }}
             transition={{ delay: 0.3 }}
-            className="flex max-w-md flex-col items-center text-center lg:items-start lg:text-left"
+            className="flex w-full max-w-md flex-col items-center text-center lg:items-start lg:text-left"
           >
-            {/* Car name + nav arrows */}
-            <p className="font-display text-xs font-semibold uppercase tracking-[0.3em] text-primary/70">
+            {/* Car name */}
+            <p className="font-display text-[10px] font-semibold uppercase tracking-[0.3em] text-primary/70 sm:text-xs">
               Classe Lendária
             </p>
-            <div className="flex items-center gap-3">
-              <button
-                onClick={goToPrev}
-                disabled={!hasPrev}
-                className="flex h-10 w-10 items-center justify-center rounded-full border border-primary/20 bg-card/30 backdrop-blur-sm transition-all hover:bg-card/60 disabled:opacity-20"
-              >
-                <ChevronLeft className="h-5 w-5 text-primary" />
-              </button>
-              <h2 className="font-display text-3xl font-black uppercase tracking-tight text-foreground sm:text-5xl lg:text-6xl">
-                {selectedCar.name.split(" ")[0]}{" "}
-                <span className="text-primary text-glow-cyan">{selectedCar.name.split(" ").slice(1).join(" ")}</span>
-              </h2>
-              <button
-                onClick={goToNext}
-                disabled={!hasNext}
-                className="flex h-10 w-10 items-center justify-center rounded-full border border-primary/20 bg-card/30 backdrop-blur-sm transition-all hover:bg-card/60 disabled:opacity-20"
-              >
-                <ChevronRight className="h-5 w-5 text-primary" />
-              </button>
-            </div>
-            <p className="mt-2 font-body text-sm text-muted-foreground">
+            <h2 className="font-display text-2xl font-black uppercase tracking-tight text-foreground sm:text-5xl lg:text-6xl">
+              {selectedCar.name.split(" ")[0]}{" "}
+              <span className="text-primary text-glow-cyan">{selectedCar.name.split(" ").slice(1).join(" ")}</span>
+            </h2>
+            <p className="mt-1 font-body text-xs text-muted-foreground sm:text-sm">
               Token {selectedCar.tokenId} · Piloto: {user?.username ?? "—"}
               <span className="ml-2 text-primary/60">
                 ({carIndex + 1}/{state.cars.length})
@@ -281,20 +265,20 @@ const Index = () => {
               initial={{ opacity: 0, y: 10 }}
               animate={{ opacity: 1, y: 0 }}
               transition={{ delay: 0.5 }}
-              className="mt-6 glass rounded-xl p-4 max-w-xs w-full"
+              className="mt-3 glass rounded-xl p-3 max-w-xs w-full sm:mt-6 sm:p-4"
             >
-              <div className="flex items-center justify-between mb-2">
+              <div className="flex items-center justify-between mb-1.5 sm:mb-2">
                 <div className="flex items-center gap-2">
-                  <Star className="h-4 w-4 text-neon-orange" />
-                  <span className="font-display text-sm font-bold text-foreground">
+                  <Star className="h-3.5 w-3.5 text-neon-orange sm:h-4 sm:w-4" />
+                  <span className="font-display text-xs font-bold text-foreground sm:text-sm">
                     Nível {selectedCar.level}
                   </span>
                 </div>
-                <span className="font-display text-xs text-muted-foreground">
+                <span className="font-display text-[10px] text-muted-foreground sm:text-xs">
                   {selectedCar.xp}/{selectedCar.xpToNext} XP
                 </span>
               </div>
-              <div className="relative h-2 w-full overflow-hidden rounded-full bg-muted/50">
+              <div className="relative h-1.5 w-full overflow-hidden rounded-full bg-muted/50 sm:h-2">
                 <motion.div
                   initial={{ width: 0 }}
                   animate={{ width: `${xpPercent}%` }}
@@ -302,7 +286,7 @@ const Index = () => {
                   className="absolute inset-y-0 left-0 rounded-full bg-gradient-to-r from-neon-orange to-yellow-400"
                 />
               </div>
-              <div className="mt-2 flex items-center justify-between text-xs font-body text-muted-foreground">
+              <div className="mt-1.5 flex items-center justify-between text-[10px] font-body text-muted-foreground sm:mt-2 sm:text-xs">
                 <span>{selectedCar.wins}W · {selectedCar.racesCount}R</span>
                 {selectedCar.attributePoints > 0 && (
                   <span className="text-neon-green font-display font-bold animate-pulse">
@@ -346,8 +330,8 @@ const Index = () => {
                   transition={{ duration: 0.3 }}
                   className="overflow-hidden"
                 >
-                  <div className="glass-strong rounded-2xl p-6 shadow-2xl">
-                    <div className="flex items-center justify-between mb-4">
+                  <div className="glass-strong rounded-2xl p-4 shadow-2xl sm:p-6">
+                    <div className="flex items-center justify-between mb-3 sm:mb-4">
                       <h3 className="font-display text-[10px] font-bold uppercase tracking-[0.3em] text-muted-foreground">
                         Atributos
                       </h3>
@@ -359,7 +343,7 @@ const Index = () => {
                       </div>
                     </div>
 
-                    <div className="space-y-3">
+                    <div className="space-y-2 sm:space-y-3">
                       {stats.map((stat, i) => (
                         <div key={stat.label} className="flex items-center gap-2">
                           <div className="flex-1">
@@ -404,9 +388,9 @@ const Index = () => {
                       </motion.div>
                     )}
 
-                    <div className="my-5 h-px w-full bg-gradient-to-r from-transparent via-border to-transparent" />
+                    <div className="my-3 h-px w-full bg-gradient-to-r from-transparent via-border to-transparent sm:my-5" />
 
-                    <div className="flex flex-col gap-3 sm:flex-row">
+                    <div className="flex flex-col gap-2 sm:flex-row sm:gap-3">
                       <GlowButton variant="purple" icon={<Wrench className="h-4 w-4" />} className="flex-1">
                         Peças
                       </GlowButton>
@@ -470,21 +454,42 @@ const Index = () => {
           </motion.div>
         </main>
 
-        {/* Floating car navigation arrows — always visible */}
-        <div className="pointer-events-none absolute inset-0 z-20 flex items-center justify-between px-4 sm:px-8">
+        {/* Floating car navigation arrows — hidden on small screens to avoid overlap */}
+        <div className="pointer-events-none absolute inset-0 z-20 hidden items-center justify-between px-4 sm:flex sm:px-8">
           <button
             onClick={goToPrev}
             disabled={!hasPrev}
-            className="pointer-events-auto flex h-14 w-14 items-center justify-center rounded-full border border-primary/30 bg-card/40 backdrop-blur-xl transition-all hover:bg-card/70 hover:border-primary/60 hover:scale-110 active:scale-90 disabled:opacity-15 sm:h-16 sm:w-16"
+            className="pointer-events-auto flex h-12 w-12 items-center justify-center rounded-full border border-primary/30 bg-card/40 backdrop-blur-xl transition-all hover:bg-card/70 hover:border-primary/60 hover:scale-110 active:scale-90 disabled:opacity-15 sm:h-14 sm:w-14 lg:h-16 lg:w-16"
           >
-            <ChevronLeft className="h-7 w-7 text-primary sm:h-8 sm:w-8" />
+            <ChevronLeft className="h-6 w-6 text-primary sm:h-7 sm:w-7 lg:h-8 lg:w-8" />
           </button>
           <button
             onClick={goToNext}
             disabled={!hasNext}
-            className="pointer-events-auto flex h-14 w-14 items-center justify-center rounded-full border border-primary/30 bg-card/40 backdrop-blur-xl transition-all hover:bg-card/70 hover:border-primary/60 hover:scale-110 active:scale-90 disabled:opacity-15 sm:h-16 sm:w-16"
+            className="pointer-events-auto flex h-12 w-12 items-center justify-center rounded-full border border-primary/30 bg-card/40 backdrop-blur-xl transition-all hover:bg-card/70 hover:border-primary/60 hover:scale-110 active:scale-90 disabled:opacity-15 sm:h-14 sm:w-14 lg:h-16 lg:w-16"
           >
-            <ChevronRight className="h-7 w-7 text-primary sm:h-8 sm:w-8" />
+            <ChevronRight className="h-6 w-6 text-primary sm:h-7 sm:w-7 lg:h-8 lg:w-8" />
+          </button>
+        </div>
+
+        {/* Mobile swipe navigation hint — bottom bar */}
+        <div className="fixed bottom-4 left-0 right-0 z-20 flex items-center justify-center gap-4 sm:hidden">
+          <button
+            onClick={goToPrev}
+            disabled={!hasPrev}
+            className="flex h-10 w-10 items-center justify-center rounded-full border border-primary/30 bg-card/60 backdrop-blur-xl active:scale-90 disabled:opacity-15"
+          >
+            <ChevronLeft className="h-5 w-5 text-primary" />
+          </button>
+          <span className="font-display text-[10px] uppercase tracking-widest text-muted-foreground">
+            {carIndex + 1} / {state.cars.length}
+          </span>
+          <button
+            onClick={goToNext}
+            disabled={!hasNext}
+            className="flex h-10 w-10 items-center justify-center rounded-full border border-primary/30 bg-card/60 backdrop-blur-xl active:scale-90 disabled:opacity-15"
+          >
+            <ChevronRight className="h-5 w-5 text-primary" />
           </button>
         </div>
       </div>
