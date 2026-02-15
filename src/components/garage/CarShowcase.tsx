@@ -3,37 +3,50 @@ import turboCar from "@/assets/turbo-car.png";
 
 const CarShowcase = () => {
   return (
-    <div className="relative flex items-center justify-center">
+    <div className="relative flex flex-col items-center justify-center">
       {/* Ambient glow behind car */}
-      <div className="absolute h-64 w-96 rounded-full bg-primary/10 blur-[100px]" />
-      <div className="absolute h-40 w-64 translate-y-10 rounded-full bg-accent/10 blur-[80px]" />
+      <div className="absolute h-64 w-96 rounded-full bg-primary/15 blur-[120px]" />
 
-      {/* Floating car */}
+      {/* Floating car with blend */}
       <motion.div
-        initial={{ opacity: 0, scale: 0.8, y: 40 }}
+        initial={{ opacity: 0, scale: 0.85, y: 50 }}
         animate={{ opacity: 1, scale: 1, y: 0 }}
         transition={{ duration: 0.8, ease: "easeOut" }}
         className="relative"
       >
-        <motion.img
-          src={turboCar}
-          alt="TurboNitro Racing Car"
-          className="relative z-10 w-full max-w-2xl drop-shadow-[0_20px_60px_hsl(185_80%_55%/0.3)]"
-          animate={{ y: [0, -12, 0] }}
-          transition={{
-            duration: 4,
-            repeat: Infinity,
-            ease: "easeInOut",
-          }}
-        />
-
-        {/* Floor reflection */}
         <motion.div
-          initial={{ opacity: 0 }}
-          animate={{ opacity: 0.3 }}
-          transition={{ delay: 0.5, duration: 1 }}
-          className="absolute -bottom-8 left-1/2 h-20 w-3/4 -translate-x-1/2 rounded-full bg-primary/20 blur-2xl"
-        />
+          animate={{ y: [0, -10, 0] }}
+          transition={{ duration: 4, repeat: Infinity, ease: "easeInOut" }}
+        >
+          <img
+            src={turboCar}
+            alt="TurboNitro Racing Car"
+            className="relative z-10 w-full max-w-2xl"
+            style={{
+              mixBlendMode: "lighten",
+              filter: "drop-shadow(0 0 40px hsl(185 80% 55% / 0.25))",
+            }}
+          />
+        </motion.div>
+
+        {/* Neon platform / ground line */}
+        <div className="relative -mt-4 flex flex-col items-center">
+          {/* Main glow line */}
+          <motion.div
+            initial={{ scaleX: 0, opacity: 0 }}
+            animate={{ scaleX: 1, opacity: 1 }}
+            transition={{ delay: 0.6, duration: 0.8, ease: "easeOut" }}
+            className="h-[2px] w-[80%] rounded-full bg-gradient-to-r from-transparent via-primary to-transparent"
+            style={{ boxShadow: "0 0 20px hsl(185 80% 55% / 0.6), 0 0 60px hsl(185 80% 55% / 0.2)" }}
+          />
+          {/* Reflection pool */}
+          <motion.div
+            initial={{ opacity: 0 }}
+            animate={{ opacity: 1 }}
+            transition={{ delay: 0.8, duration: 1 }}
+            className="mt-1 h-16 w-[70%] rounded-full bg-primary/8 blur-2xl"
+          />
+        </div>
       </motion.div>
     </div>
   );
