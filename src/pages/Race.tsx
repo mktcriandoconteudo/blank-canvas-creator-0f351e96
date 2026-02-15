@@ -215,37 +215,37 @@ const Race = () => {
       transition={{ duration: 0.4 }}
       style={{ background: "#020208" }}
     >
-      {/* ====== LAYER 1: Start video (countdown) ====== */}
-      <div
-        className="absolute inset-0 z-[1]"
-        style={{
-          opacity: raceState === "countdown" ? 1 : 0,
-          transition: "opacity 0.8s ease",
-          pointerEvents: "none",
-        }}
-      >
-        <video
-          src={raceStartVideo}
-          autoPlay
-          loop
-          muted
-          playsInline
-          // @ts-ignore
-          webkit-playsinline="true"
-          className="absolute inset-0 w-full h-full object-cover"
-          style={{ filter: "brightness(0.85) saturate(1.2) contrast(1.1)" }}
-        />
-      </div>
+      {/* ====== LAYER 1: Start video (countdown only) ====== */}
+      {raceState === "countdown" && (
+        <div
+          className="absolute inset-0 z-[1]"
+          style={{ pointerEvents: "none" }}
+        >
+          <video
+            src={raceStartVideo}
+            autoPlay
+            loop
+            muted
+            playsInline
+            // @ts-ignore
+            webkit-playsinline="true"
+            className="absolute inset-0 w-full h-full object-cover"
+            style={{ filter: "brightness(0.85) saturate(1.2) contrast(1.1)" }}
+          />
+        </div>
+      )}
 
-      {/* ====== LAYER 2: Race videos in sequence (during race) ====== */}
-      <RaceVideoPlayer
-        videos={RACE_VIDEOS}
-        finaleVideo={raceState === "finished" ? (victory ? raceVictoryVideo : raceDefeatVideo) : undefined}
-        isActive={raceState !== "countdown"}
-        poster={raceScenePlayer}
-        nitroActive={nitroActive}
-        isRacing={isRacing}
-      />
+      {/* ====== LAYER 2: Race videos (only after countdown) ====== */}
+      {raceState !== "countdown" && (
+        <RaceVideoPlayer
+          videos={RACE_VIDEOS}
+          finaleVideo={raceState === "finished" ? (victory ? raceVictoryVideo : raceDefeatVideo) : undefined}
+          isActive={true}
+          poster={raceScenePlayer}
+          nitroActive={nitroActive}
+          isRacing={isRacing}
+        />
+      )}
 
 
 
