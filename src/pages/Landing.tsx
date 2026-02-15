@@ -1,11 +1,11 @@
-import { motion, useScroll, useTransform } from "framer-motion";
+import { motion, useScroll, useTransform, AnimatePresence } from "framer-motion";
 import ShaderBackground from "@/components/ui/shader-background";
 import { useNavigate } from "react-router-dom";
-import { useRef } from "react";
+import { useRef, useState } from "react";
 import {
   Zap, Trophy, Gauge, Shield, Coins, Fuel, Users, Star,
   ChevronRight, ArrowRight, Sparkles, Car, Wrench, Flag,
-  Twitter, MessageCircle, Globe, Github
+  Twitter, MessageCircle, Globe, Github, Menu, X
 } from "lucide-react";
 import landingHero from "@/assets/landing-hero-v2.jpg";
 import nftCard from "@/assets/nft-card-preview.jpg";
@@ -113,6 +113,7 @@ const RoadmapStep = ({
 /* ═══════════════════════════════════════════ */
 const Landing = () => {
   const navigate = useNavigate();
+  const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
   const heroRef = useRef<HTMLDivElement>(null);
   const { scrollYProgress } = useScroll({ target: heroRef, offset: ["start start", "end start"] });
   const heroY = useTransform(scrollYProgress, [0, 1], [0, 200]);
@@ -139,10 +140,10 @@ const Landing = () => {
             <a href="#roadmap" className="font-display text-xs uppercase tracking-wider text-muted-foreground transition-colors hover:text-primary">Roadmap</a>
             <button onClick={() => navigate("/marketplace")} className="font-display text-xs uppercase tracking-wider text-muted-foreground transition-colors hover:text-primary">Marketplace</button>
           </div>
-          <div className="flex items-center gap-3">
+          <div className="flex items-center gap-2 sm:gap-3">
             <button
               onClick={() => navigate("/auth")}
-              className="rounded-xl border border-primary/30 bg-primary/10 px-4 py-2 font-display text-xs font-bold uppercase tracking-wider text-primary transition-all hover:bg-primary/20 hover:shadow-[0_0_20px_hsl(185_80%_55%/0.2)]"
+              className="hidden rounded-xl border border-primary/30 bg-primary/10 px-4 py-2 font-display text-xs font-bold uppercase tracking-wider text-primary transition-all hover:bg-primary/20 hover:shadow-[0_0_20px_hsl(185_80%_55%/0.2)] sm:block"
             >
               Login
             </button>
@@ -152,8 +153,45 @@ const Landing = () => {
             >
               Jogar
             </button>
+            <button
+              onClick={() => setMobileMenuOpen(!mobileMenuOpen)}
+              className="flex h-9 w-9 items-center justify-center rounded-lg border border-border/30 bg-card/30 text-foreground backdrop-blur-xl sm:hidden"
+            >
+              {mobileMenuOpen ? <X className="h-5 w-5" /> : <Menu className="h-5 w-5" />}
+            </button>
           </div>
         </div>
+
+        {/* Mobile menu */}
+        <AnimatePresence>
+          {mobileMenuOpen && (
+            <motion.div
+              initial={{ height: 0, opacity: 0 }}
+              animate={{ height: "auto", opacity: 1 }}
+              exit={{ height: 0, opacity: 0 }}
+              transition={{ duration: 0.25 }}
+              className="overflow-hidden border-t border-border/10 bg-background/95 backdrop-blur-2xl sm:hidden"
+            >
+              <div className="flex flex-col gap-1 px-4 py-3">
+                {[
+                  { label: "Features", action: () => { document.getElementById("features")?.scrollIntoView({ behavior: "smooth" }); setMobileMenuOpen(false); } },
+                  { label: "NFTs", action: () => { document.getElementById("nft")?.scrollIntoView({ behavior: "smooth" }); setMobileMenuOpen(false); } },
+                  { label: "Roadmap", action: () => { document.getElementById("roadmap")?.scrollIntoView({ behavior: "smooth" }); setMobileMenuOpen(false); } },
+                  { label: "Marketplace", action: () => { navigate("/marketplace"); setMobileMenuOpen(false); } },
+                  { label: "Login", action: () => { navigate("/auth"); setMobileMenuOpen(false); } },
+                ].map((item) => (
+                  <button
+                    key={item.label}
+                    onClick={item.action}
+                    className="rounded-lg px-3 py-2.5 text-left font-display text-sm uppercase tracking-wider text-muted-foreground transition-colors hover:bg-card/50 hover:text-primary"
+                  >
+                    {item.label}
+                  </button>
+                ))}
+              </div>
+            </motion.div>
+          )}
+        </AnimatePresence>
       </motion.nav>
 
       {/* ─── HERO ─── */}
