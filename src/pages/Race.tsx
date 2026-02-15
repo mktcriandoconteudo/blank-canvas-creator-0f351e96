@@ -37,7 +37,7 @@ const Race = () => {
     };
   });
 
-  const [raceState, setRaceState] = useState<"countdown" | "racing" | "finished">("countdown");
+  const [raceState, setRaceState] = useState<"idle" | "countdown" | "racing" | "finished">("idle");
   const [countdown, setCountdown] = useState(3);
   const [playerProgress, setPlayerProgress] = useState(0);
   const [opponentProgress, setOpponentProgress] = useState(0);
@@ -174,7 +174,7 @@ const Race = () => {
       <div
         className="absolute inset-0 z-[1]"
         style={{
-          opacity: raceState === "countdown" ? 1 : 0,
+          opacity: raceState === "countdown" || raceState === "idle" ? 1 : 0,
           transition: "opacity 0.8s ease",
           pointerEvents: "none",
         }}
@@ -195,7 +195,7 @@ const Race = () => {
       <RaceVideoPlayer
         videos={RACE_VIDEOS}
         finaleVideo={raceState === "finished" ? (victory ? raceVictoryVideo : raceDefeatVideo) : undefined}
-        isActive={raceState !== "countdown"}
+        isActive={raceState !== "countdown" && raceState !== "idle"}
         poster={raceScenePlayer}
         nitroActive={nitroActive}
         isRacing={isRacing}
@@ -418,6 +418,34 @@ const Race = () => {
               {playerProgress > opponentProgress ? "OVERTAKE!" : "OVERTAKEN!"}
             </span>
           </motion.div>
+        )}
+      </AnimatePresence>
+
+      {/* ====== Idle: Tap to start ====== */}
+      <AnimatePresence>
+        {raceState === "idle" && (
+          <div
+            className="absolute inset-0 z-[20] flex items-center justify-center cursor-pointer"
+            onClick={() => setRaceState("countdown")}
+          >
+            <div className="absolute inset-0 bg-background/50" />
+            <motion.div
+              initial={{ opacity: 0, y: 20 }}
+              animate={{ opacity: 1, y: 0 }}
+              exit={{ opacity: 0, scale: 0.8 }}
+              className="relative z-10 flex flex-col items-center gap-4"
+            >
+              <motion.span
+                animate={{ scale: [1, 1.05, 1] }}
+                transition={{ duration: 1.5, repeat: Infinity }}
+                className="font-display text-5xl font-black uppercase tracking-widest text-primary"
+                style={{ textShadow: "0 0 40px hsl(185, 80%, 55% / 0.6)" }}
+              >
+                🏁 CORRER
+              </motion.span>
+              <span className="font-body text-sm text-muted-foreground/60">Toque para iniciar</span>
+            </motion.div>
+          </div>
         )}
       </AnimatePresence>
 
