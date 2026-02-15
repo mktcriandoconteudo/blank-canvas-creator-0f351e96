@@ -5,6 +5,7 @@ import { Fuel, Gauge, Wrench, Star, Zap, Volume2, VolumeX } from "lucide-react";
 import SpeedLinesCanvas from "@/components/race/SpeedLinesCanvas";
 import RaceResultModal from "@/components/race/RaceResultModal";
 import RaceVideoPlayer from "@/components/race/RaceVideoPlayer";
+import SimpleVideoPlayer from "@/components/race/SimpleVideoPlayer";
 import { useGameState } from "@/hooks/useGameState";
 
 // Cinematic videos — starting grid + race clips + victory/defeat finales
@@ -242,10 +243,16 @@ const Race = () => {
       transition={{ duration: 0.4 }}
       style={{ background: "#020208" }}
     >
-      {/* Start video removed — race videos play from countdown */}
-
-      {/* ====== Race videos (plays from start) ====== */}
-      {(
+      {/* ====== Race videos ====== */}
+      {carKeyRef.current === "thunder" || (selectedCar?.name ?? "").toLowerCase().startsWith("thunder") ? (
+        <SimpleVideoPlayer
+          raceVideo={raceBattleVideo1}
+          finaleVideo={finaleVideoSrc}
+          isActive={true}
+          nitroActive={nitroActive}
+          isRacing={isRacing}
+        />
+      ) : (
         <RaceVideoPlayer
           videos={RACE_VIDEOS}
           finaleVideo={finaleVideoSrc}
