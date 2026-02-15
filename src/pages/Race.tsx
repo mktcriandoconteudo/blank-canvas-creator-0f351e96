@@ -14,7 +14,7 @@ import raceDefeatVideo from "@/assets/race-defeat-video.mp4";
 import raceStartVideo from "@/assets/race-start-video.mp4";
 import raceScenePlayer from "@/assets/race-scene-main.jpg";
 
-const RACE_VIDEOS = [raceBattleVideo1, raceBattleVideo2];
+const RACE_VIDEOS = [raceBattleVideo1, raceBattleVideo2, raceBattleVideo1];
 
 
 const FINISH_LINE = 100;
