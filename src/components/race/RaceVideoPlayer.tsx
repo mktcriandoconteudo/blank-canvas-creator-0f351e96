@@ -10,13 +10,26 @@ interface RaceVideoPlayerProps {
 }
 
 /**
- * Dual-video crossfade player to avoid static poster flash on mobile.
+ * Dual-video crossfade player for mobile (Android + iOS).
  * Two <video> elements alternate: while one plays, the next is preloaded.
  * On 'ended', the preloaded video starts and the old one loads the next src.
  */
+
+function setupMobileVideo(el: HTMLVideoElement) {
+  el.muted = true;
+  el.volume = 0;
+  el.playsInline = true;
+  el.setAttribute("playsinline", "");
+  el.setAttribute("webkit-playsinline", "");
+  // Android webview / some browsers
+  el.setAttribute("x5-playsinline", "");
+  el.setAttribute("x5-video-player-type", "h5");
+  el.setAttribute("x5-video-player-fullscreen", "false");
+}
+
 const RaceVideoPlayer = ({ videos, finaleVideo, isActive, poster, nitroActive, isRacing }: RaceVideoPlayerProps) => {
   const [playingFinale, setPlayingFinale] = useState(false);
-  const [activeSlot, setActiveSlot] = useState<0 | 1>(0); // which video element is visible
+  const [activeSlot, setActiveSlot] = useState<0 | 1>(0);
   const videoARef = useRef<HTMLVideoElement | null>(null);
   const videoBRef = useRef<HTMLVideoElement | null>(null);
   const finaleRef = useRef<HTMLVideoElement | null>(null);
@@ -31,7 +44,9 @@ const RaceVideoPlayer = ({ videos, finaleVideo, isActive, poster, nitroActive, i
 
     const activeVid = getRef(activeSlot).current;
     if (activeVid) {
+      setupMobileVideo(activeVid);
       activeVid.src = videos[0];
+      activeVid.load();
       activeVid.play().catch(() => {});
     }
 
@@ -39,6 +54,7 @@ const RaceVideoPlayer = ({ videos, finaleVideo, isActive, poster, nitroActive, i
     const nextIndex = videos.length > 1 ? 1 : 0;
     const nextVid = getRef(getNextSlot(activeSlot)).current;
     if (nextVid) {
+      setupMobileVideo(nextVid);
       nextVid.src = videos[nextIndex];
       nextVid.load();
     }
@@ -46,17 +62,39 @@ const RaceVideoPlayer = ({ videos, finaleVideo, isActive, poster, nitroActive, i
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [isActive]);
 
+  // Force play via user gesture (Android Chrome often blocks even muted autoplay)
+  useEffect(() => {
+    if (!isActive || playingFinale) return;
+
+    const tryPlay = () => {
+      const activeVid = getRef(activeSlot).current;
+      if (activeVid && activeVid.paused) {
+        activeVid.play().catch(() => {});
+      }
+    };
+
+    document.addEventListener("touchstart", tryPlay, { once: true });
+    document.addEventListener("click", tryPlay, { once: true });
+
+    return () => {
+      document.removeEventListener("touchstart", tryPlay);
+      document.removeEventListener("click", tryPlay);
+    };
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [isActive, playingFinale]);
+
   // When finale video is set, switch to it
   useEffect(() => {
     if (finaleVideo && !playingFinale) {
       setPlayingFinale(true);
-      // Pause both race videos
       videoARef.current?.pause();
       videoBRef.current?.pause();
 
       const vid = finaleRef.current;
       if (vid) {
+        setupMobileVideo(vid);
         vid.src = finaleVideo;
+        vid.load();
         vid.play().catch(() => {});
       }
     }
@@ -69,13 +107,11 @@ const RaceVideoPlayer = ({ videos, finaleVideo, isActive, poster, nitroActive, i
     const nextSlot = getNextSlot(activeSlot);
     const nextVid = getRef(nextSlot).current;
 
-    // Play the preloaded video immediately (no src change = no flash)
     if (nextVid) {
       nextVid.play().catch(() => {});
     }
     setActiveSlot(nextSlot);
 
-    // Advance index and preload the NEXT video in the now-hidden slot
     const nextIndex = (currentIndexRef.current + 1) % videos.length;
     currentIndexRef.current = nextIndex;
 
@@ -113,8 +149,6 @@ const RaceVideoPlayer = ({ videos, finaleVideo, isActive, poster, nitroActive, i
           ref={videoARef}
           muted
           playsInline
-          // @ts-ignore
-          webkit-playsinline="true"
           preload="auto"
           onEnded={activeSlot === 0 ? handleEnded : undefined}
           style={videoStyle(activeSlot === 0)}
@@ -127,8 +161,6 @@ const RaceVideoPlayer = ({ videos, finaleVideo, isActive, poster, nitroActive, i
           ref={videoBRef}
           muted
           playsInline
-          // @ts-ignore
-          webkit-playsinline="true"
           preload="auto"
           onEnded={activeSlot === 1 ? handleEnded : undefined}
           style={videoStyle(activeSlot === 1)}
@@ -140,8 +172,6 @@ const RaceVideoPlayer = ({ videos, finaleVideo, isActive, poster, nitroActive, i
         ref={finaleRef}
         muted
         playsInline
-        // @ts-ignore
-        webkit-playsinline="true"
         loop
         preload="none"
         className="absolute inset-0 w-full h-full object-cover"
