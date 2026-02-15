@@ -51,8 +51,8 @@ const Race = () => {
   const [nitroActive, setNitroActive] = useState(false);
   const [nitroCharges, setNitroCharges] = useState(3);
   const [bgOffset, setBgOffset] = useState(0);
-  const [soundOn, setSoundOn] = useState(true);
-  const soundOnRef = useRef(true);
+  const [soundOn, setSoundOn] = useState(false);
+  const soundOnRef = useRef(false);
 
   const prevLeader = useRef<"player" | "opponent" | "tie">("tie");
   const finishRaceRef = useRef(finishRace);
@@ -88,12 +88,15 @@ const Race = () => {
     return () => clearTimeout(timer);
   }, [countdown, raceState]);
 
-  // Start both BGMs only when race actually begins
+  // Start both BGMs only when race actually begins (GO!)
   useEffect(() => {
     if (raceState !== "racing") return;
-    if (!soundOnRef.current) return;
 
-    // Race engine BGM
+    // Enable sound when race starts
+    setSoundOn(true);
+    soundOnRef.current = true;
+
+    // Race engine BGM - only plays during racing
     if (!bgmRef.current) {
       const audio = new Audio(raceBgm);
       audio.loop = true;
