@@ -171,7 +171,7 @@ const Landing = () => {
         </motion.div>
 
         {/* Shader plasma lines - top half only */}
-        <div className="absolute inset-x-0 top-0 h-[50%] z-[1] mix-blend-screen">
+        <div className="absolute inset-x-0 top-0 h-[50%] z-[1] mix-blend-screen opacity-60">
           <ShaderBackground />
           <div className="absolute inset-0 bg-gradient-to-t from-black via-transparent to-transparent" />
         </div>
