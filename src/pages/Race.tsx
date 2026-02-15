@@ -6,14 +6,15 @@ import RaceResultModal from "@/components/race/RaceResultModal";
 import RaceVideoPlayer from "@/components/race/RaceVideoPlayer";
 import { useGameState } from "@/hooks/useGameState";
 
-// Cinematic videos — starting grid + 3 race clips in sequence
+// Cinematic videos — starting grid + race clips + victory/defeat finales
 import raceBattleVideo1 from "@/assets/race-battle-video.mp4";
 import raceBattleVideo2 from "@/assets/race-battle-video-2.mp4";
-import raceBattleVideo3 from "@/assets/race-battle-video-3.mp4";
+import raceVictoryVideo from "@/assets/race-battle-video-3.mp4";
+import raceDefeatVideo from "@/assets/race-defeat-video.mp4";
 import raceStartVideo from "@/assets/race-start-video.mp4";
 import raceScenePlayer from "@/assets/race-scene-main.jpg";
 
-const RACE_VIDEOS = [raceBattleVideo1, raceBattleVideo2, raceBattleVideo3];
+const RACE_VIDEOS = [raceBattleVideo1, raceBattleVideo2];
 
 
 const FINISH_LINE = 100;
@@ -159,6 +160,7 @@ const Race = () => {
       {/* ====== LAYER 2: Race videos in sequence (during race) ====== */}
       <RaceVideoPlayer
         videos={RACE_VIDEOS}
+        finaleVideo={raceState === "finished" ? (victory ? raceVictoryVideo : raceDefeatVideo) : undefined}
         isActive={raceState !== "countdown"}
         poster={raceScenePlayer}
         nitroActive={nitroActive}
