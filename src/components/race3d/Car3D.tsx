@@ -1,5 +1,6 @@
 import { useRef, useMemo } from "react";
 import { useFrame } from "@react-three/fiber";
+import { useTexture } from "@react-three/drei";
 import * as THREE from "three";
 
 interface Car3DProps {
@@ -7,188 +8,139 @@ interface Car3DProps {
   color: "cyan" | "red";
   isRacing: boolean;
   nitroActive?: boolean;
+  textureSrc: string;
 }
 
-const Car3D = ({ position, color, isRacing, nitroActive = false }: Car3DProps) => {
+const Car3D = ({ position, color, isRacing, nitroActive = false, textureSrc }: Car3DProps) => {
   const groupRef = useRef<THREE.Group>(null);
   const flameRef = useRef<THREE.Mesh>(null);
+  const flameRef2 = useRef<THREE.Mesh>(null);
 
-  const bodyColor = color === "cyan" ? "hsl(200, 80%, 25%)" : "hsl(0, 70%, 30%)";
-  const accentColor = color === "cyan" ? "hsl(185, 80%, 55%)" : "hsl(0, 70%, 55%)";
+  const texture = useTexture(textureSrc);
+
   const neonColor = color === "cyan" ? "hsl(185, 90%, 60%)" : "hsl(350, 80%, 55%)";
+  const neonHex = color === "cyan" ? "#00d4ff" : "#ff3355";
 
-  const bodyMat = useMemo(() => new THREE.MeshStandardMaterial({
-    color: new THREE.Color(bodyColor),
-    roughness: 0.2,
-    metalness: 0.85,
-  }), [bodyColor]);
+  // Sprite material with transparency
+  const spriteMat = useMemo(() => {
+    const mat = new THREE.MeshBasicMaterial({
+      map: texture,
+      transparent: true,
+      alphaTest: 0.05,
+      side: THREE.DoubleSide,
+      depthWrite: false,
+    });
+    return mat;
+  }, [texture]);
 
-  const accentMat = useMemo(() => new THREE.MeshStandardMaterial({
-    color: new THREE.Color(accentColor),
-    emissive: new THREE.Color(accentColor),
-    emissiveIntensity: 1.5,
-    roughness: 0.3,
-    metalness: 0.5,
-  }), [accentColor]);
-
-  const glassMat = useMemo(() => new THREE.MeshStandardMaterial({
-    color: new THREE.Color("hsl(200, 30%, 15%)"),
-    roughness: 0.05,
-    metalness: 0.9,
-    transparent: true,
-    opacity: 0.7,
-  }), []);
-
-  const headlightMat = useMemo(() => new THREE.MeshStandardMaterial({
-    color: new THREE.Color("hsl(60, 90%, 80%)"),
-    emissive: new THREE.Color("hsl(60, 90%, 80%)"),
-    emissiveIntensity: 3,
-  }), []);
-
-  const taillightMat = useMemo(() => new THREE.MeshStandardMaterial({
-    color: new THREE.Color("hsl(0, 90%, 50%)"),
-    emissive: new THREE.Color("hsl(0, 90%, 50%)"),
-    emissiveIntensity: 3,
-  }), []);
-
-  const nitroFlameMat = useMemo(() => new THREE.MeshStandardMaterial({
-    color: new THREE.Color("hsl(210, 100%, 60%)"),
-    emissive: new THREE.Color("hsl(210, 100%, 70%)"),
+  const flameMat = useMemo(() => new THREE.MeshStandardMaterial({
+    color: new THREE.Color(nitroActive ? "hsl(210, 100%, 60%)" : "hsl(30, 100%, 50%)"),
+    emissive: new THREE.Color(nitroActive ? "hsl(210, 100%, 70%)" : "hsl(30, 100%, 60%)"),
     emissiveIntensity: 5,
     transparent: true,
-    opacity: 0.8,
-  }), []);
+    opacity: 0.85,
+  }), [nitroActive]);
 
   useFrame((state) => {
     if (!groupRef.current) return;
     const t = state.clock.elapsedTime;
 
-    // Subtle side-to-side wobble while racing
+    // Subtle wobble
     if (isRacing) {
-      groupRef.current.rotation.z = Math.sin(t * 8) * 0.01;
-      groupRef.current.position.y = position[1] + Math.sin(t * 12) * 0.01;
+      groupRef.current.position.y = position[1] + Math.sin(t * 10) * 0.015;
+      groupRef.current.position.x = position[0] + Math.sin(t * 6) * 0.03;
     }
 
-    // Nitro flame animation
-    if (flameRef.current) {
-      if (nitroActive) {
-        flameRef.current.visible = true;
-        flameRef.current.scale.z = 1 + Math.sin(t * 30) * 0.5;
-        flameRef.current.scale.x = 0.8 + Math.sin(t * 25) * 0.3;
-      } else {
-        flameRef.current.visible = false;
+    // Flame animation
+    [flameRef, flameRef2].forEach((ref, i) => {
+      if (ref.current) {
+        const show = isRacing;
+        ref.current.visible = show;
+        if (show) {
+          const scale = nitroActive ? 1.5 + Math.sin(t * 30 + i) * 0.5 : 0.4 + Math.sin(t * 15 + i) * 0.2;
+          ref.current.scale.set(0.15 + i * 0.05, scale, 0.15 + i * 0.05);
+          ref.current.material = flameMat;
+        }
       }
-    }
+    });
   });
 
   return (
     <group ref={groupRef} position={position}>
-      {/* Car body - lower chassis */}
-      <mesh material={bodyMat} position={[0, 0.2, 0]} castShadow>
-        <boxGeometry args={[1.8, 0.35, 4.2]} />
+      {/* Car sprite billboard - facing camera */}
+      <mesh
+        material={spriteMat}
+        position={[0, 1.8, 0]}
+      >
+        <planeGeometry args={[5.5, 2.75]} />
       </mesh>
 
-      {/* Car body - upper cabin */}
-      <mesh material={bodyMat} position={[0, 0.5, -0.2]} castShadow>
-        <boxGeometry args={[1.5, 0.3, 2.0]} />
-      </mesh>
-
-      {/* Windshield */}
-      <mesh material={glassMat} position={[0, 0.55, 0.8]}>
-        <boxGeometry args={[1.4, 0.25, 0.5]} />
-      </mesh>
-
-      {/* Rear window */}
-      <mesh material={glassMat} position={[0, 0.55, -1.1]}>
-        <boxGeometry args={[1.4, 0.2, 0.4]} />
-      </mesh>
-
-      {/* Accent stripe */}
-      <mesh material={accentMat} position={[0, 0.39, 0]}>
-        <boxGeometry args={[0.3, 0.02, 4.3]} />
-      </mesh>
-
-      {/* Side skirts */}
-      <mesh material={accentMat} position={[-0.92, 0.12, 0]}>
-        <boxGeometry args={[0.05, 0.1, 3.8]} />
-      </mesh>
-      <mesh material={accentMat} position={[0.92, 0.12, 0]}>
-        <boxGeometry args={[0.05, 0.1, 3.8]} />
-      </mesh>
-
-      {/* Spoiler */}
-      <mesh material={accentMat} position={[0, 0.65, -2.0]}>
-        <boxGeometry args={[1.8, 0.05, 0.3]} />
-      </mesh>
-      <mesh material={bodyMat} position={[-0.6, 0.5, -1.9]}>
-        <boxGeometry args={[0.08, 0.3, 0.15]} />
-      </mesh>
-      <mesh material={bodyMat} position={[0.6, 0.5, -1.9]}>
-        <boxGeometry args={[0.08, 0.3, 0.15]} />
-      </mesh>
-
-      {/* Wheels */}
-      {[[-0.85, 0.15, 1.3], [0.85, 0.15, 1.3], [-0.85, 0.15, -1.3], [0.85, 0.15, -1.3]].map((pos, i) => (
-        <mesh key={`wheel-${i}`} position={pos as [number, number, number]} rotation={[0, 0, Math.PI / 2]}>
-          <cylinderGeometry args={[0.18, 0.18, 0.2, 12]} />
-          <meshStandardMaterial color="hsl(0, 0%, 15%)" roughness={0.6} metalness={0.3} />
-        </mesh>
-      ))}
-
-      {/* Headlights */}
-      <mesh material={headlightMat} position={[-0.6, 0.25, 2.12]}>
-        <boxGeometry args={[0.35, 0.12, 0.05]} />
-      </mesh>
-      <mesh material={headlightMat} position={[0.6, 0.25, 2.12]}>
-        <boxGeometry args={[0.35, 0.12, 0.05]} />
-      </mesh>
-
-      {/* Taillights */}
-      <mesh material={taillightMat} position={[-0.65, 0.3, -2.12]}>
-        <boxGeometry args={[0.4, 0.08, 0.05]} />
-      </mesh>
-      <mesh material={taillightMat} position={[0.65, 0.3, -2.12]}>
-        <boxGeometry args={[0.4, 0.08, 0.05]} />
-      </mesh>
-
-      {/* Underglow neon */}
+      {/* Underglow light on asphalt */}
       <pointLight
-        position={[0, 0.05, 0]}
-        color={neonColor}
-        intensity={1.2}
-        distance={4}
+        position={[0, 0.1, 0]}
+        color={neonHex}
+        intensity={2}
+        distance={6}
+        decay={2}
       />
 
-      {/* Headlight cone */}
+      {/* Headlight projection forward */}
       <spotLight
-        position={[0, 0.3, 2.5]}
-        target-position={[0, 0, 10]}
-        color="hsl(50, 80%, 80%)"
-        intensity={2}
-        distance={15}
-        angle={0.5}
-        penumbra={0.5}
+        position={[0, 0.5, 3]}
+        color="hsl(50, 80%, 85%)"
+        intensity={3}
+        distance={20}
+        angle={0.4}
+        penumbra={0.6}
+        castShadow={false}
       />
 
       {/* Taillight glow */}
       <pointLight
-        position={[0, 0.3, -2.2]}
-        color="hsl(0, 90%, 50%)"
-        intensity={1}
-        distance={3}
+        position={[0, 0.8, -1.5]}
+        color={color === "cyan" ? "#00aaff" : "#ff2200"}
+        intensity={1.5}
+        distance={4}
       />
 
-      {/* Nitro flame */}
-      <mesh ref={flameRef} material={nitroFlameMat} position={[0, 0.2, -2.8]} visible={false}>
-        <coneGeometry args={[0.3, 1.5, 8]} />
-      </mesh>
-      {nitroActive && (
-        <pointLight
-          position={[0, 0.2, -3.5]}
-          color="hsl(210, 100%, 70%)"
-          intensity={4}
-          distance={6}
+      {/* Exhaust flames */}
+      <mesh ref={flameRef} position={[-0.4, 0.4, -2]} rotation={[Math.PI / 2, 0, 0]}>
+        <coneGeometry args={[0.15, 1, 6]} />
+        <meshStandardMaterial
+          color="hsl(30, 100%, 50%)"
+          emissive="hsl(30, 100%, 60%)"
+          emissiveIntensity={3}
+          transparent
+          opacity={0.8}
         />
+      </mesh>
+      <mesh ref={flameRef2} position={[0.4, 0.4, -2]} rotation={[Math.PI / 2, 0, 0]}>
+        <coneGeometry args={[0.15, 1, 6]} />
+        <meshStandardMaterial
+          color="hsl(30, 100%, 50%)"
+          emissive="hsl(30, 100%, 60%)"
+          emissiveIntensity={3}
+          transparent
+          opacity={0.8}
+        />
+      </mesh>
+
+      {/* Nitro boost intense light */}
+      {nitroActive && (
+        <>
+          <pointLight
+            position={[0, 0.5, -3]}
+            color="#4488ff"
+            intensity={8}
+            distance={10}
+          />
+          <pointLight
+            position={[0, 0.2, -1]}
+            color="#00ccff"
+            intensity={3}
+            distance={5}
+          />
+        </>
       )}
     </group>
   );

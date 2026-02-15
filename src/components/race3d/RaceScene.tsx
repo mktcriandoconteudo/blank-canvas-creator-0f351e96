@@ -1,10 +1,13 @@
 import { Canvas } from "@react-three/fiber";
-import { Environment } from "@react-three/drei";
+import { Environment, Preload } from "@react-three/drei";
+import { Suspense } from "react";
 import InfiniteRoad from "./InfiniteRoad";
 import Car3D from "./Car3D";
 import CyberpunkCity from "./CyberpunkCity";
 import ChaseCamera from "./ChaseCamera";
 import PostEffects from "./PostEffects";
+import carPlayerImg from "@/assets/car-player-3d.png";
+import carOpponentImg from "@/assets/car-opponent-3d.png";
 
 interface RaceSceneProps {
   playerProgress: number;
@@ -22,15 +25,12 @@ const RaceScene = ({
   nitroActive,
 }: RaceSceneProps) => {
   const isRacing = raceState === "racing";
-  const speed = isRacing ? 15 + (playerProgress / 100) * 10 : 0;
+  const speed = isRacing ? 18 + (playerProgress / 100) * 15 : raceState === "finished" ? 3 : 0;
 
-  // Cars stay in scene, road moves.
-  // Player in right lane, opponent in left
-  const playerX = 2.5;
-  const opponentX = -2.5;
-
-  // Relative z offset based on who's ahead
-  const diff = (playerProgress - opponentProgress) * 0.15;
+  // Cars stay in place, road moves
+  const playerX = 2.8;
+  const opponentX = -2.8;
+  const diff = (playerProgress - opponentProgress) * 0.2;
   const playerZ = 0;
   const opponentZ = -diff;
 
@@ -40,59 +40,66 @@ const RaceScene = ({
       dpr={[1, 1.5]}
       gl={{
         antialias: true,
-        toneMapping: 3, // ACESFilmic
-        toneMappingExposure: 0.8,
+        toneMapping: 3,
+        toneMappingExposure: 0.7,
+        powerPreference: "high-performance",
       }}
-      camera={{ fov: 65, near: 0.1, far: 300, position: [0, 6, -12] }}
-      style={{ background: "hsl(240, 15%, 3%)" }}
+      camera={{ fov: 65, near: 0.1, far: 400, position: [0, 6, -12] }}
+      style={{ background: "#030308" }}
     >
-      {/* Ambient light (very dim) */}
-      <ambientLight intensity={0.08} color="hsl(240, 20%, 30%)" />
+      <Suspense fallback={null}>
+        {/* Minimal ambient */}
+        <ambientLight intensity={0.05} color="#1a1a3a" />
 
-      {/* Directional moonlight */}
-      <directionalLight
-        position={[10, 20, 10]}
-        intensity={0.15}
-        color="hsl(220, 30%, 70%)"
-        castShadow
-        shadow-mapSize-width={1024}
-        shadow-mapSize-height={1024}
-      />
+        {/* Moonlight */}
+        <directionalLight
+          position={[15, 30, 20]}
+          intensity={0.12}
+          color="#4466aa"
+          castShadow
+          shadow-mapSize-width={2048}
+          shadow-mapSize-height={2048}
+        />
 
-      {/* Chase camera */}
-      <ChaseCamera
-        playerZ={playerZ}
-        playerX={playerX}
-        shaking={cameraShake}
-        nitroActive={nitroActive}
-      />
+        {/* Camera */}
+        <ChaseCamera
+          playerZ={playerZ}
+          playerX={playerX}
+          shaking={cameraShake}
+          nitroActive={nitroActive}
+        />
 
-      {/* Road */}
-      <InfiniteRoad speed={speed} />
+        {/* Road */}
+        <InfiniteRoad speed={speed} />
 
-      {/* Player car */}
-      <Car3D
-        position={[playerX, 0, playerZ]}
-        color="cyan"
-        isRacing={isRacing}
-        nitroActive={nitroActive}
-      />
+        {/* Player car */}
+        <Car3D
+          position={[playerX, 0, playerZ]}
+          color="cyan"
+          isRacing={isRacing}
+          nitroActive={nitroActive}
+          textureSrc={carPlayerImg}
+        />
 
-      {/* Opponent car */}
-      <Car3D
-        position={[opponentX, 0, opponentZ]}
-        color="red"
-        isRacing={isRacing}
-      />
+        {/* Opponent car */}
+        <Car3D
+          position={[opponentX, 0, opponentZ]}
+          color="red"
+          isRacing={isRacing}
+          textureSrc={carOpponentImg}
+        />
 
-      {/* City backdrop */}
-      <CyberpunkCity />
+        {/* City */}
+        <CyberpunkCity />
 
-      {/* Environment for reflections */}
-      <Environment preset="night" />
+        {/* Environment reflections */}
+        <Environment preset="night" />
 
-      {/* Post-processing */}
-      <PostEffects nitroActive={nitroActive} />
+        {/* Post-processing */}
+        <PostEffects nitroActive={nitroActive} />
+
+        <Preload all />
+      </Suspense>
     </Canvas>
   );
 };
