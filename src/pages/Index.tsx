@@ -213,36 +213,30 @@ const Index = () => {
               Classe Lendária
             </p>
             <div className="flex items-center gap-3">
-              {multiCar && (
-                <button
-                  onClick={goToPrev}
-                  disabled={!hasPrev}
-                  className="flex h-10 w-10 items-center justify-center rounded-full border border-primary/20 bg-card/30 backdrop-blur-sm transition-all hover:bg-card/60 disabled:opacity-20"
-                >
-                  <ChevronLeft className="h-5 w-5 text-primary" />
-                </button>
-              )}
+              <button
+                onClick={goToPrev}
+                disabled={!hasPrev}
+                className="flex h-10 w-10 items-center justify-center rounded-full border border-primary/20 bg-card/30 backdrop-blur-sm transition-all hover:bg-card/60 disabled:opacity-20"
+              >
+                <ChevronLeft className="h-5 w-5 text-primary" />
+              </button>
               <h2 className="font-display text-3xl font-black uppercase tracking-tight text-foreground sm:text-5xl lg:text-6xl">
                 {selectedCar.name.split(" ")[0]}{" "}
                 <span className="text-primary text-glow-cyan">{selectedCar.name.split(" ").slice(1).join(" ")}</span>
               </h2>
-              {multiCar && (
-                <button
-                  onClick={goToNext}
-                  disabled={!hasNext}
-                  className="flex h-10 w-10 items-center justify-center rounded-full border border-primary/20 bg-card/30 backdrop-blur-sm transition-all hover:bg-card/60 disabled:opacity-20"
-                >
-                  <ChevronRight className="h-5 w-5 text-primary" />
-                </button>
-              )}
+              <button
+                onClick={goToNext}
+                disabled={!hasNext}
+                className="flex h-10 w-10 items-center justify-center rounded-full border border-primary/20 bg-card/30 backdrop-blur-sm transition-all hover:bg-card/60 disabled:opacity-20"
+              >
+                <ChevronRight className="h-5 w-5 text-primary" />
+              </button>
             </div>
             <p className="mt-2 font-body text-sm text-muted-foreground">
               Token {selectedCar.tokenId} · Piloto: {user?.username ?? "—"}
-              {multiCar && (
-                <span className="ml-2 text-primary/60">
-                  ({carIndex + 1}/{state.cars.length})
-                </span>
-              )}
+              <span className="ml-2 text-primary/60">
+                ({carIndex + 1}/{state.cars.length})
+              </span>
             </p>
 
             {/* XP / Level badge */}
