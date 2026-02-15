@@ -215,7 +215,7 @@ const Race = () => {
       
       const result = finishRaceRef.current(won);
       setXpResult(result);
-      setTimeout(() => setShowResult(true), 5500);
+      setTimeout(() => setShowResult(true), isThunder ? 10000 : 5500);
     }
   }, [playerProgress, opponentProgress, raceState]);
 
