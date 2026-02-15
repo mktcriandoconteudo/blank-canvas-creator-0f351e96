@@ -106,31 +106,37 @@ const Race = () => {
     return () => clearTimeout(timer);
   }, [countdown, raceState]);
 
-  // Start both BGMs only when race actually begins (GO!)
+  // Start bassloom-phantom-skid when race begins (persists after finish)
   useEffect(() => {
     if (raceState !== "racing") return;
-
-    // Enable sound when race starts
     setSoundOn(true);
     soundOnRef.current = true;
 
-    // bassloom-phantom-skid — plays during race and continues after finish
-    if (!bgmRef.current) {
-      const audio = new Audio(raceBgm);
-      audio.loop = true;
-      audio.volume = 0.4;
-      bgmRef.current = audio;
-      audio.play().catch(() => {});
-    }
+    const bgmAudio = new Audio(raceBgm);
+    bgmAudio.loop = true;
+    bgmAudio.volume = 0.4;
+    bgmRef.current = bgmAudio;
+    bgmAudio.play().catch(() => {});
+    // NO cleanup — bassloom persists through finish, cleaned on unmount
+  }, [raceState]);
 
-    // karlosdearma — only plays during racing, stops at finish
-    if (!bgmLoopRef.current) {
-      const audio = new Audio(raceBgmLoop);
-      audio.loop = true;
-      audio.volume = 0.35;
-      bgmLoopRef.current = audio;
-      audio.play().catch(() => {});
-    }
+  // Start karlosdearma ONLY during racing — cleanup kills it on state change
+  useEffect(() => {
+    if (raceState !== "racing") return;
+
+    const loopAudio = new Audio(raceBgmLoop);
+    loopAudio.loop = true;
+    loopAudio.volume = 0.35;
+    bgmLoopRef.current = loopAudio;
+    loopAudio.play().catch(() => {});
+    console.log("[karlosdearma] STARTED");
+
+    return () => {
+      console.log("[karlosdearma] CLEANUP — stopping");
+      loopAudio.pause();
+      loopAudio.src = "";
+      bgmLoopRef.current = null;
+    };
   }, [raceState]);
 
   // Race tick + parallax
