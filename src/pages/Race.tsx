@@ -36,6 +36,9 @@ const Race = () => {
   const navigate = useNavigate();
   const { state, selectedCar, finishRace, loading } = useGameState();
   const playerStats = selectedCar ?? { speed: 70, acceleration: 60, engineHealth: 100, name: "Unknown", level: 1 };
+  
+  // Debug: log which car is actually selected
+  console.log("[RACE MOUNT]", { selectedCarId: state.selectedCarId, selectedCarName: selectedCar?.name, allCars: state.cars.map(c => c.id + "=" + c.name) });
 
   const noFuel = !loading && state.fuelTanks <= 0;
 
