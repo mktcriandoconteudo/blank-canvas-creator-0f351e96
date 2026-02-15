@@ -1,5 +1,6 @@
 import { motion } from "framer-motion";
 import { Zap, Gauge, Wind, Shield, Wrench, Flag } from "lucide-react";
+import { useNavigate } from "react-router-dom";
 import garageScene from "@/assets/garage-scene.jpg";
 import StatBar from "@/components/garage/StatBar";
 import GlowButton from "@/components/garage/GlowButton";
@@ -12,6 +13,8 @@ const carStats = [
 ];
 
 const Index = () => {
+  const navigate = useNavigate();
+
   return (
     <div className="relative min-h-screen overflow-hidden bg-background">
       {/* Full scene background — car already in garage */}
@@ -93,7 +96,7 @@ const Index = () => {
                 <GlowButton variant="purple" icon={<Wrench className="h-4 w-4" />} className="flex-1">
                   Equipar Peças
                 </GlowButton>
-                <GlowButton variant="cyan" icon={<Flag className="h-4 w-4" />} className="flex-1">
+                <GlowButton variant="cyan" icon={<Flag className="h-4 w-4" />} className="flex-1" onClick={() => navigate("/race")}>
                   Iniciar Corrida
                 </GlowButton>
               </div>
