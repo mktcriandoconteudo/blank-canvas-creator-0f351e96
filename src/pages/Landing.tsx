@@ -6,11 +6,10 @@ import {
   ChevronRight, ArrowRight, Sparkles, Car, Wrench, Flag,
   Twitter, MessageCircle, Globe, Github
 } from "lucide-react";
-import landingHero from "@/assets/landing-hero.jpg";
+import landingHero from "@/assets/landing-hero-v2.jpg";
 import nftCard from "@/assets/nft-card-preview.jpg";
 import featureGarage from "@/assets/feature-garage.jpg";
 import featureRace from "@/assets/feature-race.jpg";
-import turboCarImg from "@/assets/turbo-car.png";
 
 /* ─── Animated counter ─── */
 const AnimatedNumber = ({ value, suffix = "" }: { value: number; suffix?: string }) => (
@@ -156,73 +155,75 @@ const Landing = () => {
       </motion.nav>
 
       {/* ─── HERO ─── */}
-      <section ref={heroRef} className="relative flex min-h-screen items-center justify-center overflow-hidden pt-16">
+      <section ref={heroRef} className="relative flex min-h-screen items-end overflow-hidden pb-24 pt-16 sm:items-center sm:pb-0">
         <motion.div style={{ y: heroY, scale: heroScale }} className="absolute inset-0">
-          <img src={landingHero} alt="TurboNitro Racing" className="h-full w-full object-cover" />
-          <div className="absolute inset-0 bg-gradient-to-b from-background/70 via-background/40 to-background" />
-          <div className="absolute inset-0 bg-gradient-to-r from-background/80 via-transparent to-background/80" />
+          <img src={landingHero} alt="TurboNitro Racing" className="h-full w-full object-cover object-center" />
+          <div className="absolute inset-0 bg-gradient-to-t from-background via-background/60 to-background/30" />
+          <div className="absolute inset-0 bg-gradient-to-r from-background/90 via-background/30 to-transparent" />
         </motion.div>
 
-        <motion.div style={{ opacity: heroOpacity }} className="relative z-10 mx-auto max-w-4xl px-4 text-center">
-          <motion.div
-            initial={{ opacity: 0, y: 30 }}
-            animate={{ opacity: 1, y: 0 }}
-            transition={{ delay: 0.2, duration: 0.8 }}
-          >
-            <p className="mb-4 font-display text-xs font-semibold uppercase tracking-[0.5em] text-primary/80">
-              NFT Racing Game · Play to Earn
-            </p>
-            <h1 className="font-display text-4xl font-black uppercase leading-tight tracking-tight sm:text-6xl lg:text-8xl">
-              <span className="text-foreground">Acelere.</span>{" "}
-              <span className="text-primary text-glow-cyan">Conquiste.</span>{" "}
-              <span className="text-neon-purple">Domine.</span>
-            </h1>
-            <p className="mx-auto mt-6 max-w-xl font-body text-base leading-relaxed text-muted-foreground sm:text-lg">
-              Colecione carros NFT lendários, evolua seus atributos, dispute corridas PvP e ganhe Nitro Points. 
-              Cada corrida é uma batalha pela supremacia nas pistas.
-            </p>
-          </motion.div>
-
-          <motion.div
-            initial={{ opacity: 0, y: 20 }}
-            animate={{ opacity: 1, y: 0 }}
-            transition={{ delay: 0.6, duration: 0.6 }}
-            className="mt-8 flex flex-col items-center gap-4 sm:flex-row sm:justify-center"
-          >
-            <button
-              onClick={() => navigate("/auth")}
-              className="group flex items-center gap-2 rounded-2xl bg-primary px-8 py-4 font-display text-sm font-bold uppercase tracking-widest text-primary-foreground transition-all hover:brightness-110 glow-cyan-strong"
+        <motion.div style={{ opacity: heroOpacity }} className="relative z-10 mx-auto w-full max-w-7xl px-4 sm:px-8">
+          <div className="max-w-2xl">
+            <motion.div
+              initial={{ opacity: 0, y: 30 }}
+              animate={{ opacity: 1, y: 0 }}
+              transition={{ delay: 0.2, duration: 0.8 }}
             >
-              <Zap className="h-5 w-5" />
-              Começar Agora
-              <ArrowRight className="h-4 w-4 transition-transform group-hover:translate-x-1" />
-            </button>
-            <button
-              onClick={() => document.getElementById("features")?.scrollIntoView({ behavior: "smooth" })}
-              className="flex items-center gap-2 rounded-2xl border border-border/30 bg-card/30 px-8 py-4 font-display text-sm font-bold uppercase tracking-widest text-foreground backdrop-blur-xl transition-all hover:border-primary/30 hover:bg-card/50"
-            >
-              Saiba Mais
-            </button>
-          </motion.div>
-
-          {/* Floating stats badges */}
-          <motion.div
-            initial={{ opacity: 0 }}
-            animate={{ opacity: 1 }}
-            transition={{ delay: 1, duration: 0.8 }}
-            className="mt-12 flex flex-wrap justify-center gap-4"
-          >
-            {[
-              { icon: <Users className="h-4 w-4" />, label: "2.5K+ Pilotos" },
-              { icon: <Car className="h-4 w-4" />, label: "10K+ NFTs" },
-              { icon: <Trophy className="h-4 w-4" />, label: "50K+ Corridas" },
-            ].map((badge, i) => (
-              <div key={i} className="flex items-center gap-2 rounded-full border border-border/20 bg-card/30 px-4 py-2 backdrop-blur-xl">
-                <span className="text-primary">{badge.icon}</span>
-                <span className="font-display text-[10px] uppercase tracking-wider text-muted-foreground">{badge.label}</span>
+              <div className="mb-5 inline-flex items-center gap-2 rounded-full border border-primary/20 bg-primary/5 px-4 py-1.5 backdrop-blur-xl">
+                <div className="h-1.5 w-1.5 animate-pulse rounded-full bg-primary" />
+                <span className="font-display text-[10px] uppercase tracking-[0.3em] text-primary">Play to Earn · Live</span>
               </div>
-            ))}
-          </motion.div>
+              <h1 className="font-display text-4xl font-black uppercase leading-[0.95] tracking-tight text-foreground sm:text-6xl lg:text-7xl">
+                O Futuro das{" "}
+                <span className="text-primary text-glow-cyan">Corridas</span>{" "}
+                é <span className="text-accent">NFT</span>
+              </h1>
+              <p className="mt-6 max-w-lg font-body text-base leading-relaxed text-muted-foreground sm:text-lg">
+                Colecione carros lendários, evolua atributos, dispute corridas PvP e acumule Nitro Points. Cada corrida é uma batalha pela supremacia.
+              </p>
+            </motion.div>
+
+            <motion.div
+              initial={{ opacity: 0, y: 20 }}
+              animate={{ opacity: 1, y: 0 }}
+              transition={{ delay: 0.6, duration: 0.6 }}
+              className="mt-8 flex flex-col gap-4 sm:flex-row"
+            >
+              <button
+                onClick={() => navigate("/auth")}
+                className="group flex items-center gap-2 rounded-2xl bg-primary px-8 py-4 font-display text-sm font-bold uppercase tracking-widest text-primary-foreground transition-all hover:brightness-110 glow-cyan-strong"
+              >
+                <Zap className="h-5 w-5" />
+                Começar Agora
+                <ArrowRight className="h-4 w-4 transition-transform group-hover:translate-x-1" />
+              </button>
+              <button
+                onClick={() => document.getElementById("features")?.scrollIntoView({ behavior: "smooth" })}
+                className="flex items-center gap-2 rounded-2xl border border-border/30 bg-card/30 px-8 py-4 font-display text-sm font-bold uppercase tracking-widest text-foreground backdrop-blur-xl transition-all hover:border-primary/30 hover:bg-card/50"
+              >
+                Saiba Mais
+              </button>
+            </motion.div>
+
+            {/* Floating stats badges */}
+            <motion.div
+              initial={{ opacity: 0 }}
+              animate={{ opacity: 1 }}
+              transition={{ delay: 1, duration: 0.8 }}
+              className="mt-10 flex flex-wrap gap-3"
+            >
+              {[
+                { icon: <Users className="h-4 w-4" />, label: "2.5K+ Pilotos" },
+                { icon: <Car className="h-4 w-4" />, label: "10K+ NFTs" },
+                { icon: <Trophy className="h-4 w-4" />, label: "50K+ Corridas" },
+              ].map((badge, i) => (
+                <div key={i} className="flex items-center gap-2 rounded-full border border-border/20 bg-card/30 px-4 py-2 backdrop-blur-xl">
+                  <span className="text-primary">{badge.icon}</span>
+                  <span className="font-display text-[10px] uppercase tracking-wider text-muted-foreground">{badge.label}</span>
+                </div>
+              ))}
+            </motion.div>
+          </div>
         </motion.div>
 
         {/* Scroll indicator */}
