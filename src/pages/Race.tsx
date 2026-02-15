@@ -186,13 +186,17 @@ const Race = () => {
 
   const toggleSound = useCallback(() => {
     const next = !soundOnRef.current;
+    console.log("[toggleSound] called, current:", soundOnRef.current, "next:", next, "raceState:", raceState, "bgmLoop:", !!bgmLoopRef.current, "bgm:", !!bgmRef.current);
     setSoundOn(next);
     soundOnRef.current = next;
     if (!next) {
       if (bgmRef.current) { bgmRef.current.pause(); }
       if (bgmLoopRef.current) { bgmLoopRef.current.pause(); }
     } else {
-      if (bgmLoopRef.current) { bgmLoopRef.current.play().catch(() => {}); }
+      if (bgmLoopRef.current) {
+        console.log("[toggleSound] playing bgmLoop, paused:", bgmLoopRef.current.paused);
+        bgmLoopRef.current.play().catch((e) => console.error("[toggleSound] bgmLoop play error:", e));
+      }
       if (raceState === "racing" && bgmRef.current) { bgmRef.current.play().catch(() => {}); }
     }
   }, [raceState]);
