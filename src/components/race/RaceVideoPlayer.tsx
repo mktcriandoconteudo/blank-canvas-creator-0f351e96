@@ -10,31 +10,19 @@ interface RaceVideoPlayerProps {
 }
 
 const RaceVideoPlayer = ({ videos, finaleVideo, isActive, poster, nitroActive, isRacing }: RaceVideoPlayerProps) => {
-  const [currentIndex, setCurrentIndex] = useState(0);
   const [playingFinale, setPlayingFinale] = useState(false);
-  const videoRef = useRef<HTMLVideoElement>(null);
-  const finaleRef = useRef<HTMLVideoElement>(null);
-  const hasStarted = useRef(false);
+  const videoRef = useRef<HTMLVideoElement | null>(null);
+  const finaleRef = useRef<HTMLVideoElement | null>(null);
+  const currentIndexRef = useRef(0);
 
-  // Start first video once when active
+  // Start playing race video when active
   useEffect(() => {
-    if (!isActive || playingFinale || hasStarted.current) return;
+    if (!isActive || playingFinale) return;
     const vid = videoRef.current;
     if (vid) {
-      hasStarted.current = true;
       vid.play().catch(() => {});
     }
   }, [isActive, playingFinale]);
-
-  // When index changes (after first video ends), swap src and play without load()
-  useEffect(() => {
-    if (!isActive || playingFinale || !hasStarted.current) return;
-    const vid = videoRef.current;
-    if (vid && vid.src !== videos[currentIndex]) {
-      vid.src = videos[currentIndex];
-      vid.play().catch(() => {});
-    }
-  }, [currentIndex, isActive, playingFinale, videos]);
 
   // When finale video is set, switch to it
   useEffect(() => {
@@ -50,10 +38,17 @@ const RaceVideoPlayer = ({ videos, finaleVideo, isActive, poster, nitroActive, i
     }
   }, [finaleVideo, playingFinale]);
 
+  // When current race video ends, advance to next one
   const handleEnded = useCallback(() => {
     if (playingFinale) return;
-    setCurrentIndex((prev) => (prev + 1) % videos.length);
-  }, [videos.length, playingFinale]);
+    const nextIndex = (currentIndexRef.current + 1) % videos.length;
+    currentIndexRef.current = nextIndex;
+    const vid = videoRef.current;
+    if (vid) {
+      vid.src = videos[nextIndex];
+      vid.play().catch(() => {});
+    }
+  }, [videos, playingFinale]);
 
   return (
     <div
@@ -63,6 +58,7 @@ const RaceVideoPlayer = ({ videos, finaleVideo, isActive, poster, nitroActive, i
         transition: "opacity 0.8s ease",
       }}
     >
+      {/* Race video — starts with first video, advances on end */}
       {!playingFinale && (
         <video
           ref={videoRef}
@@ -83,6 +79,7 @@ const RaceVideoPlayer = ({ videos, finaleVideo, isActive, poster, nitroActive, i
         />
       )}
 
+      {/* Finale video (victory or defeat) */}
       <video
         ref={finaleRef}
         muted
