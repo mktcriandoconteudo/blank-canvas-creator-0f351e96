@@ -79,6 +79,9 @@ const Race = () => {
       console.log("[RACE] carKey locked:", key);
     }
   }, [selectedCar?.name]);
+  
+  // Check if current car is Thunder Bolt
+  const isThunder = carKeyRef.current === "thunder" || (selectedCar?.name ?? "").toLowerCase().startsWith("thunder");
   const [soundOn, setSoundOn] = useState(false);
   const soundOnRef = useRef(false);
 
@@ -131,6 +134,23 @@ const Race = () => {
     return () => clearTimeout(timer);
   }, [countdown, raceState, noFuel]);
 
+  // Thunder Bolt: force race to end at exactly 10 seconds
+  useEffect(() => {
+    if (raceState !== "racing" || !isThunder) return;
+    const timer = setTimeout(() => {
+      setRaceState("finished");
+      setNitroActive(false);
+      setPlayerProgress(FINISH_LINE);
+      setOpponentProgress(preWin ? FINISH_LINE * 0.9 : FINISH_LINE);
+      setVictory(preWin);
+      console.log("[THUNDER] Race ended at 10s, won:", preWin);
+      const result = finishRaceRef.current(preWin);
+      setXpResult(result);
+      setTimeout(() => setShowResult(true), 500);
+    }, 10000);
+    return () => clearTimeout(timer);
+  }, [raceState, isThunder]);
+
   // Start BGM when race begins — persists through finish, cleaned on unmount
   useEffect(() => {
     if (raceState !== "racing") return;
@@ -182,8 +202,7 @@ const Race = () => {
     prevLeader.current = cur;
   }, [playerProgress, opponentProgress, raceState]);
 
-  // Check if current car is Thunder Bolt
-  const isThunder = carKeyRef.current === "thunder" || (selectedCar?.name ?? "").toLowerCase().startsWith("thunder");
+  // isThunder declared above after carKeyRef
 
   // Detect finish
   useEffect(() => {
