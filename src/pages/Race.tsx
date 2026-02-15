@@ -306,24 +306,24 @@ const Race = () => {
         initial={{ opacity: 0, x: -30 }}
         animate={{ opacity: 1, x: 0 }}
         transition={{ delay: 0.3 }}
-        className="absolute left-5 top-[10%] z-[10]"
+        className="absolute left-3 top-[8%] z-[10] sm:left-5 sm:top-[10%]"
       >
-        <div className="rounded-xl border border-primary/15 bg-background/15 px-4 py-2.5 backdrop-blur-xl">
-          <h1 className="font-display text-xs font-black uppercase tracking-[0.3em] text-primary text-glow-cyan">
+        <div className="rounded-xl border border-primary/15 bg-background/15 px-3 py-2 backdrop-blur-xl sm:px-4 sm:py-2.5">
+          <h1 className="font-display text-[10px] font-black uppercase tracking-[0.3em] text-primary text-glow-cyan sm:text-xs">
             TurboNitro
           </h1>
-          <div className="mt-1.5 flex items-center gap-3">
+          <div className="mt-1 flex items-center gap-2 sm:mt-1.5 sm:gap-3">
             <div className="flex items-center gap-1">
               <Star className="h-3 w-3 text-neon-orange" />
-              <span className="font-display text-[10px] text-foreground/70">Lv.{selectedCar?.level ?? 1}</span>
+              <span className="font-display text-[9px] text-foreground/70 sm:text-[10px]">Lv.{selectedCar?.level ?? 1}</span>
             </div>
             <div className="flex items-center gap-1">
               <Fuel className="h-3 w-3 text-neon-orange" />
-              <span className="font-display text-[10px] text-foreground/70">{state.fuelTanks}/5</span>
+              <span className="font-display text-[9px] text-foreground/70 sm:text-[10px]">{state.fuelTanks}/5</span>
             </div>
             <div className="flex items-center gap-1">
               <Wrench className="h-3 w-3 text-primary" />
-              <span className="font-display text-[10px] text-foreground/70">Rev.{Math.max(0, 5 - (selectedCar?.racesSinceRevision ?? 0))}</span>
+              <span className="font-display text-[9px] text-foreground/70 sm:text-[10px]">Rev.{Math.max(0, 5 - (selectedCar?.racesSinceRevision ?? 0))}</span>
             </div>
           </div>
         </div>
@@ -335,12 +335,12 @@ const Race = () => {
         animate={{ opacity: 1 }}
         transition={{ delay: 0.4 }}
         onClick={toggleSound}
-        className="absolute left-5 top-[22%] z-[10] flex h-8 w-8 items-center justify-center rounded-lg border border-primary/15 bg-background/15 backdrop-blur-xl transition-colors hover:bg-background/30"
+        className="absolute left-3 top-[20%] z-[10] flex h-7 w-7 items-center justify-center rounded-lg border border-primary/15 bg-background/15 backdrop-blur-xl transition-colors hover:bg-background/30 sm:left-5 sm:top-[22%] sm:h-8 sm:w-8"
       >
         {soundOn ? (
-          <Volume2 className="h-4 w-4 text-primary/70" />
+          <Volume2 className="h-3.5 w-3.5 text-primary/70 sm:h-4 sm:w-4" />
         ) : (
-          <VolumeX className="h-4 w-4 text-muted-foreground/50" />
+          <VolumeX className="h-3.5 w-3.5 text-muted-foreground/50 sm:h-4 sm:w-4" />
         )}
       </motion.button>
 
@@ -348,9 +348,9 @@ const Race = () => {
         initial={{ opacity: 0, x: 30 }}
         animate={{ opacity: 1, x: 0 }}
         transition={{ delay: 0.4 }}
-        className="absolute right-5 top-[10%] z-[10]"
+        className="absolute right-3 top-[8%] z-[10] sm:right-5 sm:top-[10%]"
       >
-        <div className="rounded-xl border border-primary/15 bg-background/15 px-4 py-2.5 backdrop-blur-xl min-w-[180px]">
+        <div className="rounded-xl border border-primary/15 bg-background/15 px-3 py-2 backdrop-blur-xl min-w-[140px] sm:px-4 sm:py-2.5 sm:min-w-[180px]">
           <div className="mb-1.5 flex items-center justify-between">
             <span className="font-display text-[10px] uppercase tracking-wider text-primary">{playerStats.name}</span>
             <span className="font-display text-sm font-bold text-primary">{Math.round(playerProgress)}%</span>
@@ -387,11 +387,11 @@ const Race = () => {
         initial={{ opacity: 0, y: 30 }}
         animate={{ opacity: 1, y: 0 }}
         transition={{ delay: 0.5 }}
-        className="absolute bottom-[10%] left-6 z-[10]"
+        className="absolute bottom-[8%] left-3 z-[10] sm:bottom-[10%] sm:left-6"
       >
-        <div className="flex items-end gap-1.5">
+        <div className="flex items-end gap-1">
           <motion.span
-            className="font-display text-6xl font-black tabular-nums text-primary"
+            className="font-display text-4xl font-black tabular-nums text-primary sm:text-6xl"
             style={{
               textShadow: "0 0 30px hsl(185, 80%, 55% / 0.6), 0 0 80px hsl(185, 80%, 55% / 0.3)",
             }}
@@ -400,11 +400,11 @@ const Race = () => {
           >
             {isRacing || raceState === "finished" ? speedKmh : 0}
           </motion.span>
-          <span className="mb-3 font-display text-sm text-muted-foreground/60">km/h</span>
+          <span className="mb-1.5 font-display text-[10px] text-muted-foreground/60 sm:mb-3 sm:text-sm">km/h</span>
         </div>
         <div className="mt-0.5 flex items-center gap-2">
           <Gauge className="h-3 w-3 text-primary/50" />
-          <span className="font-body text-[10px] text-muted-foreground/60">
+          <span className="font-body text-[9px] text-muted-foreground/60 sm:text-[10px]">
             Motor: <span className={playerStats.engineHealth < 30 ? "text-destructive" : "text-foreground/60"}>{playerStats.engineHealth}%</span>
           </span>
         </div>
@@ -415,12 +415,12 @@ const Race = () => {
         initial={{ opacity: 0, y: 30 }}
         animate={{ opacity: 1, y: 0 }}
         transition={{ delay: 0.6 }}
-        className="absolute bottom-[10%] right-6 z-[10]"
+        className="absolute bottom-[8%] right-3 z-[10] sm:bottom-[10%] sm:right-6"
       >
         <button
           onClick={activateNitro}
           disabled={nitroCharges <= 0 || raceState !== "racing" || nitroActive}
-          className={`group relative flex h-16 w-16 items-center justify-center rounded-2xl border transition-all duration-200 ${
+          className={`group relative flex h-12 w-12 items-center justify-center rounded-2xl border transition-all duration-200 sm:h-16 sm:w-16 ${
             nitroActive
               ? "border-neon-orange/60 bg-neon-orange/15 scale-110"
               : nitroCharges > 0 && raceState === "racing"
@@ -428,8 +428,8 @@ const Race = () => {
               : "border-muted/10 bg-background/5 opacity-30"
           }`}
         >
-          <Zap className={`h-7 w-7 transition-colors ${nitroActive ? "text-neon-orange" : "text-primary/70"}`} />
-          <span className="absolute -bottom-0.5 right-1 font-display text-[9px] font-bold text-muted-foreground/50">
+          <Zap className={`h-5 w-5 transition-colors sm:h-7 sm:w-7 ${nitroActive ? "text-neon-orange" : "text-primary/70"}`} />
+          <span className="absolute -bottom-0.5 right-1 font-display text-[8px] font-bold text-muted-foreground/50 sm:text-[9px]">
             x{nitroCharges}
           </span>
         </button>
@@ -446,7 +446,7 @@ const Race = () => {
             className="absolute inset-0 z-[9] flex items-center justify-center pointer-events-none"
           >
             <span
-              className="font-display text-5xl font-black uppercase text-primary/80"
+              className="font-display text-3xl font-black uppercase text-primary/80 sm:text-5xl"
               style={{ textShadow: "0 0 40px hsl(185, 80%, 55% / 0.8)" }}
             >
               {playerProgress > opponentProgress ? "OVERTAKE!" : "OVERTAKEN!"}
@@ -466,7 +466,7 @@ const Race = () => {
               animate={{ scale: 1, opacity: 1 }}
               exit={{ scale: 0.3, opacity: 0 }}
               transition={{ duration: 0.5, ease: "easeOut" }}
-              className="relative font-display text-[140px] font-black text-primary"
+              className="relative font-display text-[80px] font-black text-primary sm:text-[140px]"
               style={{
                 textShadow: "0 0 60px hsl(185, 80%, 55% / 0.8), 0 0 120px hsl(185, 80%, 55% / 0.4), 0 0 200px hsl(185, 80%, 55% / 0.2)",
               }}
