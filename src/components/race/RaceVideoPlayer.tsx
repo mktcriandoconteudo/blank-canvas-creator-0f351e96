@@ -176,10 +176,11 @@ const RaceVideoPlayer = ({ videos, finaleVideo, isActive, poster, nitroActive, i
         preload="none"
         className="absolute inset-0 w-full h-full object-cover"
         style={{
-          filter: "brightness(1.05) saturate(1.3) contrast(1.1)",
-          transition: "opacity 0.6s ease",
+          filter: "brightness(1.1) saturate(1.2) contrast(1.05)",
+          transition: "opacity 0.5s ease",
           opacity: playingFinale ? 1 : 0,
           zIndex: playingFinale ? 5 : 0,
+          transform: "scale(1.02)",
         }}
       />
     </div>

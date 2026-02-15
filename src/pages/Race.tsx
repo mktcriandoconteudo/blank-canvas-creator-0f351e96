@@ -165,7 +165,7 @@ const Race = () => {
       setVictory(won);
       const result = finishRaceRef.current(won);
       setXpResult(result);
-      setTimeout(() => setShowResult(true), 3500);
+      setTimeout(() => setShowResult(true), 5500);
     }
   }, [playerProgress, opponentProgress, raceState]);
 
