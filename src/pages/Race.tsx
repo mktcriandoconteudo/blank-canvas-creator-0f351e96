@@ -9,7 +9,7 @@ import { useGameState } from "@/hooks/useGameState";
 import raceBattleVideo from "@/assets/race-battle-video.mp4";
 import raceStartVideo from "@/assets/race-start-video.mp4";
 import raceScenePlayer from "@/assets/race-scene-main.jpg";
-import raceSceneOpponent from "@/assets/race-scene-opponent.jpg";
+
 
 const FINISH_LINE = 100;
 const TICK_MS = 50;
@@ -42,8 +42,8 @@ const Race = () => {
   const [nitroCharges, setNitroCharges] = useState(3);
   const [bgOffset, setBgOffset] = useState(0);
 
-  // Who's visually "dominant" — determines which cinematic scene shows
-  const [showingOpponent, setShowingOpponent] = useState(false);
+
+
 
   const prevLeader = useRef<"player" | "opponent" | "tie">("tie");
   const finishRaceRef = useRef(finishRace);
@@ -89,14 +89,8 @@ const Race = () => {
     if (cur !== prevLeader.current && cur !== "tie") {
       setCameraShake(true);
       setTimeout(() => setCameraShake(false), 600);
-      // Briefly flash opponent scene on overtake
-      if (cur === "opponent") {
-        setShowingOpponent(true);
-        setTimeout(() => setShowingOpponent(false), 2500);
-      } else if (prevLeader.current === "opponent") {
-        setShowingOpponent(true);
-        setTimeout(() => setShowingOpponent(false), 1500);
-      }
+
+
     }
     prevLeader.current = cur;
   }, [playerProgress, opponentProgress, raceState]);
@@ -182,18 +176,8 @@ const Race = () => {
         </video>
       </div>
 
-      {/* ====== LAYER 3: Opponent flash on overtake ====== */}
-      <div
-        className="absolute inset-0 z-[3]"
-        style={{
-          backgroundImage: `url(${raceSceneOpponent})`,
-          backgroundSize: "cover",
-          backgroundPosition: "center",
-          opacity: showingOpponent ? 0.7 : 0,
-          transition: "opacity 0.6s ease",
-          filter: "brightness(1.1) saturate(1.2)",
-        }}
-      />
+
+
 
       {/* ====== LAYER 3: Cinematic vignette + grade ====== */}
       <div
