@@ -235,8 +235,8 @@ const Marketplace = () => {
     <div className="min-h-screen bg-background text-foreground">
       {/* Header */}
       <header className="sticky top-0 z-50 border-b border-border/10 bg-background/80 backdrop-blur-2xl">
-        <div className="mx-auto flex max-w-7xl items-center justify-between px-4 py-3 sm:px-8">
-          <div className="flex items-center gap-4">
+        <div className="mx-auto flex max-w-7xl items-center justify-between gap-3 px-3 py-3 sm:px-8">
+          <div className="flex items-center gap-3 shrink-0">
             <Button
               variant="ghost"
               size="sm"
@@ -246,7 +246,7 @@ const Marketplace = () => {
               <ArrowLeft className="h-4 w-4" />
             </Button>
             <div>
-              <h1 className="font-display text-lg font-black uppercase tracking-tight text-foreground">
+              <h1 className="font-display text-base sm:text-lg font-black uppercase tracking-tight text-foreground">
                 Marketplace
               </h1>
               <p className="font-display text-[9px] uppercase tracking-[0.3em] text-muted-foreground">
@@ -277,7 +277,7 @@ const Marketplace = () => {
 
       {/* Filters */}
       <div className="border-b border-border/10 bg-background/60 backdrop-blur-xl">
-        <div className="mx-auto flex max-w-7xl gap-2 overflow-x-auto px-4 py-3 sm:px-8">
+        <div className="mx-auto flex max-w-7xl gap-2 overflow-x-auto px-3 py-2.5 sm:px-8 sm:py-3 no-scrollbar">
           {(["Todos", "Comum", "Raro", "Épico", "Lendário"] as const).map((rarity) => (
             <button
               key={rarity}
@@ -295,7 +295,7 @@ const Marketplace = () => {
       </div>
 
       {/* Mobile search */}
-      <div className="px-4 pt-4 sm:hidden">
+      <div className="px-3 pt-3 sm:hidden">
         <div className="relative">
           <Search className="absolute left-3 top-1/2 h-3.5 w-3.5 -translate-y-1/2 text-muted-foreground" />
           <input
@@ -309,8 +309,8 @@ const Marketplace = () => {
       </div>
 
       {/* Cards Grid */}
-      <main className="mx-auto max-w-7xl px-4 py-6 sm:px-8 sm:py-10">
-        <div className="grid gap-5 grid-cols-2 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4">
+      <main className="mx-auto max-w-7xl px-3 py-4 sm:px-8 sm:py-10">
+        <div className="grid gap-3 grid-cols-1 xs:grid-cols-2 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 sm:gap-5">
           {filteredCars.map((car, i) => (
             <CarNFTCard key={car.id} car={car} index={i} />
           ))}
