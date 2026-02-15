@@ -2,7 +2,7 @@ import { motion, AnimatePresence } from "framer-motion";
 import { Zap, Gauge, Wind, Shield, Wrench, Flag, Star, Plus, Coins, Volume2, VolumeX, LogOut, User, Menu, X, ChevronLeft, ChevronRight, ChevronUp, ChevronDown } from "lucide-react";
 import { useNavigate } from "react-router-dom";
 import { useRef, useState, useEffect, useCallback } from "react";
-import garageScene from "@/assets/garage-scene.jpg";
+// garage scene no longer used as background
 import carPhantom from "@/assets/marketplace/car-phantom.jpg";
 import carBlaze from "@/assets/marketplace/car-blaze.jpg";
 import carEclipse from "@/assets/marketplace/car-eclipse.jpg";
@@ -120,7 +120,7 @@ const Index = () => {
   const hasNext = carIndex < state.cars.length - 1;
   const goToPrev = () => { if (hasPrev) selectCar(state.cars[carIndex - 1].id); };
   const goToNext = () => { if (hasNext) selectCar(state.cars[carIndex + 1].id); };
-  const currentBg = showStats ? garageScene : getCarImage(selectedCar);
+  const currentBg = getCarImage(selectedCar);
 
   const stats = [
     { label: "Velocidade", key: "speed" as const, value: selectedCar.speed, icon: <Gauge className="h-4 w-4" />, gradient: "bg-gradient-to-r from-cyan-500 to-blue-500" },
@@ -470,52 +470,23 @@ const Index = () => {
           </motion.div>
         </main>
 
-        {/* Floating car navigation arrows — visible when stats are closed */}
-        <AnimatePresence>
-          {!showStats && (
-            <motion.div
-              initial={{ opacity: 0 }}
-              animate={{ opacity: 1 }}
-              exit={{ opacity: 0 }}
-              transition={{ duration: 0.3 }}
-              className="pointer-events-none absolute inset-0 z-20 flex items-center justify-between px-4 sm:px-8"
-            >
-              <button
-                onClick={goToPrev}
-                disabled={!hasPrev}
-                className="pointer-events-auto flex h-14 w-14 items-center justify-center rounded-full border border-primary/30 bg-card/40 backdrop-blur-xl transition-all hover:bg-card/70 hover:border-primary/60 hover:scale-110 active:scale-90 disabled:opacity-15 sm:h-16 sm:w-16"
-              >
-                <ChevronLeft className="h-7 w-7 text-primary sm:h-8 sm:w-8" />
-              </button>
-              <button
-                onClick={goToNext}
-                disabled={!hasNext}
-                className="pointer-events-auto flex h-14 w-14 items-center justify-center rounded-full border border-primary/30 bg-card/40 backdrop-blur-xl transition-all hover:bg-card/70 hover:border-primary/60 hover:scale-110 active:scale-90 disabled:opacity-15 sm:h-16 sm:w-16"
-              >
-                <ChevronRight className="h-7 w-7 text-primary sm:h-8 sm:w-8" />
-              </button>
-            </motion.div>
-          )}
-        </AnimatePresence>
-
-        {/* Car indicator when stats closed */}
-        <AnimatePresence>
-          {!showStats && (
-            <motion.div
-              initial={{ opacity: 0, y: 20 }}
-              animate={{ opacity: 1, y: 0 }}
-              exit={{ opacity: 0, y: 20 }}
-              className="absolute bottom-6 left-1/2 z-20 -translate-x-1/2"
-            >
-              <div className="flex items-center gap-3 rounded-xl border border-primary/20 bg-card/40 px-5 py-3 backdrop-blur-xl">
-                <span className="font-display text-sm font-bold text-primary">{selectedCar.name}</span>
-                <span className="font-body text-xs text-muted-foreground">
-                  Lv.{selectedCar.level} · {carIndex + 1}/{state.cars.length}
-                </span>
-              </div>
-            </motion.div>
-          )}
-        </AnimatePresence>
+        {/* Floating car navigation arrows — always visible */}
+        <div className="pointer-events-none absolute inset-0 z-20 flex items-center justify-between px-4 sm:px-8">
+          <button
+            onClick={goToPrev}
+            disabled={!hasPrev}
+            className="pointer-events-auto flex h-14 w-14 items-center justify-center rounded-full border border-primary/30 bg-card/40 backdrop-blur-xl transition-all hover:bg-card/70 hover:border-primary/60 hover:scale-110 active:scale-90 disabled:opacity-15 sm:h-16 sm:w-16"
+          >
+            <ChevronLeft className="h-7 w-7 text-primary sm:h-8 sm:w-8" />
+          </button>
+          <button
+            onClick={goToNext}
+            disabled={!hasNext}
+            className="pointer-events-auto flex h-14 w-14 items-center justify-center rounded-full border border-primary/30 bg-card/40 backdrop-blur-xl transition-all hover:bg-card/70 hover:border-primary/60 hover:scale-110 active:scale-90 disabled:opacity-15 sm:h-16 sm:w-16"
+          >
+            <ChevronRight className="h-7 w-7 text-primary sm:h-8 sm:w-8" />
+          </button>
+        </div>
       </div>
     </div>
   );
