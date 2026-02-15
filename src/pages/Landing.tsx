@@ -137,7 +137,7 @@ const Landing = () => {
             <a href="#features" className="font-display text-xs uppercase tracking-wider text-muted-foreground transition-colors hover:text-primary">Features</a>
             <a href="#nft" className="font-display text-xs uppercase tracking-wider text-muted-foreground transition-colors hover:text-primary">NFTs</a>
             <a href="#roadmap" className="font-display text-xs uppercase tracking-wider text-muted-foreground transition-colors hover:text-primary">Roadmap</a>
-            <a href="#stats" className="font-display text-xs uppercase tracking-wider text-muted-foreground transition-colors hover:text-primary">Stats</a>
+            <button onClick={() => navigate("/marketplace")} className="font-display text-xs uppercase tracking-wider text-muted-foreground transition-colors hover:text-primary">Marketplace</button>
           </div>
           <div className="flex items-center gap-3">
             <button
@@ -598,7 +598,7 @@ const Landing = () => {
               <ul className="space-y-2 font-body text-sm text-muted-foreground">
                 <li className="cursor-pointer transition-colors hover:text-primary">Garagem</li>
                 <li className="cursor-pointer transition-colors hover:text-primary">Corridas</li>
-                <li className="cursor-pointer transition-colors hover:text-primary">Marketplace</li>
+                <li className="cursor-pointer transition-colors hover:text-primary" onClick={() => navigate("/marketplace")}>Marketplace</li>
                 <li className="cursor-pointer transition-colors hover:text-primary">Ranking</li>
               </ul>
             </div>
