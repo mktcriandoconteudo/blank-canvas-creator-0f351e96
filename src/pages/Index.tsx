@@ -15,21 +15,37 @@ const Index = () => {
   const [garageSoundOn, setGarageSoundOn] = useState(true);
   const garageBgmRef = useRef<HTMLAudioElement | null>(null);
 
+  const audioStartedRef = useRef(false);
+
   useEffect(() => {
     const audio = new Audio(garageBgm);
     audio.loop = true;
     audio.volume = 0.5;
     garageBgmRef.current = audio;
 
-    const tryPlay = () => {
-      audio.play().catch(() => {});
-    };
+    // Try autoplay immediately
+    audio.play().then(() => {
+      audioStartedRef.current = true;
+    }).catch(() => {
+      // Browser blocked autoplay — will start on first user interaction
+    });
 
-    // Try immediately, and also on first user interaction (browser autoplay policy)
-    tryPlay();
+    return () => {
+      audio.pause();
+      audio.src = "";
+      garageBgmRef.current = null;
+    };
+  }, []);
+
+  // Ensure audio starts on first user interaction if autoplay was blocked
+  useEffect(() => {
+    if (audioStartedRef.current) return;
+
     const handleInteraction = () => {
       if (garageBgmRef.current && garageSoundOn) {
-        garageBgmRef.current.play().catch(() => {});
+        garageBgmRef.current.play().then(() => {
+          audioStartedRef.current = true;
+        }).catch(() => {});
       }
       document.removeEventListener("click", handleInteraction);
       document.removeEventListener("touchstart", handleInteraction);
@@ -38,13 +54,10 @@ const Index = () => {
     document.addEventListener("touchstart", handleInteraction);
 
     return () => {
-      audio.pause();
-      audio.src = "";
-      garageBgmRef.current = null;
       document.removeEventListener("click", handleInteraction);
       document.removeEventListener("touchstart", handleInteraction);
     };
-  }, []);
+  }, [garageSoundOn]);
 
   const toggleGarageSound = useCallback(() => {
     setGarageSoundOn(prev => {
