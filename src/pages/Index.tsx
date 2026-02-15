@@ -98,30 +98,30 @@ const Index = () => {
           initial={{ opacity: 0, y: -20 }}
           animate={{ opacity: 1, y: 0 }}
           transition={{ duration: 0.5 }}
-          className="flex items-center justify-between px-8 py-4"
+          className="flex items-center justify-between px-4 py-3 sm:px-8 sm:py-4"
         >
-          <h1 className="font-display text-2xl font-black uppercase tracking-widest text-primary text-glow-cyan">
+          <h1 className="font-display text-lg font-black uppercase tracking-widest text-primary text-glow-cyan sm:text-2xl">
             TurboNitro
           </h1>
-          <div className="flex items-center gap-4">
+          <div className="flex items-center gap-2 sm:gap-4">
             <button
               onClick={toggleGarageSound}
-              className="flex items-center gap-2 rounded-lg bg-muted/30 px-3 py-1.5 backdrop-blur-sm transition-colors hover:bg-muted/50"
+              className="flex items-center gap-1.5 rounded-lg bg-muted/30 px-2 py-1 backdrop-blur-sm transition-colors hover:bg-muted/50 sm:gap-2 sm:px-3 sm:py-1.5"
             >
               {garageSoundOn ? (
                 <Volume2 className="h-4 w-4 text-primary" />
               ) : (
                 <VolumeX className="h-4 w-4 text-muted-foreground" />
               )}
-              <span className="font-display text-[10px] uppercase tracking-wider text-muted-foreground">
+              <span className="hidden font-display text-[10px] uppercase tracking-wider text-muted-foreground sm:inline">
                 {garageSoundOn ? "Som" : "Mudo"}
               </span>
             </button>
-            <div className="flex items-center gap-2 rounded-lg bg-muted/30 px-3 py-1.5 backdrop-blur-sm">
+            <div className="flex items-center gap-1.5 rounded-lg bg-muted/30 px-2 py-1 backdrop-blur-sm sm:gap-2 sm:px-3 sm:py-1.5">
               <Coins className="h-4 w-4 text-neon-orange" />
-              <span className="font-display text-xs text-foreground">{state.nitroPoints} NP</span>
+              <span className="font-display text-[10px] text-foreground sm:text-xs">{state.nitroPoints} NP</span>
             </div>
-            <div className="flex items-center gap-2 font-display text-xs uppercase tracking-wider text-muted-foreground">
+            <div className="hidden items-center gap-2 font-display text-xs uppercase tracking-wider text-muted-foreground sm:flex">
               <div className="h-2 w-2 animate-pulse rounded-full bg-emerald-400" />
               Garagem
             </div>
@@ -129,7 +129,7 @@ const Index = () => {
         </motion.header>
 
         {/* Main */}
-        <main className="flex flex-1 items-end justify-between gap-8 px-8 pb-8 lg:items-center lg:px-16">
+        <main className="flex flex-1 flex-col gap-4 overflow-y-auto px-4 pb-4 sm:pb-8 lg:flex-row lg:items-center lg:justify-between lg:gap-8 lg:px-16">
           {/* Left: Car info */}
           <motion.div
             initial={{ opacity: 0, y: 20 }}
@@ -140,7 +140,7 @@ const Index = () => {
             <p className="font-display text-xs font-semibold uppercase tracking-[0.3em] text-primary/70">
               Classe Lendária
             </p>
-            <h2 className="font-display text-5xl font-black uppercase tracking-tight text-foreground lg:text-6xl">
+            <h2 className="font-display text-3xl font-black uppercase tracking-tight text-foreground sm:text-5xl lg:text-6xl">
               {selectedCar.name.split(" ")[0]}{" "}
               <span className="text-primary text-glow-cyan">{selectedCar.name.split(" ").slice(1).join(" ")}</span>
             </h2>
@@ -209,7 +209,7 @@ const Index = () => {
             initial={{ opacity: 0, x: 40 }}
             animate={{ opacity: 1, x: 0 }}
             transition={{ duration: 0.6, delay: 0.4 }}
-            className="w-full max-w-xs"
+            className="w-full max-w-xs self-center lg:self-auto"
           >
             <div className="glass-strong rounded-2xl p-6 shadow-2xl">
               <div className="flex items-center justify-between mb-4">
