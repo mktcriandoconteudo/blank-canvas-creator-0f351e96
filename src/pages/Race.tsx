@@ -180,12 +180,13 @@ const Race = () => {
 
   const toggleSound = useCallback(() => {
     const next = !soundOnRef.current;
+    console.log("[toggleSound] switching to:", next, "bgmRef exists:", !!bgmRef.current, "paused:", bgmRef.current?.paused);
     setSoundOn(next);
     soundOnRef.current = next;
     if (!next) {
-      if (bgmRef.current) bgmRef.current.pause();
+      if (bgmRef.current) { bgmRef.current.pause(); }
     } else {
-      if (bgmRef.current) bgmRef.current.play().catch(() => {});
+      if (bgmRef.current) { bgmRef.current.play().catch(() => {}); }
     }
   }, []);
   const earnedNP = Math.round(((victory ? 150 : 20) * playerStats.engineHealth) / 100);
