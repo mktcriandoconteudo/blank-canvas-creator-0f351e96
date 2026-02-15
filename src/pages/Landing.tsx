@@ -158,18 +158,18 @@ const Landing = () => {
 
       {/* ─── HERO ─── */}
       <section ref={heroRef} className="relative flex min-h-screen items-end overflow-hidden pb-24 pt-16 sm:items-center sm:pb-0">
-        {/* Car image behind */}
-        <motion.div style={{ y: heroY, scale: heroScale }} className="absolute inset-0 z-0">
-          <img src={landingHero} alt="TurboNitro Racing" className="h-full w-full object-cover object-center opacity-90" />
-          <div className="absolute inset-0 bg-gradient-to-t from-background via-background/20 to-transparent" />
-          <div className="absolute inset-0 bg-gradient-to-r from-background/60 via-transparent to-background/40" />
-        </motion.div>
-
-        {/* Shader plasma lines - top half only */}
-        <div className="absolute inset-x-0 top-0 h-[50%] z-[1] mix-blend-screen opacity-60">
+        {/* Shader plasma lines - bottom layer */}
+        <div className="absolute inset-x-0 top-0 h-[50%] z-0 opacity-60">
           <ShaderBackground />
-          <div className="absolute inset-0 bg-gradient-to-t from-black via-transparent to-transparent" />
+          <div className="absolute inset-0 bg-gradient-to-b from-transparent to-background" />
         </div>
+
+        {/* Car image on top of shader */}
+        <motion.div style={{ y: heroY, scale: heroScale }} className="absolute inset-0 z-[1]">
+          <img src={landingHero} alt="TurboNitro Racing" className="h-full w-full object-cover object-center opacity-90" />
+          <div className="absolute inset-0 bg-gradient-to-t from-background via-background/30 to-transparent" />
+          <div className="absolute inset-0 bg-gradient-to-r from-background/70 via-transparent to-background/40" />
+        </motion.div>
 
         <motion.div style={{ opacity: heroOpacity }} className="relative z-10 mx-auto w-full max-w-7xl px-4 sm:px-8">
           <div className="max-w-2xl">
