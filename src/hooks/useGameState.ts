@@ -1,27 +1,34 @@
 import { useState, useEffect, useCallback } from "react";
 import {
   GameState,
-  loadGameState,
-  saveGameState,
+  loadGameStateFromSupabase,
   getSelectedCar,
   addXpToCar,
   distributePoint,
   repairCar,
-  refuelDaily,
+  saveUserToSupabase,
+  saveCarToSupabase,
   CarData,
 } from "@/lib/gameState";
 
-export const useGameState = () => {
-  const [state, setState] = useState<GameState>(() => {
-    const loaded = loadGameState();
-    return refuelDaily(loaded);
-  });
+const DEFAULT_WALLET = "0x7f3a...e1b2";
 
-  const selectedCar = getSelectedCar(state);
+export const useGameState = () => {
+  const [state, setState] = useState<GameState | null>(null);
+  const [loading, setLoading] = useState(true);
+
+  useEffect(() => {
+    loadGameStateFromSupabase(DEFAULT_WALLET).then((loaded) => {
+      setState(loaded);
+      setLoading(false);
+    });
+  }, []);
+
+  const selectedCar = state ? getSelectedCar(state) : undefined;
 
   const finishRace = useCallback(
     (won: boolean) => {
-      if (!state.selectedCarId) return { leveledUp: false, newLevel: 0 };
+      if (!state?.selectedCarId) return { leveledUp: false, newLevel: 0 };
       const { newState, leveledUp, newLevel } = addXpToCar(state, state.selectedCarId, won);
       setState(newState);
       return { leveledUp, newLevel };
@@ -31,7 +38,7 @@ export const useGameState = () => {
 
   const addPoint = useCallback(
     (attribute: "speed" | "acceleration" | "handling" | "durability") => {
-      if (!state.selectedCarId) return;
+      if (!state?.selectedCarId) return;
       const newState = distributePoint(state, state.selectedCarId, attribute);
       setState(newState);
     },
@@ -40,7 +47,7 @@ export const useGameState = () => {
 
   const repair = useCallback(
     (cost: number) => {
-      if (!state.selectedCarId) return false;
+      if (!state?.selectedCarId) return false;
       const newState = repairCar(state, state.selectedCarId, cost);
       if (!newState) return false;
       setState(newState);
@@ -51,18 +58,34 @@ export const useGameState = () => {
 
   const updateState = useCallback((updater: (prev: GameState) => GameState) => {
     setState((prev) => {
+      if (!prev) return prev;
       const next = updater(prev);
-      saveGameState(next);
+      // Persist changes to Supabase
+      saveUserToSupabase(next.walletAddress, next.nitroPoints, next.fuelTanks);
+      // Persist car changes
+      const prevCar = prev.cars.find((c) => c.id === prev.selectedCarId);
+      const nextCar = next.cars.find((c) => c.id === next.selectedCarId);
+      if (nextCar && JSON.stringify(prevCar) !== JSON.stringify(nextCar)) {
+        saveCarToSupabase(nextCar);
+      }
       return next;
     });
   }, []);
 
   return {
-    state,
+    state: state ?? {
+      cars: [],
+      selectedCarId: null,
+      nitroPoints: 0,
+      fuelTanks: 0,
+      lastFuelRefill: "",
+      walletAddress: DEFAULT_WALLET,
+    },
     selectedCar,
     finishRace,
     addPoint,
     repair,
     updateState,
+    loading,
   };
 };

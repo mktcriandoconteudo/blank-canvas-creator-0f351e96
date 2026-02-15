@@ -11,7 +11,7 @@ import { useGameState } from "@/hooks/useGameState";
 
 const Index = () => {
   const navigate = useNavigate();
-  const { state, selectedCar, addPoint, repair, updateState } = useGameState();
+  const { state, selectedCar, addPoint, repair, updateState, loading } = useGameState();
   const [garageSoundOn, setGarageSoundOn] = useState(true);
   const garageBgmRef = useRef<HTMLAudioElement | null>(null);
 
@@ -73,7 +73,7 @@ const Index = () => {
     });
   }, []);
 
-  if (!selectedCar) return null;
+  if (loading || !selectedCar) return null;
 
   const xpPercent = (selectedCar.xp / selectedCar.xpToNext) * 100;
   const needsRevision = selectedCar.racesSinceRevision >= 5;

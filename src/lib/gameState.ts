@@ -1,3 +1,5 @@
+import { supabase } from "@/integrations/supabase/client";
+
 export interface CarData {
   id: string;
   tokenId: string;
@@ -25,13 +27,14 @@ export interface GameState {
   nitroPoints: number;
   fuelTanks: number;
   lastFuelRefill: string; // ISO date
+  walletAddress: string;
 }
 
-const STORAGE_KEY = "turbonitro_gamestate";
+const DEFAULT_WALLET = "0x7f3a...e1b2";
 
 const XP_PER_WIN = 80;
 const XP_PER_LOSS = 25;
-const XP_MULTIPLIER = 1.5; // each level needs 1.5x more XP
+const XP_MULTIPLIER = 1.5;
 
 export const calculateXpToNext = (level: number): number => {
   return Math.round(100 * Math.pow(XP_MULTIPLIER, level - 1));
@@ -42,7 +45,7 @@ const defaultCar: CarData = {
   tokenId: "#4829",
   name: "Phantom X9",
   model: "legendary",
-  ownerWallet: "0x7f3a...e1b2",
+  ownerWallet: DEFAULT_WALLET,
   speed: 75,
   acceleration: 60,
   handling: 65,
@@ -58,33 +61,144 @@ const defaultCar: CarData = {
   racesSinceRevision: 0,
 };
 
-const defaultState: GameState = {
-  cars: [defaultCar],
-  selectedCarId: "car-001",
-  nitroPoints: 500,
-  fuelTanks: 5,
-  lastFuelRefill: new Date().toISOString().split("T")[0],
-};
 
-export const loadGameState = (): GameState => {
-  try {
-    const raw = localStorage.getItem(STORAGE_KEY);
-    if (raw) {
-      return JSON.parse(raw) as GameState;
-    }
-  } catch (e) {
-    console.warn("Failed to load game state", e);
-  }
-  return { ...defaultState, cars: [{ ...defaultCar }] };
-};
+// ---- Supabase helpers ----
 
-export const saveGameState = (state: GameState): void => {
-  try {
-    localStorage.setItem(STORAGE_KEY, JSON.stringify(state));
-  } catch (e) {
-    console.warn("Failed to save game state", e);
+function mapCarRow(row: any): CarData {
+  return {
+    id: row.id,
+    tokenId: row.token_id,
+    name: row.name,
+    model: row.model,
+    ownerWallet: row.owner_wallet,
+    speed: row.speed_base,
+    acceleration: row.acceleration_base,
+    handling: row.handling_base,
+    durability: row.durability,
+    engineHealth: row.engine_health,
+    level: row.level,
+    xp: row.xp,
+    xpToNext: row.xp_to_next,
+    attributePoints: row.attribute_points,
+    totalKm: Number(row.total_km),
+    wins: row.wins,
+    racesCount: row.races_count,
+    racesSinceRevision: row.races_since_revision,
+  };
+}
+
+export async function ensureUserExists(wallet: string): Promise<void> {
+  const { data } = await supabase
+    .from("users")
+    .select("id")
+    .eq("wallet_address", wallet)
+    .maybeSingle();
+
+  if (!data) {
+    await supabase.from("users").insert({ wallet_address: wallet });
   }
-};
+}
+
+export async function ensureCarExists(wallet: string): Promise<void> {
+  const { data } = await supabase
+    .from("cars")
+    .select("id")
+    .eq("owner_wallet", wallet)
+    .maybeSingle();
+
+  if (!data) {
+    await supabase.from("cars").insert({
+      token_id: defaultCar.tokenId,
+      owner_wallet: wallet,
+      name: defaultCar.name,
+      model: defaultCar.model,
+      speed_base: defaultCar.speed,
+      acceleration_base: defaultCar.acceleration,
+      handling_base: defaultCar.handling,
+      durability: defaultCar.durability,
+      engine_health: defaultCar.engineHealth,
+      level: defaultCar.level,
+      xp: defaultCar.xp,
+      xp_to_next: defaultCar.xpToNext,
+      attribute_points: defaultCar.attributePoints,
+      total_km: defaultCar.totalKm,
+      wins: defaultCar.wins,
+      races_count: defaultCar.racesCount,
+      races_since_revision: defaultCar.racesSinceRevision,
+    });
+  }
+}
+
+export async function loadGameStateFromSupabase(wallet: string = DEFAULT_WALLET): Promise<GameState> {
+  await ensureUserExists(wallet);
+  await ensureCarExists(wallet);
+
+  const { data: userData } = await supabase
+    .from("users")
+    .select("*")
+    .eq("wallet_address", wallet)
+    .maybeSingle();
+
+  const { data: carsData } = await supabase
+    .from("cars")
+    .select("*")
+    .eq("owner_wallet", wallet);
+
+  const cars = (carsData ?? []).map(mapCarRow);
+
+  // Daily fuel refill
+  const today = new Date().toISOString().split("T")[0];
+  let fuelTanks = userData?.fuel_tanks ?? 5;
+  const lastRefill = userData?.last_fuel_refill ?? today;
+
+  if (lastRefill !== today) {
+    fuelTanks = 5;
+    await supabase
+      .from("users")
+      .update({ fuel_tanks: 5, last_fuel_refill: today })
+      .eq("wallet_address", wallet);
+  }
+
+  return {
+    cars,
+    selectedCarId: cars[0]?.id ?? null,
+    nitroPoints: userData?.nitro_points ?? 500,
+    fuelTanks,
+    lastFuelRefill: lastRefill,
+    walletAddress: wallet,
+  };
+}
+
+export async function saveCarToSupabase(car: CarData): Promise<void> {
+  await supabase
+    .from("cars")
+    .update({
+      speed_base: car.speed,
+      acceleration_base: car.acceleration,
+      handling_base: car.handling,
+      durability: car.durability,
+      engine_health: car.engineHealth,
+      level: car.level,
+      xp: car.xp,
+      xp_to_next: car.xpToNext,
+      attribute_points: car.attributePoints,
+      total_km: car.totalKm,
+      wins: car.wins,
+      races_count: car.racesCount,
+      races_since_revision: car.racesSinceRevision,
+    })
+    .eq("id", car.id);
+}
+
+export async function saveUserToSupabase(wallet: string, nitroPoints: number, fuelTanks: number): Promise<void> {
+  await supabase
+    .from("users")
+    .update({
+      nitro_points: nitroPoints,
+      fuel_tanks: fuelTanks,
+    })
+    .eq("wallet_address", wallet);
+}
 
 export const getSelectedCar = (state: GameState): CarData | undefined => {
   return state.cars.find((c) => c.id === state.selectedCarId);
@@ -108,11 +222,9 @@ export const addXpToCar = (
     updatedCar.racesSinceRevision += 1;
     if (won) updatedCar.wins += 1;
 
-    // Degrade car
     updatedCar.engineHealth = Math.max(0, updatedCar.engineHealth - (won ? 3 : 5));
     updatedCar.durability = Math.max(0, updatedCar.durability - (won ? 2 : 4));
 
-    // Check level up
     while (updatedCar.xp >= updatedCar.xpToNext) {
       updatedCar.xp -= updatedCar.xpToNext;
       updatedCar.level += 1;
@@ -125,7 +237,6 @@ export const addXpToCar = (
     return updatedCar;
   });
 
-  // Calculate NitroPoints with ROI formula
   const car = state.cars.find((c) => c.id === carId);
   const health = car?.engineHealth ?? 100;
   const basePoints = won ? 150 : 20;
@@ -138,7 +249,11 @@ export const addXpToCar = (
     fuelTanks: Math.max(0, state.fuelTanks - 1),
   };
 
-  saveGameState(newState);
+  // Persist to Supabase (fire-and-forget)
+  const updatedCar = newCars.find((c) => c.id === carId);
+  if (updatedCar) saveCarToSupabase(updatedCar);
+  saveUserToSupabase(state.walletAddress, newState.nitroPoints, newState.fuelTanks);
+
   return { newState, leveledUp, newLevel };
 };
 
@@ -157,7 +272,10 @@ export const distributePoint = (
   });
 
   const newState = { ...state, cars: newCars };
-  saveGameState(newState);
+
+  const updatedCar = newCars.find((c) => c.id === carId);
+  if (updatedCar) saveCarToSupabase(updatedCar);
+
   return newState;
 };
 
@@ -183,19 +301,10 @@ export const repairCar = (
     cars: newCars,
     nitroPoints: state.nitroPoints - cost,
   };
-  saveGameState(newState);
-  return newState;
-};
 
-export const refuelDaily = (state: GameState): GameState => {
-  const today = new Date().toISOString().split("T")[0];
-  if (state.lastFuelRefill === today) return state;
+  const updatedCar = newCars.find((c) => c.id === carId);
+  if (updatedCar) saveCarToSupabase(updatedCar);
+  saveUserToSupabase(state.walletAddress, newState.nitroPoints, newState.fuelTanks);
 
-  const newState = {
-    ...state,
-    fuelTanks: 5,
-    lastFuelRefill: today,
-  };
-  saveGameState(newState);
   return newState;
 };
