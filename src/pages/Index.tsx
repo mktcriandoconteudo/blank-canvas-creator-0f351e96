@@ -3,6 +3,36 @@ import { Zap, Gauge, Wind, Shield, Wrench, Flag, Star, Plus, Coins, Volume2, Vol
 import { useNavigate } from "react-router-dom";
 import { useRef, useState, useEffect, useCallback } from "react";
 import garageScene from "@/assets/garage-scene.jpg";
+import carPhantom from "@/assets/marketplace/car-phantom.jpg";
+import carBlaze from "@/assets/marketplace/car-blaze.jpg";
+import carEclipse from "@/assets/marketplace/car-eclipse.jpg";
+import carFrost from "@/assets/marketplace/car-frost.jpg";
+import carInferno from "@/assets/marketplace/car-inferno.jpg";
+import carSolar from "@/assets/marketplace/car-solar.jpg";
+import carThunder from "@/assets/marketplace/car-thunder.jpg";
+import carVenom from "@/assets/marketplace/car-venom.jpg";
+
+const CAR_IMAGES: Record<string, string> = {
+  "phantom": carPhantom,
+  "blaze": carBlaze,
+  "eclipse": carEclipse,
+  "frost": carFrost,
+  "inferno": carInferno,
+  "solar": carSolar,
+  "thunder": carThunder,
+  "venom": carVenom,
+};
+
+const getCarImage = (car: { name: string; model: string }): string => {
+  const nameLower = car.name.toLowerCase();
+  for (const [key, img] of Object.entries(CAR_IMAGES)) {
+    if (nameLower.includes(key)) return img;
+  }
+  // Fallback: cycle through images based on index
+  const keys = Object.keys(CAR_IMAGES);
+  const hash = car.name.split("").reduce((a, c) => a + c.charCodeAt(0), 0);
+  return CAR_IMAGES[keys[hash % keys.length]];
+};
 import garageBgm from "@/assets/garagem-bgm.mp3";
 import StatBar from "@/components/garage/StatBar";
 import GlowButton from "@/components/garage/GlowButton";
@@ -90,7 +120,7 @@ const Index = () => {
   const hasNext = carIndex < state.cars.length - 1;
   const goToPrev = () => { if (hasPrev) selectCar(state.cars[carIndex - 1].id); };
   const goToNext = () => { if (hasNext) selectCar(state.cars[carIndex + 1].id); };
-  const multiCar = state.cars.length > 1;
+  
 
   const stats = [
     { label: "Velocidade", key: "speed" as const, value: selectedCar.speed, icon: <Gauge className="h-4 w-4" />, gradient: "bg-gradient-to-r from-cyan-500 to-blue-500" },
@@ -299,9 +329,10 @@ const Index = () => {
               )}
             </button>
 
-            <AnimatePresence>
-              {showStats && (
+            <AnimatePresence mode="wait">
+              {showStats ? (
                 <motion.div
+                  key="stats"
                   initial={{ height: 0, opacity: 0 }}
                   animate={{ height: "auto", opacity: 1 }}
                   exit={{ height: 0, opacity: 0 }}
@@ -348,7 +379,6 @@ const Index = () => {
                       ))}
                     </div>
 
-                    {/* Revision warning */}
                     {needsRevision && (
                       <motion.div
                         initial={{ opacity: 0 }}
@@ -426,6 +456,77 @@ const Index = () => {
                     <p className="mt-2 text-center font-body text-[10px] text-muted-foreground">
                       ⛽ {state.fuelTanks}/5 tanques · 🔧 Rev. em {Math.max(0, 5 - selectedCar.racesSinceRevision)} corridas
                     </p>
+                  </div>
+                </motion.div>
+              ) : (
+                <motion.div
+                  key="car-showcase"
+                  initial={{ opacity: 0, scale: 0.95 }}
+                  animate={{ opacity: 1, scale: 1 }}
+                  exit={{ opacity: 0, scale: 0.95 }}
+                  transition={{ duration: 0.3 }}
+                  className="flex flex-col items-center gap-4"
+                >
+                  {/* Car image with navigation arrows */}
+                  <div className="relative flex items-center gap-4">
+                    <button
+                      onClick={goToPrev}
+                      disabled={!hasPrev}
+                      className="flex h-12 w-12 shrink-0 items-center justify-center rounded-full border border-primary/20 bg-card/40 backdrop-blur-sm transition-all hover:bg-card/70 hover:border-primary/50 active:scale-90 disabled:opacity-20"
+                    >
+                      <ChevronLeft className="h-6 w-6 text-primary" />
+                    </button>
+
+                    <div className="relative w-56 h-40 sm:w-72 sm:h-52 overflow-hidden rounded-2xl border border-primary/15 shadow-[0_0_30px_hsl(185_80%_55%/0.15)]">
+                      <AnimatePresence mode="wait">
+                        <motion.img
+                          key={selectedCar.id}
+                          src={getCarImage(selectedCar)}
+                          alt={selectedCar.name}
+                          initial={{ opacity: 0, x: 50 }}
+                          animate={{ opacity: 1, x: 0 }}
+                          exit={{ opacity: 0, x: -50 }}
+                          transition={{ duration: 0.3 }}
+                          className="h-full w-full object-cover"
+                        />
+                      </AnimatePresence>
+                      {/* Overlay gradient */}
+                      <div className="absolute inset-0 bg-gradient-to-t from-background/60 via-transparent to-transparent" />
+                      <div className="absolute bottom-2 left-3 right-3">
+                        <p className="font-display text-xs font-bold text-primary">{selectedCar.name}</p>
+                        <p className="font-body text-[10px] text-muted-foreground">
+                          Lv.{selectedCar.level} · {carIndex + 1}/{state.cars.length}
+                        </p>
+                      </div>
+                    </div>
+
+                    <button
+                      onClick={goToNext}
+                      disabled={!hasNext}
+                      className="flex h-12 w-12 shrink-0 items-center justify-center rounded-full border border-primary/20 bg-card/40 backdrop-blur-sm transition-all hover:bg-card/70 hover:border-primary/50 active:scale-90 disabled:opacity-20"
+                    >
+                      <ChevronRight className="h-6 w-6 text-primary" />
+                    </button>
+                  </div>
+
+                  {/* Quick action buttons */}
+                  <div className="flex gap-3">
+                    {state.fuelTanks > 0 ? (
+                      <GlowButton
+                        variant="cyan"
+                        icon={<Flag className="h-4 w-4" />}
+                        onClick={() => navigate("/race")}
+                      >
+                        Iniciar Corrida
+                      </GlowButton>
+                    ) : (
+                      <button
+                        disabled
+                        className="rounded-xl border border-destructive/40 bg-destructive/10 px-6 py-3 font-display text-sm font-bold uppercase tracking-widest text-destructive/70 cursor-not-allowed"
+                      >
+                        ⛽ Sem Fuel
+                      </button>
+                    )}
                   </div>
                 </motion.div>
               )}
