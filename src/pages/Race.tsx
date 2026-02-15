@@ -180,6 +180,7 @@ const Race = () => {
       if (bgmLoopRef.current) {
         bgmLoopRef.current.pause();
         bgmLoopRef.current.currentTime = 0;
+        bgmLoopRef.current = null;
       }
       const won = playerProgress >= opponentProgress;
       setVictory(won);
@@ -209,9 +210,9 @@ const Race = () => {
       if (bgmRef.current) { bgmRef.current.pause(); }
       if (bgmLoopRef.current) { bgmLoopRef.current.pause(); }
     } else {
-      if (bgmLoopRef.current) {
-        console.log("[toggleSound] playing bgmLoop, paused:", bgmLoopRef.current.paused);
-        bgmLoopRef.current.play().catch((e) => console.error("[toggleSound] bgmLoop play error:", e));
+      // Only play bgmLoop during racing, not after finish
+      if (raceState === "racing" && bgmLoopRef.current) {
+        bgmLoopRef.current.play().catch(() => {});
       }
       if (bgmRef.current) { bgmRef.current.play().catch(() => {}); }
     }
