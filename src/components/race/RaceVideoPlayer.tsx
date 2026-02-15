@@ -83,48 +83,39 @@ const RaceVideoPlayer = ({ videos, finaleVideo, isActive, poster, nitroActive, i
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [isActive, playingFinale]);
 
-  // Preload finale video as soon as we know which one it will be
+  // When finale video is set, load it and play it
   useEffect(() => {
-    if (finaleVideo && finaleRef.current && !playingFinale) {
-      const vid = finaleRef.current;
-      setupMobileVideo(vid);
-      vid.src = finaleVideo;
-      vid.preload = "auto";
-      vid.load();
-      console.log("[RaceVideo] Preloading finale:", finaleVideo);
-    }
-  }, [finaleVideo, playingFinale]);
+    if (!finaleVideo) return;
+    const vid = finaleRef.current;
+    if (!vid) return;
 
-  // When finale video is set, switch to it with a small delay to ensure it's ready
-  useEffect(() => {
-    if (finaleVideo && !playingFinale) {
-      const vid = finaleRef.current;
-      if (!vid) return;
+    console.log("[RaceVideo] Finale video received:", finaleVideo);
+    setupMobileVideo(vid);
+    vid.src = finaleVideo;
+    vid.preload = "auto";
+    vid.load();
 
-      const startFinale = () => {
-        console.log("[RaceVideo] Starting finale playback");
-        setPlayingFinale(true);
-        videoARef.current?.pause();
-        videoBRef.current?.pause();
-        vid.currentTime = 0;
-        vid.play().catch((e) => console.warn("[RaceVideo] Finale play failed:", e));
+    const startFinale = () => {
+      console.log("[RaceVideo] Starting finale playback NOW");
+      setPlayingFinale(true);
+      videoARef.current?.pause();
+      videoBRef.current?.pause();
+      vid.currentTime = 0;
+      vid.play().catch((e) => console.warn("[RaceVideo] Finale play failed:", e));
+    };
+
+    // Wait for video to be ready, with fallback timeout
+    if (vid.readyState >= 3) {
+      startFinale();
+    } else {
+      vid.addEventListener("canplay", startFinale, { once: true });
+      const timeout = setTimeout(startFinale, 1500);
+      return () => {
+        clearTimeout(timeout);
+        vid.removeEventListener("canplay", startFinale);
       };
-
-      // If video has enough data, play immediately; otherwise wait
-      if (vid.readyState >= 3) {
-        startFinale();
-      } else {
-        console.log("[RaceVideo] Waiting for finale to buffer...");
-        vid.addEventListener("canplay", startFinale, { once: true });
-        // Fallback: force play after 1s even if not fully buffered
-        const timeout = setTimeout(startFinale, 1000);
-        return () => {
-          clearTimeout(timeout);
-          vid.removeEventListener("canplay", startFinale);
-        };
-      }
     }
-  }, [finaleVideo, playingFinale]);
+  }, [finaleVideo]);
 
   // When current race video ends, swap to preloaded one + preload next
   const handleEnded = useCallback(() => {
