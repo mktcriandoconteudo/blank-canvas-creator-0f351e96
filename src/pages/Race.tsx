@@ -154,16 +154,16 @@ const Race = () => {
     if (playerProgress >= FINISH_LINE || opponentProgress >= FINISH_LINE) {
       setRaceState("finished");
       setNitroActive(false);
-      // Stop ALL audio immediately
+      // Stop race BGM permanently
       if (bgmRef.current) {
         bgmRef.current.pause();
         bgmRef.current.currentTime = 0;
         bgmRef.current = null;
       }
+      // Pause loop BGM but keep the ref so the card button can toggle it
       if (bgmLoopRef.current) {
         bgmLoopRef.current.pause();
         bgmLoopRef.current.currentTime = 0;
-        bgmLoopRef.current = null;
       }
       const won = playerProgress >= opponentProgress;
       setVictory(won);
