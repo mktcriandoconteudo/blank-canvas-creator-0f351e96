@@ -1,5 +1,5 @@
-import { motion } from "framer-motion";
-import { Zap, Gauge, Wind, Shield, Wrench, Flag, Star, Plus, Coins, Volume2, VolumeX, LogOut, User } from "lucide-react";
+import { motion, AnimatePresence } from "framer-motion";
+import { Zap, Gauge, Wind, Shield, Wrench, Flag, Star, Plus, Coins, Volume2, VolumeX, LogOut, User, Menu, X } from "lucide-react";
 import { useNavigate } from "react-router-dom";
 import { useRef, useState, useEffect, useCallback } from "react";
 import garageScene from "@/assets/garage-scene.jpg";
@@ -17,6 +17,7 @@ const Index = () => {
   const { user, signOut } = useAuth();
   const [garageSoundOn, setGarageSoundOn] = useState(true);
   const [refilling, setRefilling] = useState(false);
+  const [menuOpen, setMenuOpen] = useState(false);
   const garageBgmRef = useRef<HTMLAudioElement | null>(null);
 
   const audioStartedRef = useRef(false);
@@ -102,43 +103,92 @@ const Index = () => {
           initial={{ opacity: 0, y: -20 }}
           animate={{ opacity: 1, y: 0 }}
           transition={{ duration: 0.5 }}
-          className="flex items-center justify-between px-4 py-3 sm:px-8 sm:py-4"
+          className="px-4 py-3 sm:px-8 sm:py-4"
         >
-          <h1 className="font-display text-lg font-black uppercase tracking-widest text-primary text-glow-cyan sm:text-2xl">
-            TurboNitro
-          </h1>
-          <div className="flex items-center gap-2 sm:gap-4">
-            <button
-              onClick={toggleGarageSound}
-              className="flex items-center gap-1.5 rounded-lg bg-muted/30 px-2 py-1 backdrop-blur-sm transition-colors hover:bg-muted/50 sm:gap-2 sm:px-3 sm:py-1.5"
-            >
-              {garageSoundOn ? (
-                <Volume2 className="h-4 w-4 text-primary" />
-              ) : (
-                <VolumeX className="h-4 w-4 text-muted-foreground" />
-              )}
-              <span className="hidden font-display text-[10px] uppercase tracking-wider text-muted-foreground sm:inline">
-                {garageSoundOn ? "Som" : "Mudo"}
-              </span>
-            </button>
-            <div className="flex items-center gap-1.5 rounded-lg bg-muted/30 px-2 py-1 backdrop-blur-sm sm:gap-2 sm:px-3 sm:py-1.5">
-              <Coins className="h-4 w-4 text-neon-orange" />
-              <span className="font-display text-[10px] text-foreground sm:text-xs">{state.nitroPoints} NP</span>
+          <div className="flex items-center justify-between">
+            <h1 className="font-display text-lg font-black uppercase tracking-widest text-primary text-glow-cyan sm:text-2xl">
+              TurboNitro
+            </h1>
+
+            {/* Desktop nav links */}
+            <div className="hidden items-center gap-4 md:flex">
+              <button onClick={() => navigate("/")} className="font-display text-xs uppercase tracking-wider text-muted-foreground transition-colors hover:text-primary">
+                Home
+              </button>
+              <button onClick={() => navigate("/marketplace")} className="font-display text-xs uppercase tracking-wider text-muted-foreground transition-colors hover:text-primary">
+                Marketplace
+              </button>
             </div>
-            <div className="flex items-center gap-2">
-              <div className="flex items-center gap-1.5 rounded-lg bg-muted/30 px-2 py-1 backdrop-blur-sm sm:px-3 sm:py-1.5">
+
+            <div className="flex items-center gap-2 sm:gap-3">
+              <button
+                onClick={toggleGarageSound}
+                className="flex items-center gap-1.5 rounded-lg bg-muted/30 px-2 py-1 backdrop-blur-sm transition-colors hover:bg-muted/50"
+              >
+                {garageSoundOn ? <Volume2 className="h-4 w-4 text-primary" /> : <VolumeX className="h-4 w-4 text-muted-foreground" />}
+              </button>
+              <div className="flex items-center gap-1.5 rounded-lg bg-muted/30 px-2 py-1 backdrop-blur-sm">
+                <Coins className="h-4 w-4 text-neon-orange" />
+                <span className="font-display text-[10px] text-foreground sm:text-xs">{state.nitroPoints} NP</span>
+              </div>
+              <div className="hidden items-center gap-1.5 rounded-lg bg-muted/30 px-2 py-1 backdrop-blur-sm sm:flex">
                 <User className="h-4 w-4 text-primary" />
                 <span className="font-display text-[10px] text-foreground sm:text-xs">{user?.username ?? "Piloto"}</span>
               </div>
               <button
                 onClick={signOut}
-                className="flex items-center gap-1 rounded-lg bg-muted/30 px-2 py-1 backdrop-blur-sm transition-colors hover:bg-destructive/20 sm:px-3 sm:py-1.5"
+                className="hidden items-center gap-1 rounded-lg bg-muted/30 px-2 py-1 backdrop-blur-sm transition-colors hover:bg-destructive/20 sm:flex"
                 title="Sair"
               >
                 <LogOut className="h-4 w-4 text-muted-foreground" />
               </button>
+              {/* Mobile hamburger */}
+              <button
+                onClick={() => setMenuOpen(!menuOpen)}
+                className="flex h-9 w-9 items-center justify-center rounded-lg bg-muted/30 backdrop-blur-sm md:hidden"
+              >
+                {menuOpen ? <X className="h-5 w-5 text-foreground" /> : <Menu className="h-5 w-5 text-foreground" />}
+              </button>
             </div>
           </div>
+
+          {/* Mobile dropdown menu */}
+          <AnimatePresence>
+            {menuOpen && (
+              <motion.div
+                initial={{ height: 0, opacity: 0 }}
+                animate={{ height: "auto", opacity: 1 }}
+                exit={{ height: 0, opacity: 0 }}
+                transition={{ duration: 0.25 }}
+                className="mt-2 overflow-hidden rounded-xl border border-border/20 bg-background/90 backdrop-blur-2xl md:hidden"
+              >
+                <div className="flex flex-col gap-1 px-3 py-2">
+                  <div className="flex items-center gap-2 rounded-lg px-3 py-2">
+                    <User className="h-4 w-4 text-primary" />
+                    <span className="font-display text-sm text-foreground">{user?.username ?? "Piloto"}</span>
+                  </div>
+                  {[
+                    { label: "Home", action: () => { navigate("/"); setMenuOpen(false); } },
+                    { label: "Marketplace", action: () => { navigate("/marketplace"); setMenuOpen(false); } },
+                  ].map((item) => (
+                    <button
+                      key={item.label}
+                      onClick={item.action}
+                      className="rounded-lg px-3 py-2.5 text-left font-display text-sm uppercase tracking-wider text-muted-foreground transition-colors hover:bg-card/50 hover:text-primary"
+                    >
+                      {item.label}
+                    </button>
+                  ))}
+                  <button
+                    onClick={() => { signOut(); setMenuOpen(false); }}
+                    className="rounded-lg px-3 py-2.5 text-left font-display text-sm uppercase tracking-wider text-destructive/70 transition-colors hover:bg-destructive/10"
+                  >
+                    Sair
+                  </button>
+                </div>
+              </motion.div>
+            )}
+          </AnimatePresence>
         </motion.header>
 
         {/* Main */}
