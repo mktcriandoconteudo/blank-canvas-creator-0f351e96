@@ -49,7 +49,7 @@ const Race = () => {
   const [nitroCharges, setNitroCharges] = useState(3);
   const [bgOffset, setBgOffset] = useState(0);
   const [soundOn, setSoundOn] = useState(true);
-
+  const soundOnRef = useRef(true);
 
 
 
@@ -69,7 +69,7 @@ const Race = () => {
         bgmRef.current.loop = true;
         bgmRef.current.volume = 0.4;
       }
-      if (soundOn) {
+      if (soundOnRef.current) {
         bgmRef.current.play().catch(() => {});
       }
       return;
@@ -280,11 +280,12 @@ const Race = () => {
         onClick={() => {
           const next = !soundOn;
           setSoundOn(next);
+          soundOnRef.current = next;
           if (!next) {
-            bgmRef.current?.pause();
+            if (bgmRef.current) { bgmRef.current.pause(); }
           } else {
-            if (raceState === "racing") {
-              bgmRef.current?.play().catch(() => {});
+            if (raceState === "racing" && bgmRef.current) {
+              bgmRef.current.play().catch(() => {});
             }
           }
         }}
