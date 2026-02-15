@@ -1,7 +1,6 @@
 import { motion } from "framer-motion";
 import { Zap, Gauge, Wind, Shield, Wrench, Flag } from "lucide-react";
-import garageBg from "@/assets/garage-bg.jpg";
-import CarShowcase from "@/components/garage/CarShowcase";
+import garageScene from "@/assets/garage-scene.jpg";
 import StatBar from "@/components/garage/StatBar";
 import GlowButton from "@/components/garage/GlowButton";
 
@@ -14,13 +13,16 @@ const carStats = [
 
 const Index = () => {
   return (
-    <div className="relative min-h-screen overflow-hidden">
-      {/* Background */}
+    <div className="relative min-h-screen overflow-hidden bg-background">
+      {/* Full scene background — car already in garage */}
       <div
         className="absolute inset-0 bg-cover bg-center bg-no-repeat"
-        style={{ backgroundImage: `url(${garageBg})` }}
+        style={{ backgroundImage: `url(${garageScene})` }}
       />
-      <div className="absolute inset-0 bg-background/70 backdrop-blur-sm" />
+      {/* Darken right side for readability of stats panel */}
+      <div className="absolute inset-0 bg-gradient-to-l from-background/80 via-background/30 to-transparent" />
+      {/* Subtle top/bottom vignette */}
+      <div className="absolute inset-0 bg-gradient-to-b from-background/60 via-transparent to-background/70" />
 
       {/* Content */}
       <div className="relative z-10 flex min-h-screen flex-col">
@@ -41,35 +43,31 @@ const Index = () => {
         </motion.header>
 
         {/* Main */}
-        <main className="flex flex-1 flex-col items-center justify-center gap-10 px-6 pb-10 lg:flex-row lg:gap-16 lg:px-16">
-          {/* Car Section */}
-          <div className="flex-1">
-            <motion.div
-              initial={{ opacity: 0, y: 20 }}
-              animate={{ opacity: 1, y: 0 }}
-              transition={{ delay: 0.2 }}
-              className="mb-6 text-center lg:text-left"
-            >
-              <p className="font-display text-xs font-semibold uppercase tracking-[0.3em] text-muted-foreground">
-                Classe Lendária
-              </p>
-              <h2 className="font-display text-4xl font-black uppercase tracking-tight text-foreground lg:text-5xl">
-                Phantom <span className="text-primary text-glow-cyan">X9</span>
-              </h2>
-              <p className="mt-1 font-body text-sm text-muted-foreground">
-                Token #4829 · Proprietário: 0x7f3a...e1b2
-              </p>
-            </motion.div>
+        <main className="flex flex-1 items-end justify-between gap-10 px-8 pb-10 lg:items-center lg:px-16">
+          {/* Left: Car info overlaid on scene */}
+          <motion.div
+            initial={{ opacity: 0, y: 20 }}
+            animate={{ opacity: 1, y: 0 }}
+            transition={{ delay: 0.3 }}
+            className="max-w-md"
+          >
+            <p className="font-display text-xs font-semibold uppercase tracking-[0.3em] text-primary/70">
+              Classe Lendária
+            </p>
+            <h2 className="font-display text-5xl font-black uppercase tracking-tight text-foreground lg:text-6xl">
+              Phantom <span className="text-primary text-glow-cyan">X9</span>
+            </h2>
+            <p className="mt-2 font-body text-sm text-muted-foreground">
+              Token #4829 · Proprietário: 0x7f3a...e1b2
+            </p>
+          </motion.div>
 
-            <CarShowcase />
-          </div>
-
-          {/* Stats Panel */}
+          {/* Right: Stats Panel */}
           <motion.div
             initial={{ opacity: 0, x: 40 }}
             animate={{ opacity: 1, x: 0 }}
             transition={{ duration: 0.6, delay: 0.4 }}
-            className="w-full max-w-md"
+            className="w-full max-w-sm"
           >
             <div className="glass-strong rounded-2xl p-8 shadow-2xl">
               <h3 className="mb-6 font-display text-xs font-bold uppercase tracking-[0.3em] text-muted-foreground">
@@ -89,10 +87,8 @@ const Index = () => {
                 ))}
               </div>
 
-              {/* Divider */}
               <div className="my-8 h-px w-full bg-gradient-to-r from-transparent via-border to-transparent" />
 
-              {/* Buttons */}
               <div className="flex flex-col gap-4 sm:flex-row">
                 <GlowButton variant="purple" icon={<Wrench className="h-4 w-4" />} className="flex-1">
                   Equipar Peças
