@@ -163,17 +163,18 @@ const Landing = () => {
 
       {/* ─── HERO ─── */}
       <section ref={heroRef} className="relative flex min-h-screen items-end overflow-hidden pb-24 pt-16 sm:items-center sm:pb-0">
-        {/* Shader plasma lines behind hero */}
-        <div className="absolute inset-0 z-0">
-          <ShaderBackground />
-          <div className="absolute inset-0 bg-gradient-to-t from-background via-transparent to-background/40" />
-        </div>
-
-        <motion.div style={{ y: heroY, scale: heroScale }} className="absolute inset-0 z-[1]">
+        {/* Car image behind */}
+        <motion.div style={{ y: heroY, scale: heroScale }} className="absolute inset-0 z-0">
           <img src={landingHero} alt="TurboNitro Racing" className="h-full w-full object-cover object-center opacity-90" />
           <div className="absolute inset-0 bg-gradient-to-t from-background via-background/20 to-transparent" />
           <div className="absolute inset-0 bg-gradient-to-r from-background/60 via-transparent to-background/40" />
         </motion.div>
+
+        {/* Shader plasma lines on top of car */}
+        <div className="absolute inset-0 z-[1] mix-blend-screen">
+          <ShaderBackground />
+          <div className="absolute inset-0 bg-gradient-to-t from-background via-transparent to-background/40" />
+        </div>
 
         <motion.div style={{ opacity: heroOpacity }} className="relative z-10 mx-auto w-full max-w-7xl px-4 sm:px-8">
           <div className="max-w-2xl">
