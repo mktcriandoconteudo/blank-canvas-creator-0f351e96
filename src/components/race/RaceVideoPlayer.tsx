@@ -83,19 +83,45 @@ const RaceVideoPlayer = ({ videos, finaleVideo, isActive, poster, nitroActive, i
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [isActive, playingFinale]);
 
-  // When finale video is set, switch to it
+  // Preload finale video as soon as we know which one it will be
+  useEffect(() => {
+    if (finaleVideo && finaleRef.current && !playingFinale) {
+      const vid = finaleRef.current;
+      setupMobileVideo(vid);
+      vid.src = finaleVideo;
+      vid.preload = "auto";
+      vid.load();
+      console.log("[RaceVideo] Preloading finale:", finaleVideo);
+    }
+  }, [finaleVideo, playingFinale]);
+
+  // When finale video is set, switch to it with a small delay to ensure it's ready
   useEffect(() => {
     if (finaleVideo && !playingFinale) {
-      setPlayingFinale(true);
-      videoARef.current?.pause();
-      videoBRef.current?.pause();
-
       const vid = finaleRef.current;
-      if (vid) {
-        setupMobileVideo(vid);
-        vid.src = finaleVideo;
-        vid.load();
-        vid.play().catch(() => {});
+      if (!vid) return;
+
+      const startFinale = () => {
+        console.log("[RaceVideo] Starting finale playback");
+        setPlayingFinale(true);
+        videoARef.current?.pause();
+        videoBRef.current?.pause();
+        vid.currentTime = 0;
+        vid.play().catch((e) => console.warn("[RaceVideo] Finale play failed:", e));
+      };
+
+      // If video has enough data, play immediately; otherwise wait
+      if (vid.readyState >= 3) {
+        startFinale();
+      } else {
+        console.log("[RaceVideo] Waiting for finale to buffer...");
+        vid.addEventListener("canplay", startFinale, { once: true });
+        // Fallback: force play after 1s even if not fully buffered
+        const timeout = setTimeout(startFinale, 1000);
+        return () => {
+          clearTimeout(timeout);
+          vid.removeEventListener("canplay", startFinale);
+        };
       }
     }
   }, [finaleVideo, playingFinale]);
@@ -173,7 +199,7 @@ const RaceVideoPlayer = ({ videos, finaleVideo, isActive, poster, nitroActive, i
         muted
         playsInline
         loop
-        preload="none"
+        preload="auto"
         className="absolute inset-0 w-full h-full object-cover"
         style={{
           filter: "brightness(1.1) saturate(1.2) contrast(1.05)",
