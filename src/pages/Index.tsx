@@ -1,5 +1,5 @@
 import { motion, AnimatePresence } from "framer-motion";
-import { Zap, Gauge, Wind, Shield, Wrench, Flag, Star, Plus, Coins, Volume2, VolumeX, LogOut, User, Menu, X } from "lucide-react";
+import { Zap, Gauge, Wind, Shield, Wrench, Flag, Star, Plus, Coins, Volume2, VolumeX, LogOut, User, Menu, X, ChevronLeft, ChevronRight, ChevronUp, ChevronDown } from "lucide-react";
 import { useNavigate } from "react-router-dom";
 import { useRef, useState, useEffect, useCallback } from "react";
 import garageScene from "@/assets/garage-scene.jpg";
@@ -13,11 +13,12 @@ import { supabase } from "@/lib/supabase";
 
 const Index = () => {
   const navigate = useNavigate();
-  const { state, selectedCar, addPoint, repair, updateState, loading } = useGameState();
+  const { state, selectedCar, addPoint, repair, updateState, selectCar, loading } = useGameState();
   const { user, signOut } = useAuth();
   const [garageSoundOn, setGarageSoundOn] = useState(true);
   const [refilling, setRefilling] = useState(false);
   const [menuOpen, setMenuOpen] = useState(false);
+  const [showStats, setShowStats] = useState(true);
   const garageBgmRef = useRef<HTMLAudioElement | null>(null);
 
   const audioStartedRef = useRef(false);
@@ -83,6 +84,13 @@ const Index = () => {
   const xpPercent = (selectedCar.xp / selectedCar.xpToNext) * 100;
   const needsRevision = selectedCar.racesSinceRevision >= 5;
   const repairCost = 50 + selectedCar.level * 10;
+
+  const carIndex = state.cars.findIndex((c) => c.id === state.selectedCarId);
+  const hasPrev = carIndex > 0;
+  const hasNext = carIndex < state.cars.length - 1;
+  const goToPrev = () => { if (hasPrev) selectCar(state.cars[carIndex - 1].id); };
+  const goToNext = () => { if (hasNext) selectCar(state.cars[carIndex + 1].id); };
+  const multiCar = state.cars.length > 1;
 
   const stats = [
     { label: "Velocidade", key: "speed" as const, value: selectedCar.speed, icon: <Gauge className="h-4 w-4" />, gradient: "bg-gradient-to-r from-cyan-500 to-blue-500" },
@@ -193,22 +201,48 @@ const Index = () => {
 
         {/* Main */}
         <main className="flex flex-1 flex-col gap-4 overflow-y-auto px-4 pb-4 sm:pb-8 lg:flex-row lg:items-center lg:justify-between lg:gap-8 lg:px-16">
-          {/* Left: Car info */}
+          {/* Left: Car info + car navigation */}
           <motion.div
             initial={{ opacity: 0, y: 20 }}
             animate={{ opacity: 1, y: 0 }}
             transition={{ delay: 0.3 }}
             className="flex max-w-md flex-col items-center text-center lg:items-start lg:text-left"
           >
+            {/* Car name + nav arrows */}
             <p className="font-display text-xs font-semibold uppercase tracking-[0.3em] text-primary/70">
               Classe Lendária
             </p>
-            <h2 className="font-display text-3xl font-black uppercase tracking-tight text-foreground sm:text-5xl lg:text-6xl">
-              {selectedCar.name.split(" ")[0]}{" "}
-              <span className="text-primary text-glow-cyan">{selectedCar.name.split(" ").slice(1).join(" ")}</span>
-            </h2>
+            <div className="flex items-center gap-3">
+              {multiCar && (
+                <button
+                  onClick={goToPrev}
+                  disabled={!hasPrev}
+                  className="flex h-10 w-10 items-center justify-center rounded-full border border-primary/20 bg-card/30 backdrop-blur-sm transition-all hover:bg-card/60 disabled:opacity-20"
+                >
+                  <ChevronLeft className="h-5 w-5 text-primary" />
+                </button>
+              )}
+              <h2 className="font-display text-3xl font-black uppercase tracking-tight text-foreground sm:text-5xl lg:text-6xl">
+                {selectedCar.name.split(" ")[0]}{" "}
+                <span className="text-primary text-glow-cyan">{selectedCar.name.split(" ").slice(1).join(" ")}</span>
+              </h2>
+              {multiCar && (
+                <button
+                  onClick={goToNext}
+                  disabled={!hasNext}
+                  className="flex h-10 w-10 items-center justify-center rounded-full border border-primary/20 bg-card/30 backdrop-blur-sm transition-all hover:bg-card/60 disabled:opacity-20"
+                >
+                  <ChevronRight className="h-5 w-5 text-primary" />
+                </button>
+              )}
+            </div>
             <p className="mt-2 font-body text-sm text-muted-foreground">
               Token {selectedCar.tokenId} · Piloto: {user?.username ?? "—"}
+              {multiCar && (
+                <span className="ml-2 text-primary/60">
+                  ({carIndex + 1}/{state.cars.length})
+                </span>
+              )}
             </p>
 
             {/* XP / Level badge */}
@@ -249,132 +283,159 @@ const Index = () => {
 
           </motion.div>
 
-          {/* Right: Stats Panel */}
+          {/* Right: Collapsible Stats Panel */}
           <motion.div
             initial={{ opacity: 0, x: 40 }}
             animate={{ opacity: 1, x: 0 }}
             transition={{ duration: 0.6, delay: 0.4 }}
             className="w-full max-w-xs self-center lg:self-auto"
           >
-            <div className="glass-strong rounded-2xl p-6 shadow-2xl">
-              <div className="flex items-center justify-between mb-4">
-                <h3 className="font-display text-[10px] font-bold uppercase tracking-[0.3em] text-muted-foreground">
-                  Atributos
-                </h3>
-                <div className="flex items-center gap-1 text-xs">
-                  <Shield className="h-3 w-3 text-muted-foreground" />
-                  <span className="font-body text-muted-foreground">
-                    Motor: <span className={selectedCar.engineHealth < 30 ? "text-destructive" : "text-foreground"}>{selectedCar.engineHealth}%</span>
-                  </span>
-                </div>
-              </div>
+            {/* Toggle button */}
+            <button
+              onClick={() => setShowStats(!showStats)}
+              className="mb-2 flex w-full items-center justify-between rounded-xl border border-primary/15 bg-card/30 px-4 py-2.5 backdrop-blur-sm transition-colors hover:bg-card/50"
+            >
+              <span className="font-display text-xs font-bold uppercase tracking-[0.2em] text-muted-foreground">
+                {showStats ? "Fechar Atributos" : "Ver Atributos"}
+              </span>
+              {showStats ? (
+                <ChevronUp className="h-4 w-4 text-primary" />
+              ) : (
+                <ChevronDown className="h-4 w-4 text-primary" />
+              )}
+            </button>
 
-              <div className="space-y-3">
-                {stats.map((stat, i) => (
-                  <div key={stat.label} className="flex items-center gap-2">
-                    <div className="flex-1">
-                      <StatBar
-                        label={stat.label}
-                        value={stat.value}
-                        gradient={stat.gradient}
-                        delay={0.5 + i * 0.15}
-                        icon={stat.icon}
-                      />
-                    </div>
-                    {selectedCar.attributePoints > 0 && (
-                      <motion.button
-                        initial={{ scale: 0 }}
-                        animate={{ scale: 1 }}
-                        transition={{ delay: 0.8 + i * 0.1 }}
-                        onClick={() => addPoint(stat.key)}
-                        className="mt-4 flex h-6 w-6 shrink-0 items-center justify-center rounded-full border border-neon-green/50 bg-neon-green/10 text-neon-green transition-all hover:bg-neon-green/30 hover:scale-110"
-                      >
-                        <Plus className="h-3 w-3" />
-                      </motion.button>
-                    )}
-                  </div>
-                ))}
-              </div>
-
-              {/* Revision warning — inside stats panel for mobile visibility */}
-              {needsRevision && (
+            <AnimatePresence>
+              {showStats && (
                 <motion.div
-                  initial={{ opacity: 0 }}
-                  animate={{ opacity: 1 }}
-                  className="mt-4 rounded-xl border border-destructive/30 bg-destructive/10 p-3"
+                  initial={{ height: 0, opacity: 0 }}
+                  animate={{ height: "auto", opacity: 1 }}
+                  exit={{ height: 0, opacity: 0 }}
+                  transition={{ duration: 0.3 }}
+                  className="overflow-hidden"
                 >
-                  <div className="flex flex-col gap-2 sm:flex-row sm:items-center sm:justify-between">
-                    <span className="font-display text-xs font-bold text-destructive">⚠ Revisão necessária!</span>
-                    <button
-                      onClick={() => repair(repairCost)}
-                      className="w-full rounded-lg border border-primary/40 bg-primary/10 px-3 py-2 font-display text-xs font-bold text-primary transition-colors hover:bg-primary/20 sm:w-auto"
-                    >
-                      🔧 Reparar ({repairCost} NP)
-                    </button>
+                  <div className="glass-strong rounded-2xl p-6 shadow-2xl">
+                    <div className="flex items-center justify-between mb-4">
+                      <h3 className="font-display text-[10px] font-bold uppercase tracking-[0.3em] text-muted-foreground">
+                        Atributos
+                      </h3>
+                      <div className="flex items-center gap-1 text-xs">
+                        <Shield className="h-3 w-3 text-muted-foreground" />
+                        <span className="font-body text-muted-foreground">
+                          Motor: <span className={selectedCar.engineHealth < 30 ? "text-destructive" : "text-foreground"}>{selectedCar.engineHealth}%</span>
+                        </span>
+                      </div>
+                    </div>
+
+                    <div className="space-y-3">
+                      {stats.map((stat, i) => (
+                        <div key={stat.label} className="flex items-center gap-2">
+                          <div className="flex-1">
+                            <StatBar
+                              label={stat.label}
+                              value={stat.value}
+                              gradient={stat.gradient}
+                              delay={0.1 + i * 0.1}
+                              icon={stat.icon}
+                            />
+                          </div>
+                          {selectedCar.attributePoints > 0 && (
+                            <motion.button
+                              initial={{ scale: 0 }}
+                              animate={{ scale: 1 }}
+                              transition={{ delay: 0.3 + i * 0.1 }}
+                              onClick={() => addPoint(stat.key)}
+                              className="mt-4 flex h-6 w-6 shrink-0 items-center justify-center rounded-full border border-neon-green/50 bg-neon-green/10 text-neon-green transition-all hover:bg-neon-green/30 hover:scale-110"
+                            >
+                              <Plus className="h-3 w-3" />
+                            </motion.button>
+                          )}
+                        </div>
+                      ))}
+                    </div>
+
+                    {/* Revision warning */}
+                    {needsRevision && (
+                      <motion.div
+                        initial={{ opacity: 0 }}
+                        animate={{ opacity: 1 }}
+                        className="mt-4 rounded-xl border border-destructive/30 bg-destructive/10 p-3"
+                      >
+                        <div className="flex flex-col gap-2 sm:flex-row sm:items-center sm:justify-between">
+                          <span className="font-display text-xs font-bold text-destructive">⚠ Revisão necessária!</span>
+                          <button
+                            onClick={() => repair(repairCost)}
+                            className="w-full rounded-lg border border-primary/40 bg-primary/10 px-3 py-2 font-display text-xs font-bold text-primary transition-colors hover:bg-primary/20 sm:w-auto"
+                          >
+                            🔧 Reparar ({repairCost} NP)
+                          </button>
+                        </div>
+                      </motion.div>
+                    )}
+
+                    <div className="my-5 h-px w-full bg-gradient-to-r from-transparent via-border to-transparent" />
+
+                    <div className="flex flex-col gap-3 sm:flex-row">
+                      <GlowButton variant="purple" icon={<Wrench className="h-4 w-4" />} className="flex-1">
+                        Peças
+                      </GlowButton>
+                      {state.fuelTanks > 0 ? (
+                        <GlowButton
+                          variant="cyan"
+                          icon={<Flag className="h-4 w-4" />}
+                          className="flex-1"
+                          onClick={() => navigate("/race")}
+                        >
+                          Iniciar Corrida
+                        </GlowButton>
+                      ) : (
+                        <div className="flex-1 flex flex-col gap-1">
+                          <button
+                            disabled
+                            className="w-full rounded-xl border border-destructive/40 bg-destructive/10 px-8 py-4 font-display text-sm font-bold uppercase tracking-widest text-destructive/70 cursor-not-allowed"
+                          >
+                            ⛽ Sem Fuel
+                          </button>
+                        </div>
+                      )}
+                    </div>
+
+                    {state.fuelTanks < 5 && state.nitroPoints >= 50 && (
+                      <button
+                        disabled={refilling}
+                        onClick={async () => {
+                          setRefilling(true);
+                          try {
+                            const { data, error } = await supabase.rpc("refill_fuel", {
+                              _wallet_address: state.walletAddress,
+                            });
+                            if (error) throw error;
+                            if (data === true) {
+                              updateState((prev) => ({
+                                ...prev,
+                                fuelTanks: 5,
+                                nitroPoints: prev.nitroPoints - 50,
+                              }));
+                            }
+                          } catch (e) {
+                            console.error("Refill failed:", e);
+                          } finally {
+                            setRefilling(false);
+                          }
+                        }}
+                        className="mt-2 w-full rounded-lg border border-neon-green/30 bg-neon-green/10 px-3 py-2 font-display text-xs uppercase tracking-wider text-neon-green transition-colors hover:bg-neon-green/20 disabled:opacity-50"
+                      >
+                        ⛽ Reabastecer (50 NP)
+                      </button>
+                    )}
+
+                    <p className="mt-2 text-center font-body text-[10px] text-muted-foreground">
+                      ⛽ {state.fuelTanks}/5 tanques · 🔧 Rev. em {Math.max(0, 5 - selectedCar.racesSinceRevision)} corridas
+                    </p>
                   </div>
                 </motion.div>
               )}
-
-              <div className="my-5 h-px w-full bg-gradient-to-r from-transparent via-border to-transparent" />
-
-              <div className="flex flex-col gap-3 sm:flex-row">
-                <GlowButton variant="purple" icon={<Wrench className="h-4 w-4" />} className="flex-1">
-                  Peças
-                </GlowButton>
-                {state.fuelTanks > 0 ? (
-                  <GlowButton
-                    variant="cyan"
-                    icon={<Flag className="h-4 w-4" />}
-                    className="flex-1"
-                    onClick={() => navigate("/race")}
-                  >
-                    Iniciar Corrida
-                  </GlowButton>
-                ) : (
-                  <div className="flex-1 flex flex-col gap-1">
-                    <button
-                      disabled
-                      className="w-full rounded-xl border border-destructive/40 bg-destructive/10 px-8 py-4 font-display text-sm font-bold uppercase tracking-widest text-destructive/70 cursor-not-allowed"
-                    >
-                      ⛽ Sem Fuel
-                    </button>
-                  </div>
-                )}
-              </div>
-
-              {state.fuelTanks < 5 && state.nitroPoints >= 50 && (
-                <button
-                  disabled={refilling}
-                  onClick={async () => {
-                    setRefilling(true);
-                    try {
-                      const { data, error } = await supabase.rpc("refill_fuel", {
-                        _wallet_address: state.walletAddress,
-                      });
-                      if (error) throw error;
-                      if (data === true) {
-                        updateState((prev) => ({
-                          ...prev,
-                          fuelTanks: 5,
-                          nitroPoints: prev.nitroPoints - 50,
-                        }));
-                      }
-                    } catch (e) {
-                      console.error("Refill failed:", e);
-                    } finally {
-                      setRefilling(false);
-                    }
-                  }}
-                  className="mt-2 w-full rounded-lg border border-neon-green/30 bg-neon-green/10 px-3 py-2 font-display text-xs uppercase tracking-wider text-neon-green transition-colors hover:bg-neon-green/20 disabled:opacity-50"
-                >
-                  ⛽ Reabastecer (50 NP)
-                </button>
-              )}
-
-              <p className="mt-2 text-center font-body text-[10px] text-muted-foreground">
-                ⛽ {state.fuelTanks}/5 tanques · 🔧 Rev. em {Math.max(0, 5 - selectedCar.racesSinceRevision)} corridas
-              </p>
-            </div>
+            </AnimatePresence>
           </motion.div>
         </main>
       </div>
