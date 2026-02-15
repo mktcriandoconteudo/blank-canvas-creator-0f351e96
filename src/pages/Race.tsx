@@ -114,7 +114,7 @@ const Race = () => {
     setSoundOn(true);
     soundOnRef.current = true;
 
-    // Race engine BGM - only plays during racing
+    // bassloom-phantom-skid — plays during race and continues after finish
     if (!bgmRef.current) {
       const audio = new Audio(raceBgm);
       audio.loop = true;
@@ -123,7 +123,7 @@ const Race = () => {
       audio.play().catch(() => {});
     }
 
-    // Background loop BGM
+    // karlosdearma — only plays during racing, stops at finish
     if (!bgmLoopRef.current) {
       const audio = new Audio(raceBgmLoop);
       audio.loop = true;
@@ -175,13 +175,16 @@ const Race = () => {
     if (playerProgress >= FINISH_LINE || opponentProgress >= FINISH_LINE) {
       setRaceState("finished");
       setNitroActive(false);
-      // Keep race BGM (bassloom-phantom-skid) playing after finish
-      // Only stop the loop BGM
+      
+      // STOP karlosdearma permanently
       if (bgmLoopRef.current) {
         bgmLoopRef.current.pause();
-        bgmLoopRef.current.currentTime = 0;
+        bgmLoopRef.current.src = "";
         bgmLoopRef.current = null;
       }
+      
+      // bassloom-phantom-skid continues — do NOT touch bgmRef here
+      
       const won = playerProgress >= opponentProgress;
       setVictory(won);
       const result = finishRaceRef.current(won);
@@ -203,7 +206,6 @@ const Race = () => {
 
   const toggleSound = useCallback(() => {
     const next = !soundOnRef.current;
-    console.log("[toggleSound] called, current:", soundOnRef.current, "next:", next, "raceState:", raceState, "bgmLoop:", !!bgmLoopRef.current, "bgm:", !!bgmRef.current);
     setSoundOn(next);
     soundOnRef.current = next;
     if (!next) {
