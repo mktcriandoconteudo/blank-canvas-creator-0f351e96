@@ -40,7 +40,7 @@ import garageBgm from "@/assets/garagem-bgm.mp3";
 import StatBar from "@/components/garage/StatBar";
 import GlowButton from "@/components/garage/GlowButton";
 import { useGameState } from "@/hooks/useGameState";
-import { needsOilChange, kmSinceOilChange } from "@/lib/gameState";
+import { needsOilChange, kmSinceOilChange, isEngineBlown } from "@/lib/gameState";
 import { useAuth } from "@/hooks/useAuth";
 import { useInsurance } from "@/hooks/useInsurance";
 import { INSURANCE_PLANS } from "@/lib/insurance";
@@ -387,13 +387,15 @@ const Index = () => {
             </AnimatePresence>
 
             {/* Mechanic Warnings — dismissible per session */}
-            {(selectedCar.engineHealth < 50 || oilNeeded || selectedCar.durability < 30) && !mechanicDismissed && (
+            {(isEngineBlown(selectedCar) || selectedCar.engineHealth < 50 || oilNeeded || selectedCar.durability < 30) && !mechanicDismissed && (
               <motion.div
                 initial={{ opacity: 0, x: -20 }}
                 animate={{ opacity: 1, x: 0 }}
                 exit={{ opacity: 0, x: -20 }}
                 transition={{ delay: 0.6 }}
-                className="mt-3 w-full max-w-xs rounded-xl border border-neon-orange/30 bg-background/90 p-3 backdrop-blur-xl shadow-lg relative"
+                className={`mt-3 w-full max-w-xs rounded-xl border p-3 backdrop-blur-xl shadow-lg relative ${
+                  isEngineBlown(selectedCar) ? "border-destructive/40 bg-background/95" : "border-neon-orange/30 bg-background/90"
+                }`}
               >
                 <button
                   onClick={() => setMechanicDismissed(true)}
@@ -410,7 +412,12 @@ const Index = () => {
                       Mecânico diz:
                     </span>
                     <div className="space-y-1">
-                      {selectedCar.engineHealth < 50 && (
+                      {isEngineBlown(selectedCar) && (
+                        <p className="font-body text-[11px] text-destructive font-bold">
+                          🔥 "MOTOR FUNDIU! Carro bloqueado! Vai custar 3x o reparo normal. Corre pra oficina, chefe!"
+                        </p>
+                      )}
+                      {!isEngineBlown(selectedCar) && selectedCar.engineHealth < 50 && (
                         <p className="font-body text-[11px] text-destructive">
                           ⚠️ "Motor em {selectedCar.engineHealth}%! Tá quase fundindo, chefe. Faz uma revisão urgente!"
                         </p>
@@ -432,11 +439,15 @@ const Index = () => {
                       )}
                     </div>
                     <button
-                      onClick={() => setShowStats(true)}
-                      className="mt-1 flex items-center gap-1.5 rounded-lg border border-neon-orange/30 bg-neon-orange/10 px-3 py-1.5 font-display text-[10px] font-bold uppercase tracking-wider text-neon-orange transition-colors hover:bg-neon-orange/20"
+                      onClick={() => navigate("/perfil")}
+                      className={`mt-1 flex items-center gap-1.5 rounded-lg border px-3 py-1.5 font-display text-[10px] font-bold uppercase tracking-wider transition-colors ${
+                        isEngineBlown(selectedCar)
+                          ? "border-destructive/30 bg-destructive/10 text-destructive hover:bg-destructive/20"
+                          : "border-neon-orange/30 bg-neon-orange/10 text-neon-orange hover:bg-neon-orange/20"
+                      }`}
                     >
                       <Wrench className="h-3 w-3" />
-                      Ir para Oficina
+                      {isEngineBlown(selectedCar) ? "Reparo Urgente" : "Ir para Oficina"}
                     </button>
                   </div>
                 </div>

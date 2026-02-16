@@ -8,7 +8,7 @@ import RaceVideoPlayer from "@/components/race/RaceVideoPlayer";
 import SimpleVideoPlayer from "@/components/race/SimpleVideoPlayer";
 import RaceLeaderboard from "@/components/race/RaceLeaderboard";
 import { useGameState } from "@/hooks/useGameState";
-import { RENTAL_STAT_PENALTY, getMaxFuel } from "@/lib/gameState";
+import { RENTAL_STAT_PENALTY, getMaxFuel, isEngineBlown, getRepairCost } from "@/lib/gameState";
 import { supabase } from "@/integrations/supabase/client";
 import { useCarVideos } from "@/hooks/useCarVideos";
 import { getCollisionConfig, rollCollision, logCollision, type CollisionResult } from "@/lib/collision";
@@ -55,6 +55,8 @@ const Race = () => {
   const dynamicVideos = carVideoMap[carImageKey] ?? {};
 
   const noFuel = !loading && (selectedCar?.fuelTanks ?? 0) <= 0;
+  const engineBlown = !loading && selectedCar ? isEngineBlown(selectedCar) : false;
+  const blownRepairCost = selectedCar ? getRepairCost(selectedCar) : 0;
 
   // Generate opponent based on player level
   const [opponent] = useState(() => {
@@ -182,7 +184,7 @@ const Race = () => {
 
   // Countdown
   useEffect(() => {
-    if (noFuel || raceState !== "countdown") return;
+    if (noFuel || engineBlown || raceState !== "countdown") return;
     if (countdown <= 0) {
       setRaceState("racing");
       return;
@@ -785,6 +787,48 @@ const Race = () => {
                 className="rounded-xl bg-primary px-8 py-3 font-display text-sm font-bold uppercase tracking-wider text-primary-foreground transition-all hover:bg-primary/90 hover:shadow-[0_0_30px_hsl(185_80%_55%/0.3)] active:scale-95"
               >
                 ⛽ Ir para Garagem
+              </button>
+            </motion.div>
+          </motion.div>
+        )}
+      </AnimatePresence>
+
+      {/* Engine blown overlay */}
+      <AnimatePresence>
+        {engineBlown && !noFuel && (
+          <motion.div
+            initial={{ opacity: 0 }}
+            animate={{ opacity: 1 }}
+            className="absolute inset-0 z-[32] flex flex-col items-center justify-center bg-background/90 backdrop-blur-xl"
+          >
+            <motion.div
+              initial={{ scale: 0.8, opacity: 0 }}
+              animate={{ scale: 1, opacity: 1 }}
+              transition={{ delay: 0.2 }}
+              className="flex flex-col items-center gap-6 rounded-2xl border border-destructive/30 bg-card/50 p-8 backdrop-blur-xl sm:p-12"
+            >
+              <div className="flex h-20 w-20 items-center justify-center rounded-full border border-destructive/30 bg-destructive/10">
+                <Wrench className="h-10 w-10 text-destructive" />
+              </div>
+              <div className="text-center">
+                <h2 className="font-display text-2xl font-black uppercase tracking-wider text-destructive sm:text-3xl">
+                  Motor Fundido!
+                </h2>
+                <p className="mt-2 max-w-xs font-body text-sm text-muted-foreground">
+                  O motor deste carro fundiu e não pode correr até ser reparado na oficina do Mecânico Raul.
+                </p>
+              </div>
+              <div className="flex items-center gap-2 rounded-lg border border-destructive/20 bg-destructive/5 px-4 py-2">
+                <Wrench className="h-4 w-4 text-destructive" />
+                <span className="font-display text-sm text-destructive">
+                  Reparo: {blownRepairCost} NP (fila prioritária 3x)
+                </span>
+              </div>
+              <button
+                onClick={() => navigate("/perfil")}
+                className="rounded-xl bg-destructive px-8 py-3 font-display text-sm font-bold uppercase tracking-wider text-destructive-foreground transition-all hover:bg-destructive/90 active:scale-95"
+              >
+                🔧 Ir para Oficina
               </button>
             </motion.div>
           </motion.div>
