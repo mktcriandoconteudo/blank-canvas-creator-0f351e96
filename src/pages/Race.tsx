@@ -52,7 +52,7 @@ const Race = () => {
   const carImageKey = selectedCar?.name ? `car-${selectedCar.name.toLowerCase().split(" ")[0]}` : "";
   const dynamicVideos = carVideoMap[carImageKey] ?? {};
 
-  const noFuel = !loading && state.fuelTanks <= 0;
+  const noFuel = !loading && (selectedCar?.fuelTanks ?? 0) <= 0;
 
   // Generate opponent based on player level
   const [opponent] = useState(() => {
@@ -507,7 +507,7 @@ const Race = () => {
             </div>
             <div className="flex items-center gap-1">
               <Fuel className="h-3 w-3 text-neon-orange" />
-              <span className="font-display text-[9px] text-foreground/70 sm:text-[10px]">{state.fuelTanks}/5</span>
+              <span className="font-display text-[9px] text-foreground/70 sm:text-[10px]">{selectedCar?.fuelTanks ?? 0}/5</span>
             </div>
             <div className="flex items-center gap-1">
               <Wrench className="h-3 w-3 text-primary" />
@@ -700,13 +700,13 @@ const Race = () => {
                   Sem Combustível
                 </h2>
                 <p className="mt-2 max-w-xs font-body text-sm text-muted-foreground">
-                  Seus tanques estão vazios! Volte à garagem para reabastecer antes de correr.
+                  Este carro está sem combustível! Volte à garagem e aguarde o reabastecimento automático (24h).
                 </p>
               </div>
               <div className="flex items-center gap-2 rounded-lg border border-primary/15 bg-primary/5 px-4 py-2">
                 <Fuel className="h-4 w-4 text-primary" />
                 <span className="font-display text-sm text-primary">
-                  {state.fuelTanks}/5 Tanques
+                  {selectedCar?.fuelTanks ?? 0}/5 Tanques
                 </span>
               </div>
               <button

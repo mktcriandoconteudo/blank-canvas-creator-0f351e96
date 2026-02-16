@@ -1,5 +1,5 @@
 import { motion, AnimatePresence } from "framer-motion";
-import { Zap, Gauge, Wind, Shield, Wrench, Flag, Star, Plus, Coins, Volume2, VolumeX, ChevronLeft, ChevronRight, ChevronUp, ChevronDown, Droplets, ShieldCheck } from "lucide-react";
+import { Zap, Gauge, Wind, Shield, Wrench, Flag, Star, Plus, Coins, Volume2, VolumeX, ChevronLeft, ChevronRight, ChevronUp, ChevronDown, Droplets, ShieldCheck, Timer } from "lucide-react";
 import MainNav from "@/components/MainNav";
 import { useNavigate } from "react-router-dom";
 import { useRef, useState, useEffect, useCallback } from "react";
@@ -41,10 +41,42 @@ import GlowButton from "@/components/garage/GlowButton";
 import { useGameState } from "@/hooks/useGameState";
 import { needsOilChange, kmSinceOilChange } from "@/lib/gameState";
 import { useAuth } from "@/hooks/useAuth";
-import { supabase } from "@/lib/supabase";
 import { useInsurance } from "@/hooks/useInsurance";
 import { INSURANCE_PLANS } from "@/lib/insurance";
 
+
+/* ─── Per-car fuel timer ─── */
+const CarFuelTimer = ({ lastRefill }: { lastRefill: string }) => {
+  const [timeLeft, setTimeLeft] = useState("");
+
+  useEffect(() => {
+    const update = () => {
+      const refillTime = new Date(lastRefill).getTime() + 24 * 60 * 60 * 1000;
+      const now = Date.now();
+      const diff = Math.max(0, refillTime - now);
+      if (diff <= 0) {
+        setTimeLeft("Pronto para reabastecer!");
+        return;
+      }
+      const h = Math.floor(diff / (1000 * 60 * 60));
+      const m = Math.floor((diff % (1000 * 60 * 60)) / (1000 * 60));
+      const s = Math.floor((diff % (1000 * 60)) / 1000);
+      setTimeLeft(`${h.toString().padStart(2, "0")}:${m.toString().padStart(2, "0")}:${s.toString().padStart(2, "0")}`);
+    };
+    update();
+    const interval = setInterval(update, 1000);
+    return () => clearInterval(interval);
+  }, [lastRefill]);
+
+  return (
+    <div className="flex items-center gap-1.5">
+      <Timer className="h-3 w-3 text-neon-orange" />
+      <span className="font-display text-[10px] font-bold text-neon-orange">
+        ⛽ Reabastece em: {timeLeft}
+      </span>
+    </div>
+  );
+};
 
 interface LastRaceResult {
   victory: boolean;
@@ -61,7 +93,6 @@ const Index = () => {
   const { state, selectedCar, addPoint, repair, oilChange, updateState, selectCar, loading } = useGameState();
   const { user, session } = useAuth();
   const [garageSoundOn, setGarageSoundOn] = useState(true);
-  const [refilling, setRefilling] = useState(false);
   const [showStats, setShowStats] = useState(window.innerWidth >= 768);
   const [showInsurance, setShowInsurance] = useState(false);
   const [purchasingPlan, setPurchasingPlan] = useState<string | null>(null);
@@ -656,7 +687,7 @@ const Index = () => {
                       <GlowButton variant="purple" icon={<Wrench className="h-4 w-4" />} className="flex-1">
                         Peças
                       </GlowButton>
-                      {state.fuelTanks > 0 ? (
+                      {selectedCar.fuelTanks > 0 ? (
                         <GlowButton
                           variant="cyan"
                           icon={<Flag className="h-4 w-4" />}
@@ -677,37 +708,45 @@ const Index = () => {
                       )}
                     </div>
 
-                    {state.fuelTanks < 5 && state.nitroPoints >= 50 && (
-                      <button
-                        disabled={refilling}
-                        onClick={async () => {
-                          setRefilling(true);
-                          try {
-                            const { data, error } = await supabase.rpc("refill_fuel", {
-                              _wallet_address: state.walletAddress,
-                            });
-                            if (error) throw error;
-                            if (data === true) {
-                              updateState((prev) => ({
-                                ...prev,
-                                fuelTanks: 5,
-                                nitroPoints: prev.nitroPoints - 50,
-                              }));
-                            }
-                          } catch (e) {
-                            console.error("Refill failed:", e);
-                          } finally {
-                            setRefilling(false);
-                          }
-                        }}
-                        className="mt-2 w-full rounded-lg border border-neon-green/30 bg-neon-green/10 px-3 py-2 font-display text-xs uppercase tracking-wider text-neon-green transition-colors hover:bg-neon-green/20 disabled:opacity-50"
-                      >
-                        ⛽ Reabastecer (50 NP)
-                      </button>
-                    )}
+                    {/* Per-car fuel indicator with timer */}
+                    <div className="mt-3 rounded-xl border border-primary/20 bg-card/30 p-3 backdrop-blur-sm">
+                      <div className="flex items-center justify-between mb-2">
+                        <div className="flex items-center gap-2">
+                          <Timer className="h-4 w-4 text-primary" />
+                          <span className="font-display text-xs font-bold uppercase tracking-wider text-foreground">
+                            Combustível
+                          </span>
+                        </div>
+                        <span className={`font-display text-xs font-bold ${selectedCar.fuelTanks > 0 ? "text-neon-green" : "text-destructive"}`}>
+                          {selectedCar.fuelTanks}/5
+                        </span>
+                      </div>
+                      {/* Fuel bar */}
+                      <div className="flex gap-1 mb-2">
+                        {[...Array(5)].map((_, i) => (
+                          <div
+                            key={i}
+                            className={`h-2 flex-1 rounded-full transition-colors ${
+                              i < selectedCar.fuelTanks
+                                ? "bg-gradient-to-r from-neon-green to-emerald-400"
+                                : "bg-muted/30"
+                            }`}
+                          />
+                        ))}
+                      </div>
+                      {/* Timer countdown */}
+                      {selectedCar.fuelTanks < 5 && (
+                        <CarFuelTimer lastRefill={selectedCar.lastFuelRefill} />
+                      )}
+                      {selectedCar.fuelTanks === 5 && (
+                        <p className="font-body text-[10px] text-neon-green/70">
+                          ✅ Tanque cheio · 5 corridas disponíveis
+                        </p>
+                      )}
+                    </div>
 
                     <p className="mt-2 text-center font-body text-[10px] text-muted-foreground">
-                      ⛽ {state.fuelTanks}/5 tanques · 🔧 Rev. em {Math.max(0, 5 - selectedCar.racesSinceRevision)} corridas · 🛢 Óleo: {Math.max(0, 100 - kmSinceOil)} km restante
+                      🔧 Rev. em {Math.max(0, 5 - selectedCar.racesSinceRevision)} corridas · 🛢 Óleo: {Math.max(0, 100 - kmSinceOil)} km restante
                     </p>
                   </div>
                 </motion.div>

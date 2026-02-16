@@ -191,6 +191,7 @@ export type Database = {
           fuel_tanks: number
           handling_base: number
           id: string
+          last_fuel_refill: string
           last_oil_change_km: number
           level: number
           license_plate: string
@@ -217,6 +218,7 @@ export type Database = {
           fuel_tanks?: number
           handling_base?: number
           id?: string
+          last_fuel_refill?: string
           last_oil_change_km?: number
           level?: number
           license_plate?: string
@@ -243,6 +245,7 @@ export type Database = {
           fuel_tanks?: number
           handling_base?: number
           id?: string
+          last_fuel_refill?: string
           last_oil_change_km?: number
           level?: number
           license_plate?: string
