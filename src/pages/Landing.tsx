@@ -135,16 +135,10 @@ const TokenTicker = () => {
       transition={{ delay: 0.9, duration: 0.6 }}
       className="mt-8 inline-flex flex-col gap-2 sm:flex-row sm:items-center sm:gap-3"
     >
-      {/* MetaMask badge */}
-      <div className="flex items-center gap-2 rounded-2xl border border-neon-orange/20 bg-card/40 px-3 py-2.5 backdrop-blur-xl">
-        <img src={metamaskLogo} alt="MetaMask" className="h-6 w-6" />
-        <span className="font-display text-[10px] uppercase tracking-wider text-neon-orange font-bold">MetaMask</span>
-      </div>
-
-      {/* Price Card */}
+      {/* Price Card with MetaMask */}
       <div className="flex items-center gap-3 rounded-2xl border border-neon-orange/30 bg-card/50 px-5 py-3 backdrop-blur-xl shadow-[0_0_30px_hsl(30_90%_55%/0.1)]">
         <div className="flex h-10 w-10 items-center justify-center rounded-full bg-neon-orange/20">
-          <Coins className="h-5 w-5 text-neon-orange" />
+          <img src={metamaskLogo} alt="MetaMask" className="h-6 w-6" />
         </div>
         <div>
           <div className="flex items-center gap-2">
@@ -287,9 +281,21 @@ const Landing = () => {
           <div className="flex items-center gap-2 sm:gap-3">
             {session ? (
               <>
-                <span className="hidden font-display text-xs uppercase tracking-wider text-primary sm:block">
-                  {user?.username ?? "Piloto"}
-                </span>
+                <button
+                  onClick={() => navigate("/perfil")}
+                  className="hidden items-center gap-2 rounded-lg bg-card/30 px-2.5 py-1.5 backdrop-blur-sm border border-border/10 sm:flex"
+                >
+                  {user?.avatarUrl ? (
+                    <img src={user.avatarUrl} alt={user?.username ?? "Piloto"} className="h-6 w-6 rounded-full object-cover border border-primary/30" />
+                  ) : (
+                    <div className="flex h-6 w-6 items-center justify-center rounded-full bg-primary/20 text-primary font-display text-[10px] font-bold">
+                      {(user?.username ?? "P").charAt(0).toUpperCase()}
+                    </div>
+                  )}
+                  <span className="font-display text-xs uppercase tracking-wider text-primary">
+                    {user?.username ?? "Piloto"}
+                  </span>
+                </button>
                 <button
                   onClick={() => navigate("/garage")}
                   className="rounded-xl bg-primary px-4 py-2 font-display text-xs font-bold uppercase tracking-wider text-primary-foreground transition-all hover:brightness-110 glow-cyan"
