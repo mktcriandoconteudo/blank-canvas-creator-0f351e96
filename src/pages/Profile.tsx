@@ -2,10 +2,11 @@ import { useState, useRef, useCallback, useEffect } from "react";
 import { motion, AnimatePresence } from "framer-motion";
 import { useNavigate } from "react-router-dom";
 import {
-  User, Coins, ArrowLeft, Camera, Pencil, Lock, Wrench,
+  User, Coins, Camera, Pencil, Lock, Wrench,
   Gauge, Zap, Shield, Wind, Droplets, AlertTriangle, CheckCircle,
   Loader2, Settings, ChevronDown, ChevronUp, Star
 } from "lucide-react";
+import MainNav from "@/components/MainNav";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { useAuth } from "@/hooks/useAuth";
@@ -385,25 +386,7 @@ const Profile = () => {
   return (
     <div className="min-h-screen bg-background text-foreground">
       {/* Header */}
-      <header className="sticky top-0 z-50 border-b border-border/10 bg-background/80 backdrop-blur-2xl">
-        <div className="mx-auto flex max-w-4xl items-center justify-between px-4 py-3 sm:px-8">
-          <div className="flex items-center gap-3">
-            <button onClick={() => navigate("/garage")} className="flex h-9 w-9 items-center justify-center rounded-xl border border-border/20 bg-card/30 transition-colors hover:bg-card/50">
-              <ArrowLeft className="h-4 w-4 text-muted-foreground" />
-            </button>
-            <div>
-              <h1 className="font-display text-lg font-black uppercase tracking-wider text-foreground">Perfil do Piloto</h1>
-              <p className="font-display text-[10px] uppercase tracking-widest text-muted-foreground">Configurações & Oficina</p>
-            </div>
-          </div>
-          <div className="flex items-center gap-2">
-            <div className="flex items-center gap-1.5 rounded-lg bg-muted/30 px-3 py-1.5 backdrop-blur-sm">
-              <Coins className="h-4 w-4 text-neon-orange" />
-              <span className="font-display text-xs font-bold text-foreground">{state.nitroPoints.toLocaleString()} NP</span>
-            </div>
-          </div>
-        </div>
-      </header>
+      <MainNav nitroPoints={state.nitroPoints} />
 
       <main className="mx-auto max-w-4xl px-4 py-6 sm:px-8 space-y-6">
         {/* ─── Profile Card ─── */}

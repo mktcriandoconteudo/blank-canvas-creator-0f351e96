@@ -5,10 +5,11 @@ import { useAuth } from "@/hooks/useAuth";
 import { supabase } from "@/lib/supabase";
 import { toast } from "@/hooks/use-toast";
 import {
-  Gauge, Zap, Shield, Star, ArrowLeft, Search,
+  Gauge, Zap, Shield, Star, Search,
   ShoppingCart, Heart, Loader2, Key, Clock, Fuel
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
+import MainNav from "@/components/MainNav";
 
 // Car images map
 import carPhantom from "@/assets/marketplace/car-phantom.jpg";
@@ -344,38 +345,26 @@ const Marketplace = () => {
   return (
     <div className="min-h-screen bg-background text-foreground">
       {/* Header */}
-      <header className="sticky top-0 z-50 border-b border-border/10 bg-background/80 backdrop-blur-2xl">
-        <div className="mx-auto flex max-w-7xl items-center justify-between gap-3 px-3 py-3 sm:px-8">
-          <div className="flex items-center gap-3 shrink-0">
-            <Button variant="ghost" size="sm" onClick={() => navigate("/")} className="h-8 w-8 rounded-lg p-0">
-              <ArrowLeft className="h-4 w-4" />
-            </Button>
-            <div>
-              <h1 className="font-display text-base sm:text-lg font-black uppercase tracking-tight text-foreground">
-                Marketplace
-              </h1>
-              <p className="font-display text-[9px] uppercase tracking-[0.3em] text-muted-foreground">
-                {tab === "comprar" ? `${filteredCars.length} carros` : `${filteredRentals.length} aluguéis`}
-              </p>
-            </div>
-          </div>
+      <MainNav nitroPoints={session ? userBalance : undefined} />
 
-          <div className="hidden items-center gap-3 sm:flex">
-            <div className="relative">
-              <Search className="absolute left-3 top-1/2 h-3.5 w-3.5 -translate-y-1/2 text-muted-foreground" />
-              <input type="text" value={searchQuery} onChange={(e) => setSearchQuery(e.target.value)}
-                placeholder="Buscar carros..."
-                className="h-9 rounded-xl border border-border/20 bg-card/30 pl-9 pr-4 font-body text-xs text-foreground placeholder:text-muted-foreground/50 focus:border-primary/40 focus:outline-none focus:ring-1 focus:ring-primary/20" />
-            </div>
-            {session && user && (
-              <span className="font-display text-xs text-neon-orange font-bold">{userBalance.toLocaleString()} NP</span>
-            )}
+      {/* Tab switcher + search */}
+      <div className="mx-auto max-w-7xl px-3 pt-3 sm:px-8 sm:pt-6">
+        <div className="flex items-center justify-between gap-3 mb-4">
+          <div>
+            <h1 className="font-display text-base sm:text-lg font-black uppercase tracking-tight text-foreground">
+              Marketplace
+            </h1>
+            <p className="font-display text-[9px] uppercase tracking-[0.3em] text-muted-foreground">
+              {tab === "comprar" ? `${filteredCars.length} carros` : `${filteredRentals.length} aluguéis`}
+            </p>
+          </div>
+          <div className="hidden sm:block relative">
+            <Search className="absolute left-3 top-1/2 h-3.5 w-3.5 -translate-y-1/2 text-muted-foreground" />
+            <input type="text" value={searchQuery} onChange={(e) => setSearchQuery(e.target.value)}
+              placeholder="Buscar carros..."
+              className="h-9 rounded-xl border border-border/20 bg-card/30 pl-9 pr-4 font-body text-xs text-foreground placeholder:text-muted-foreground/50 focus:border-primary/40 focus:outline-none focus:ring-1 focus:ring-primary/20" />
           </div>
         </div>
-      </header>
-
-      {/* Tab switcher + mobile search */}
-      <div className="mx-auto max-w-7xl px-3 pt-3 sm:px-8 sm:pt-6">
         {/* Tabs */}
         <div className="flex gap-1 rounded-xl bg-card/30 p-1 backdrop-blur-sm border border-border/10 w-fit">
           {([

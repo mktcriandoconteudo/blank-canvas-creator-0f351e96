@@ -1,5 +1,6 @@
 import { motion, AnimatePresence } from "framer-motion";
-import { Zap, Gauge, Wind, Shield, Wrench, Flag, Star, Plus, Coins, Volume2, VolumeX, LogOut, User, Menu, X, ChevronLeft, ChevronRight, ChevronUp, ChevronDown, Droplets, ShieldCheck } from "lucide-react";
+import { Zap, Gauge, Wind, Shield, Wrench, Flag, Star, Plus, Coins, Volume2, VolumeX, ChevronLeft, ChevronRight, ChevronUp, ChevronDown, Droplets, ShieldCheck } from "lucide-react";
+import MainNav from "@/components/MainNav";
 import { useNavigate } from "react-router-dom";
 import { useRef, useState, useEffect, useCallback } from "react";
 // HD garage background images
@@ -47,20 +48,13 @@ import { INSURANCE_PLANS } from "@/lib/insurance";
 const Index = () => {
   const navigate = useNavigate();
   const { state, selectedCar, addPoint, repair, oilChange, updateState, selectCar, loading } = useGameState();
-  const { user, signOut, session } = useAuth();
+  const { user, session } = useAuth();
   const [garageSoundOn, setGarageSoundOn] = useState(true);
   const [refilling, setRefilling] = useState(false);
-  const [menuOpen, setMenuOpen] = useState(false);
   const [showStats, setShowStats] = useState(window.innerWidth >= 768);
   const [showInsurance, setShowInsurance] = useState(false);
   const [purchasingPlan, setPurchasingPlan] = useState<string | null>(null);
-  const [isAdmin, setIsAdmin] = useState(false);
   const garageBgmRef = useRef<HTMLAudioElement | null>(null);
-
-  useEffect(() => {
-    if (!session) return;
-    supabase.rpc("check_is_admin").then(({ data }) => setIsAdmin(data === true));
-  }, [session]);
 
   const { policy, isInsured, daysLeft, claimsLeft, purchase } = useInsurance(
     selectedCar?.id ?? null,
@@ -205,107 +199,17 @@ const Index = () => {
 
       <div className="relative z-10 flex min-h-screen flex-col">
         {/* Header */}
-        <motion.header
-          initial={{ opacity: 0, y: -20 }}
-          animate={{ opacity: 1, y: 0 }}
-          transition={{ duration: 0.5 }}
-          className="px-4 py-3 sm:px-8 sm:py-4"
-        >
-          <div className="flex items-center justify-between">
-            <h1 className="font-display text-lg font-black uppercase tracking-widest text-primary text-glow-cyan sm:text-2xl">
-              TurboNitro
-            </h1>
+        <MainNav nitroPoints={state.nitroPoints} transparent />
 
-            {/* Desktop nav links */}
-            <div className="hidden items-center gap-4 md:flex">
-              <button onClick={() => navigate("/")} className="font-display text-xs uppercase tracking-wider text-muted-foreground transition-colors hover:text-primary">
-                Home
-              </button>
-              <button onClick={() => navigate("/marketplace")} className="font-display text-xs uppercase tracking-wider text-muted-foreground transition-colors hover:text-primary">
-                Marketplace
-              </button>
-              <button onClick={() => navigate("/perfil")} className="font-display text-xs uppercase tracking-wider text-muted-foreground transition-colors hover:text-primary">
-                Perfil
-              </button>
-              {isAdmin && (
-                <button onClick={() => navigate("/admin")} className="font-display text-xs uppercase tracking-wider text-neon-orange transition-colors hover:text-neon-orange/80">
-                  🛡️ Admin
-                </button>
-              )}
-            </div>
-
-            <div className="flex items-center gap-2 sm:gap-3">
-              <button
-                onClick={toggleGarageSound}
-                className="flex items-center gap-1.5 rounded-lg bg-muted/30 px-2 py-1 backdrop-blur-sm transition-colors hover:bg-muted/50"
-              >
-                {garageSoundOn ? <Volume2 className="h-4 w-4 text-primary" /> : <VolumeX className="h-4 w-4 text-muted-foreground" />}
-              </button>
-              <div className="flex items-center gap-1.5 rounded-lg bg-muted/30 px-2 py-1 backdrop-blur-sm">
-                <Coins className="h-4 w-4 text-neon-orange" />
-                <span className="font-display text-[10px] text-foreground sm:text-xs">{state.nitroPoints} NP</span>
-              </div>
-              <button onClick={() => navigate("/perfil")} className="hidden items-center gap-1.5 rounded-lg bg-muted/30 px-2 py-1 backdrop-blur-sm transition-colors hover:bg-muted/50 sm:flex">
-                <User className="h-4 w-4 text-primary" />
-                <span className="font-display text-[10px] text-foreground sm:text-xs">{user?.username ?? "Piloto"}</span>
-              </button>
-              <button
-                onClick={signOut}
-                className="hidden items-center gap-1 rounded-lg bg-muted/30 px-2 py-1 backdrop-blur-sm transition-colors hover:bg-destructive/20 sm:flex"
-                title="Sair"
-              >
-                <LogOut className="h-4 w-4 text-muted-foreground" />
-              </button>
-              {/* Mobile hamburger */}
-              <button
-                onClick={() => setMenuOpen(!menuOpen)}
-                className="flex h-9 w-9 items-center justify-center rounded-lg bg-muted/30 backdrop-blur-sm md:hidden"
-              >
-                {menuOpen ? <X className="h-5 w-5 text-foreground" /> : <Menu className="h-5 w-5 text-foreground" />}
-              </button>
-            </div>
-          </div>
-
-          {/* Mobile dropdown menu */}
-          <AnimatePresence>
-            {menuOpen && (
-              <motion.div
-                initial={{ height: 0, opacity: 0 }}
-                animate={{ height: "auto", opacity: 1 }}
-                exit={{ height: 0, opacity: 0 }}
-                transition={{ duration: 0.25 }}
-                className="mt-2 overflow-hidden rounded-xl border border-border/20 bg-background/90 backdrop-blur-2xl md:hidden"
-              >
-                <div className="flex flex-col gap-1 px-3 py-2">
-                  <div className="flex items-center gap-2 rounded-lg px-3 py-2">
-                    <User className="h-4 w-4 text-primary" />
-                    <span className="font-display text-sm text-foreground">{user?.username ?? "Piloto"}</span>
-                  </div>
-                  {[
-                    { label: "Home", action: () => { navigate("/"); setMenuOpen(false); } },
-                    { label: "Marketplace", action: () => { navigate("/marketplace"); setMenuOpen(false); } },
-                    { label: "👤 Perfil", action: () => { navigate("/perfil"); setMenuOpen(false); } },
-                    ...(isAdmin ? [{ label: "🛡️ Admin", action: () => { navigate("/admin"); setMenuOpen(false); } }] : []),
-                  ].map((item) => (
-                    <button
-                      key={item.label}
-                      onClick={item.action}
-                      className="rounded-lg px-3 py-2.5 text-left font-display text-sm uppercase tracking-wider text-muted-foreground transition-colors hover:bg-card/50 hover:text-primary"
-                    >
-                      {item.label}
-                    </button>
-                  ))}
-                  <button
-                    onClick={() => { signOut(); setMenuOpen(false); }}
-                    className="rounded-lg px-3 py-2.5 text-left font-display text-sm uppercase tracking-wider text-destructive/70 transition-colors hover:bg-destructive/10"
-                  >
-                    Sair
-                  </button>
-                </div>
-              </motion.div>
-            )}
-          </AnimatePresence>
-        </motion.header>
+        {/* Garage-specific controls */}
+        <div className="flex items-center justify-end gap-2 px-4 py-1 sm:px-8">
+          <button
+            onClick={toggleGarageSound}
+            className="flex items-center gap-1.5 rounded-lg bg-muted/30 px-2 py-1 backdrop-blur-sm transition-colors hover:bg-muted/50"
+          >
+            {garageSoundOn ? <Volume2 className="h-4 w-4 text-primary" /> : <VolumeX className="h-4 w-4 text-muted-foreground" />}
+          </button>
+        </div>
 
         {/* Main */}
         <main className="flex flex-1 flex-col gap-3 overflow-y-auto px-4 pb-24 sm:pb-8 lg:flex-row lg:items-center lg:justify-between lg:gap-8 lg:px-16">
