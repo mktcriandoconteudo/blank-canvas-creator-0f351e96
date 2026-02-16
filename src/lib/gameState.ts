@@ -23,6 +23,8 @@ export interface CarData {
   lastOilChangeKm: number;
   isRented: boolean;
   rentalRacesRemaining: number;
+  licensePlate: string;
+  purchasedAt: string;
 }
 
 export interface GameState {
@@ -80,6 +82,8 @@ const defaultCar: CarData = {
   lastOilChangeKm: 0,
   isRented: false,
   rentalRacesRemaining: 0,
+  licensePlate: "",
+  purchasedAt: new Date().toISOString(),
 };
 
 
@@ -108,6 +112,8 @@ function mapCarRow(row: any): CarData {
     lastOilChangeKm: Number(row.last_oil_change_km ?? 0),
     isRented: false,
     rentalRacesRemaining: 0,
+    licensePlate: row.license_plate ?? "",
+    purchasedAt: row.purchased_at ?? new Date().toISOString(),
   };
 }
 

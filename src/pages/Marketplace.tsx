@@ -292,7 +292,8 @@ const Marketplace = () => {
       } else {
         const errorMsg = result?.error === "insufficient_funds" ? "Saldo insuficiente!" :
           result?.error === "out_of_stock" ? "Estoque esgotado!" :
-          result?.error === "car_not_available" ? "Carro indisponível!" : "Erro na compra.";
+          result?.error === "car_not_available" ? "Carro indisponível!" :
+          result?.error === "garage_full" ? "🚗 Garagem cheia! Máximo de 2 carros. Venda um antes." : "Erro na compra.";
         toast({ title: errorMsg, variant: "destructive" });
       }
     } catch (err: any) {
