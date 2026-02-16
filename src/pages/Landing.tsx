@@ -271,6 +271,7 @@ const Landing = () => {
         <div className="mx-auto flex max-w-7xl items-center justify-between px-4 py-3 sm:px-8">
           <div className="shrink-0" />
           <div className="hidden items-center gap-8 sm:flex">
+            <button onClick={() => window.scrollTo({ top: 0, behavior: 'smooth' })} className="font-display text-xs uppercase tracking-wider text-primary font-bold transition-colors hover:text-primary">Home</button>
             <a href="#features" className="font-display text-xs uppercase tracking-wider text-muted-foreground transition-colors hover:text-primary">Features</a>
             <a href="#nft" className="font-display text-xs uppercase tracking-wider text-muted-foreground transition-colors hover:text-primary">NFTs</a>
             <a href="#roadmap" className="font-display text-xs uppercase tracking-wider text-muted-foreground transition-colors hover:text-primary">Roadmap</a>
