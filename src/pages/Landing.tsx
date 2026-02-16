@@ -5,12 +5,35 @@ import { useRef, useState } from "react";
 import {
   Zap, Trophy, Gauge, Shield, Coins, Fuel, Users, Star,
   ChevronRight, ArrowRight, Sparkles, Car, Wrench, Flag,
-  Twitter, MessageCircle, Globe, Github, Menu, X
+  Twitter, MessageCircle, Globe, Github, Menu, X, ShoppingCart
 } from "lucide-react";
 import landingHero from "@/assets/landing-hero-v2.jpg";
 import nftCard from "@/assets/nft-card-preview.jpg";
 import featureGarage from "@/assets/feature-garage.jpg";
 import featureRace from "@/assets/feature-race.jpg";
+
+import carPhantom from "@/assets/marketplace/car-phantom.jpg";
+import carInferno from "@/assets/marketplace/car-inferno.jpg";
+import carSolar from "@/assets/marketplace/car-solar.jpg";
+import carBlaze from "@/assets/marketplace/car-blaze.jpg";
+import carFrost from "@/assets/marketplace/car-frost.jpg";
+import carVenom from "@/assets/marketplace/car-venom.jpg";
+
+const FEATURED_CARS = [
+  { name: "Phantom X9", model: "Hypercar", image: carPhantom, rarity: "Lendário" as const, price: 2500, speed: 95, accel: 88, level: 15 },
+  { name: "Inferno GT", model: "Muscle", image: carInferno, rarity: "Épico" as const, price: 1200, speed: 78, accel: 92, level: 10 },
+  { name: "Solar Flare", model: "Racer", image: carSolar, rarity: "Lendário" as const, price: 3200, speed: 98, accel: 85, level: 18 },
+  { name: "Blaze Runner", model: "Turbo", image: carBlaze, rarity: "Lendário" as const, price: 2800, speed: 92, accel: 95, level: 16 },
+  { name: "Frost Byte", model: "GT Sport", image: carFrost, rarity: "Épico" as const, price: 1450, speed: 85, accel: 80, level: 12 },
+  { name: "Venom Strike", model: "Street", image: carVenom, rarity: "Épico" as const, price: 980, speed: 82, accel: 78, level: 8 },
+];
+
+const RARITY_STYLES: Record<string, { border: string; badge: string; text: string }> = {
+  Lendário: { border: "border-neon-orange/40", badge: "bg-neon-orange/20 text-neon-orange", text: "text-neon-orange" },
+  Épico: { border: "border-accent/40", badge: "bg-accent/20 text-accent", text: "text-accent" },
+  Raro: { border: "border-primary/40", badge: "bg-primary/20 text-primary", text: "text-primary" },
+  Comum: { border: "border-muted-foreground/30", badge: "bg-muted-foreground/20 text-muted-foreground", text: "text-muted-foreground" },
+};
 
 /* ─── Animated counter ─── */
 const AnimatedNumber = ({ value, suffix = "" }: { value: number; suffix?: string }) => (
@@ -467,6 +490,107 @@ const Landing = () => {
               </motion.div>
             ))}
           </div>
+        </div>
+      </section>
+
+      {/* ─── FEATURED CARS ─── */}
+      <section className="relative py-24 sm:py-32">
+        <div className="mx-auto max-w-7xl px-4 sm:px-8">
+          <motion.div
+            initial={{ opacity: 0, y: 20 }}
+            whileInView={{ opacity: 1, y: 0 }}
+            viewport={{ once: true }}
+            className="mb-12 flex flex-col items-center text-center sm:mb-16"
+          >
+            <p className="mb-3 font-display text-xs uppercase tracking-[0.5em] text-primary/70">Marketplace</p>
+            <h2 className="font-display text-3xl font-black uppercase tracking-tight text-foreground sm:text-5xl">
+              Carros em <span className="text-primary text-glow-cyan">Destaque</span>
+            </h2>
+            <p className="mx-auto mt-4 max-w-lg font-body text-sm text-muted-foreground">
+              Confira os NFTs mais cobiçados do marketplace. Adquira, evolua e domine as pistas.
+            </p>
+          </motion.div>
+
+          {/* Horizontal scroll on mobile, grid on desktop */}
+          <div className="flex gap-4 overflow-x-auto pb-4 no-scrollbar sm:grid sm:grid-cols-2 lg:grid-cols-3 sm:gap-6 sm:overflow-visible sm:pb-0">
+            {FEATURED_CARS.map((car, i) => {
+              const style = RARITY_STYLES[car.rarity];
+              return (
+                <motion.div
+                  key={car.name}
+                  initial={{ opacity: 0, y: 30 }}
+                  whileInView={{ opacity: 1, y: 0 }}
+                  viewport={{ once: true }}
+                  transition={{ duration: 0.5, delay: i * 0.08 }}
+                  className={`group relative min-w-[260px] shrink-0 overflow-hidden rounded-2xl border ${style.border} bg-card/50 backdrop-blur-xl transition-all duration-500 hover:scale-[1.02] sm:min-w-0`}
+                >
+                  {/* Image */}
+                  <div className="relative aspect-[4/3] overflow-hidden">
+                    <img src={car.image} alt={car.name} className="h-full w-full object-cover transition-transform duration-700 group-hover:scale-110" />
+                    <div className="absolute inset-0 bg-gradient-to-t from-card via-card/30 to-transparent" />
+                    <div className={`absolute right-3 top-3 rounded-md px-2.5 py-1 backdrop-blur-xl ${style.badge}`}>
+                      <div className="flex items-center gap-1">
+                        <Star className="h-3 w-3" />
+                        <span className="font-display text-[10px] font-bold uppercase tracking-wider">{car.rarity}</span>
+                      </div>
+                    </div>
+                    <div className="absolute bottom-3 left-3 rounded-md bg-primary/20 px-2 py-0.5 backdrop-blur-xl">
+                      <span className="font-display text-[10px] font-bold text-primary">Lv.{car.level}</span>
+                    </div>
+                  </div>
+
+                  {/* Info */}
+                  <div className="p-4">
+                    <div className="flex items-center justify-between">
+                      <h3 className="font-display text-sm font-bold text-foreground">{car.name}</h3>
+                      <span className="font-display text-[10px] uppercase tracking-wider text-muted-foreground">{car.model}</span>
+                    </div>
+                    {/* Mini stats */}
+                    <div className="mt-3 flex items-center gap-4">
+                      <div className="flex items-center gap-1 text-primary">
+                        <Gauge className="h-3 w-3" />
+                        <span className="font-display text-xs font-bold">{car.speed}</span>
+                      </div>
+                      <div className="flex items-center gap-1 text-neon-orange">
+                        <Zap className="h-3 w-3" />
+                        <span className="font-display text-xs font-bold">{car.accel}</span>
+                      </div>
+                    </div>
+                    {/* Price */}
+                    <div className="mt-3 flex items-center justify-between border-t border-border/20 pt-3">
+                      <div className="flex items-baseline gap-1">
+                        <span className={`font-display text-lg font-black ${style.text}`}>{car.price.toLocaleString()}</span>
+                        <span className="font-display text-[10px] text-muted-foreground">NP</span>
+                      </div>
+                      <button
+                        onClick={() => navigate("/marketplace")}
+                        className="flex items-center gap-1 rounded-lg bg-primary/10 px-3 py-1.5 font-display text-[10px] uppercase tracking-wider text-primary transition-all hover:bg-primary/20"
+                      >
+                        <ShoppingCart className="h-3 w-3" />
+                        Ver
+                      </button>
+                    </div>
+                  </div>
+                </motion.div>
+              );
+            })}
+          </div>
+
+          {/* CTA */}
+          <motion.div
+            initial={{ opacity: 0, y: 10 }}
+            whileInView={{ opacity: 1, y: 0 }}
+            viewport={{ once: true }}
+            className="mt-10 text-center"
+          >
+            <button
+              onClick={() => navigate("/marketplace")}
+              className="group inline-flex items-center gap-2 rounded-2xl border border-primary/30 bg-primary/5 px-8 py-3 font-display text-xs font-bold uppercase tracking-widest text-primary transition-all hover:bg-primary/10 hover:shadow-[0_0_30px_hsl(185_80%_55%/0.15)]"
+            >
+              Ver todos no Marketplace
+              <ArrowRight className="h-4 w-4 transition-transform group-hover:translate-x-1" />
+            </button>
+          </motion.div>
         </div>
       </section>
 
