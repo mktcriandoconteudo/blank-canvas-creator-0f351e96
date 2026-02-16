@@ -9,7 +9,6 @@ import { useAuth } from "@/hooks/useAuth";
 import { supabase } from "@/lib/supabase";
 import { useSiteAssets } from "@/hooks/useSiteAssets";
 import turboNitroLogo from "@/assets/turbonitro-logo.png";
-import metamaskLogo from "@/assets/metamask-logo.png";
 
 interface MainNavProps {
   /** Optional: show NP balance */
@@ -102,8 +101,7 @@ const MainNav = ({ nitroPoints, transparent = false }: MainNavProps) => {
         <div className="flex items-center gap-2 sm:gap-3">
           {nitroPoints !== undefined && (
             <div className="flex items-center gap-1.5 rounded-lg bg-card/30 px-2.5 py-1.5 backdrop-blur-sm border border-border/10">
-              <img src={metamaskLogo} alt="MetaMask" className="h-4 w-4" />
-              <Coins className="h-3.5 w-3.5 text-neon-orange" />
+              <Coins className="h-4 w-4 text-neon-orange" />
               <span className="font-display text-[10px] font-bold text-foreground sm:text-xs">
                 {nitroPoints.toLocaleString()} NP
               </span>
