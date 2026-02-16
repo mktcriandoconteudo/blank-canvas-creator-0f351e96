@@ -398,7 +398,12 @@ const Race = () => {
       if (bgmRef.current) { bgmRef.current.play().catch(() => {}); }
     }
   }, []);
-  const baseNP = isRentedCar ? (victory ? 40 : 10) : (victory ? 150 : 20);
+  // Position-based rewards (deflation-safe: total payout across 4 positions ≈ 1.6x base vs old 1.13x for win+loss avg)
+  // 1st: 100%, 2nd: 40%, 3rd: 15%, 4th: 5%
+  const POSITION_REWARD_MULTIPLIERS = [1.0, 0.40, 0.15, 0.05];
+  const positionMultiplier = POSITION_REWARD_MULTIPLIERS[playerPosition - 1] ?? 0.05;
+  const maxBaseNP = isRentedCar ? 50 : 180; // max base for 1st place
+  const baseNP = Math.round(maxBaseNP * positionMultiplier);
   const earnedNP = Math.round((baseNP * playerStats.engineHealth * rewardMultiplier) / 100);
   const speedKmh = raceState === "countdown" ? 0 : Math.round((playerProgress / 100) * 320 + (nitroActive ? 80 : 0));
   const isRacing = raceState === "racing";
@@ -736,7 +741,7 @@ const Race = () => {
         victory={victory}
         playerPosition={playerPosition}
         nitroPoints={earnedNP}
-        xpGained={victory ? 80 : 25}
+        xpGained={[80, 45, 25, 10][playerPosition - 1] ?? 10}
         leveledUp={xpResult.leveledUp}
         newLevel={xpResult.newLevel}
         onClose={handlePlayAgain}
