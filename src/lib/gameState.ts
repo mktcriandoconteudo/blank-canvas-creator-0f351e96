@@ -25,6 +25,8 @@ export interface CarData {
   rentalRacesRemaining: number;
   licensePlate: string;
   purchasedAt: string;
+  fuelTanks: number;
+  lastFuelRefill: string; // ISO timestamp
 }
 
 export interface GameState {
@@ -84,6 +86,8 @@ const defaultCar: CarData = {
   rentalRacesRemaining: 0,
   licensePlate: "",
   purchasedAt: new Date().toISOString(),
+  fuelTanks: 5,
+  lastFuelRefill: new Date().toISOString(),
 };
 
 
@@ -114,6 +118,8 @@ function mapCarRow(row: any): CarData {
     rentalRacesRemaining: 0,
     licensePlate: row.license_plate ?? "",
     purchasedAt: row.purchased_at ?? new Date().toISOString(),
+    fuelTanks: row.fuel_tanks ?? 5,
+    lastFuelRefill: row.last_fuel_refill ?? new Date().toISOString(),
   };
 }
 
@@ -185,28 +191,28 @@ export async function loadGameStateFromSupabase(wallet: string = DEFAULT_WALLET)
   const rentalMap = new Map<string, number>();
   (rentalsData ?? []).forEach((r: any) => rentalMap.set(r.car_id, r.races_remaining));
 
-  const cars = (carsData ?? []).map((row: any) => {
+  const now = new Date();
+  const wc = getWalletClient(wallet);
+
+  const cars = await Promise.all((carsData ?? []).map(async (row: any) => {
     const car = mapCarRow(row);
     if (rentalMap.has(car.id)) {
       car.isRented = true;
       car.rentalRacesRemaining = rentalMap.get(car.id) ?? 0;
     }
+    // Per-car 24h fuel refill
+    const lastRefill = new Date(car.lastFuelRefill);
+    const hoursSinceRefill = (now.getTime() - lastRefill.getTime()) / (1000 * 60 * 60);
+    if (hoursSinceRefill >= 24 && car.fuelTanks < 5) {
+      car.fuelTanks = 5;
+      car.lastFuelRefill = now.toISOString();
+      await wc
+        .from("cars")
+        .update({ fuel_tanks: 5, last_fuel_refill: now.toISOString() })
+        .eq("id", car.id);
+    }
     return car;
-  });
-
-  // Daily fuel refill
-  const today = new Date().toISOString().split("T")[0];
-  let fuelTanks = userData?.fuel_tanks ?? 5;
-  const lastRefill = userData?.last_fuel_refill ?? today;
-
-  if (lastRefill !== today) {
-    fuelTanks = 5;
-    const wc = getWalletClient(wallet);
-    await wc
-      .from("users")
-      .update({ fuel_tanks: 5, last_fuel_refill: today })
-      .eq("wallet_address", wallet);
-  }
+  }));
 
   const savedCarId = typeof window !== "undefined" ? localStorage.getItem("selectedCarId") : null;
   const validSavedCar = savedCarId && cars.some((c) => c.id === savedCarId);
@@ -215,8 +221,8 @@ export async function loadGameStateFromSupabase(wallet: string = DEFAULT_WALLET)
     cars,
     selectedCarId: validSavedCar ? savedCarId : (cars[0]?.id ?? null),
     nitroPoints: userData?.nitro_points ?? 500,
-    fuelTanks,
-    lastFuelRefill: lastRefill,
+    fuelTanks: 0, // deprecated, now per-car
+    lastFuelRefill: "",
     walletAddress: wallet,
   };
 }
@@ -240,6 +246,8 @@ export async function saveCarToSupabase(car: CarData): Promise<void> {
       races_count: car.racesCount,
       races_since_revision: car.racesSinceRevision,
       last_oil_change_km: car.lastOilChangeKm,
+      fuel_tanks: car.fuelTanks,
+      last_fuel_refill: car.lastFuelRefill,
     })
     .eq("id", car.id);
 }
@@ -309,17 +317,23 @@ export const addXpToCar = (
     : (won ? OWNED_NP_WIN : OWNED_NP_LOSS);
   const earnedPoints = Math.round((basePoints * health) / 100);
 
+  // Decrement fuel on the car that raced
+  const newCarsWithFuel = newCars.map((c) => {
+    if (c.id !== carId) return c;
+    return { ...c, fuelTanks: Math.max(0, c.fuelTanks - 1) };
+  });
+
   const newState: GameState = {
     ...state,
-    cars: newCars,
+    cars: newCarsWithFuel,
     nitroPoints: state.nitroPoints + earnedPoints,
-    fuelTanks: Math.max(0, state.fuelTanks - 1),
+    fuelTanks: 0, // deprecated
   };
 
   // Persist to Supabase (fire-and-forget)
-  const updatedCar = newCars.find((c) => c.id === carId);
+  const updatedCar = newCarsWithFuel.find((c) => c.id === carId);
   if (updatedCar) saveCarToSupabase(updatedCar);
-  saveUserToSupabase(state.walletAddress, newState.nitroPoints, newState.fuelTanks);
+  saveUserToSupabase(state.walletAddress, newState.nitroPoints, 0);
 
   // Sistema deflacionário: emitir tokens controlados ao invés de criar do nada
   // A emissão respeita hard cap, limite diário e decay progressivo
