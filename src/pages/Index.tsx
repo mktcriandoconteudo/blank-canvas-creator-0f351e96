@@ -1,5 +1,5 @@
 import { motion, AnimatePresence } from "framer-motion";
-import { Zap, Gauge, Wind, Shield, Wrench, Flag, Star, Plus, Coins, Volume2, VolumeX, ChevronLeft, ChevronRight, ChevronUp, ChevronDown, Droplets, ShieldCheck, Timer } from "lucide-react";
+import { Zap, Gauge, Wind, Shield, Wrench, Flag, Star, Plus, Coins, Volume2, VolumeX, ChevronLeft, ChevronRight, ChevronUp, ChevronDown, Droplets, ShieldCheck, Timer, X } from "lucide-react";
 import MainNav from "@/components/MainNav";
 import { useNavigate } from "react-router-dom";
 import { useRef, useState, useEffect, useCallback } from "react";
@@ -98,6 +98,7 @@ const Index = () => {
   const [showInsurance, setShowInsurance] = useState(false);
   const [purchasingPlan, setPurchasingPlan] = useState<string | null>(null);
   const [lastRace, setLastRace] = useState<LastRaceResult | null>(null);
+  const [mechanicDismissed, setMechanicDismissed] = useState(false);
   const garageBgmRef = useRef<HTMLAudioElement | null>(null);
 
   // Load last race result from localStorage
@@ -385,19 +386,26 @@ const Index = () => {
               )}
             </AnimatePresence>
 
-            {/* Mechanic Warnings */}
-            {(selectedCar.engineHealth < 50 || oilNeeded || selectedCar.durability < 30) && (
+            {/* Mechanic Warnings — dismissible per session */}
+            {(selectedCar.engineHealth < 50 || oilNeeded || selectedCar.durability < 30) && !mechanicDismissed && (
               <motion.div
                 initial={{ opacity: 0, x: -20 }}
                 animate={{ opacity: 1, x: 0 }}
+                exit={{ opacity: 0, x: -20 }}
                 transition={{ delay: 0.6 }}
-                className="mt-3 w-full max-w-xs rounded-xl border border-neon-orange/30 bg-background/90 p-3 backdrop-blur-xl shadow-lg"
+                className="mt-3 w-full max-w-xs rounded-xl border border-neon-orange/30 bg-background/90 p-3 backdrop-blur-xl shadow-lg relative"
               >
+                <button
+                  onClick={() => setMechanicDismissed(true)}
+                  className="absolute top-2 right-2 flex h-6 w-6 items-center justify-center rounded-full bg-muted/50 text-muted-foreground transition-colors hover:bg-muted hover:text-foreground"
+                >
+                  <X className="h-3.5 w-3.5" />
+                </button>
                 <div className="flex items-start gap-3">
                   <div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-full bg-neon-orange/20 text-lg">
                     🔧
                   </div>
-                  <div className="flex-1 space-y-1.5">
+                  <div className="flex-1 space-y-1.5 pr-4">
                     <span className="font-display text-xs font-bold text-neon-orange">
                       Mecânico diz:
                     </span>
