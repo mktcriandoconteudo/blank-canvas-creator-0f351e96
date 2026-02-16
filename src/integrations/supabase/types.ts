@@ -536,6 +536,44 @@ export type Database = {
         }
         Relationships: []
       }
+      mystery_box_purchases: {
+        Row: {
+          car_id: string | null
+          car_name: string
+          created_at: string
+          id: string
+          price_paid: number
+          rarity: string
+          wallet_address: string
+        }
+        Insert: {
+          car_id?: string | null
+          car_name?: string
+          created_at?: string
+          id?: string
+          price_paid?: number
+          rarity?: string
+          wallet_address: string
+        }
+        Update: {
+          car_id?: string | null
+          car_name?: string
+          created_at?: string
+          id?: string
+          price_paid?: number
+          rarity?: string
+          wallet_address?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "mystery_box_purchases_car_id_fkey"
+            columns: ["car_id"]
+            isOneToOne: false
+            referencedRelation: "cars"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       np_packages: {
         Row: {
           bonus_percent: number
@@ -1017,6 +1055,7 @@ export type Database = {
         Args: { _car_id: string; _wallet: string }
         Returns: Json
       }
+      buy_mystery_box: { Args: { _wallet: string }; Returns: Json }
       buy_used_car: {
         Args: { _listing_id: string; _wallet: string }
         Returns: Json
