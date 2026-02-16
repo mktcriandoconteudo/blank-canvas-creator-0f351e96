@@ -462,11 +462,11 @@ const Landing = () => {
               className="mt-6"
             >
               <button
-                onClick={() => navigate("/auth")}
+                onClick={() => navigate(session ? "/loja" : "/auth")}
                 className="group flex items-center gap-2 rounded-2xl bg-gradient-to-r from-neon-orange to-neon-orange/80 px-8 py-4 font-display text-sm font-bold uppercase tracking-widest text-background transition-all hover:brightness-110 shadow-[0_0_30px_hsl(30_90%_55%/0.3)] hover:shadow-[0_0_50px_hsl(30_90%_55%/0.5)]"
               >
                 <Zap className="h-5 w-5" />
-                Começar Agora e Ganhar NP
+                Comprar NP agora
                 <ArrowRight className="h-4 w-4 transition-transform group-hover:translate-x-1" />
               </button>
               <p className="mt-2 font-body text-[11px] text-muted-foreground/70">

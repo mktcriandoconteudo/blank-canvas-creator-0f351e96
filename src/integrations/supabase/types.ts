@@ -503,6 +503,86 @@ export type Database = {
         }
         Relationships: []
       }
+      np_packages: {
+        Row: {
+          bonus_percent: number
+          created_at: string
+          id: string
+          is_active: boolean
+          name: string
+          np_amount: number
+          price_brl: number
+          sort_order: number
+          updated_at: string
+        }
+        Insert: {
+          bonus_percent?: number
+          created_at?: string
+          id?: string
+          is_active?: boolean
+          name: string
+          np_amount: number
+          price_brl: number
+          sort_order?: number
+          updated_at?: string
+        }
+        Update: {
+          bonus_percent?: number
+          created_at?: string
+          id?: string
+          is_active?: boolean
+          name?: string
+          np_amount?: number
+          price_brl?: number
+          sort_order?: number
+          updated_at?: string
+        }
+        Relationships: []
+      }
+      np_purchases: {
+        Row: {
+          confirmed_at: string | null
+          created_at: string
+          id: string
+          np_amount: number
+          package_id: string | null
+          pix_code: string | null
+          price_brl: number
+          status: string
+          wallet_address: string
+        }
+        Insert: {
+          confirmed_at?: string | null
+          created_at?: string
+          id?: string
+          np_amount: number
+          package_id?: string | null
+          pix_code?: string | null
+          price_brl: number
+          status?: string
+          wallet_address: string
+        }
+        Update: {
+          confirmed_at?: string | null
+          created_at?: string
+          id?: string
+          np_amount?: number
+          package_id?: string | null
+          pix_code?: string | null
+          price_brl?: number
+          status?: string
+          wallet_address?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "np_purchases_package_id_fkey"
+            columns: ["package_id"]
+            isOneToOne: false
+            referencedRelation: "np_packages"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       onchain_events: {
         Row: {
           block_number: number
@@ -757,6 +837,10 @@ export type Database = {
           _original_cost: number
           _wallet: string
         }
+        Returns: Json
+      }
+      confirm_np_purchase: {
+        Args: { _purchase_id: string; _wallet: string }
         Returns: Json
       }
       distribute_reward: {
