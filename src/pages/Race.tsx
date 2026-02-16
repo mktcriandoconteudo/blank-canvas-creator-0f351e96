@@ -187,11 +187,13 @@ const Race = () => {
     if (noFuel || engineBlown || raceState !== "countdown") return;
     if (countdown <= 0) {
       setRaceState("racing");
+      console.log("[RACE] Countdown finished → racing");
       return;
     }
+    console.log("[RACE] Countdown:", countdown);
     const timer = setTimeout(() => setCountdown((c) => c - 1), 1000);
     return () => clearTimeout(timer);
-  }, [countdown, raceState, noFuel]);
+  }, [countdown, raceState, noFuel, engineBlown]);
 
   // Thunder Bolt: force race to end at exactly 10 seconds
   useEffect(() => {
