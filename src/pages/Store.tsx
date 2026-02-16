@@ -11,6 +11,7 @@ import { useAuth } from "@/hooks/useAuth";
 import { useGameState } from "@/hooks/useGameState";
 import { supabase, getWalletClient } from "@/lib/supabase";
 import { toast } from "@/hooks/use-toast";
+import { formatNP } from "@/lib/utils";
 
 interface NpPackage {
   id: string;
@@ -236,13 +237,13 @@ const Store = () => {
                       <div className="flex items-center justify-center gap-2">
                         <Coins className="h-5 w-5 text-neon-orange" />
                         <span className="font-display text-2xl font-black text-foreground">
-                          {total.toLocaleString()}
+                          {formatNP(total)}
                         </span>
                         <span className="font-display text-sm text-muted-foreground">NP</span>
                       </div>
                       {pkg.bonus_percent > 0 && (
                         <p className="mt-1 font-body text-[10px] text-neon-green">
-                          {pkg.np_amount.toLocaleString()} + {(total - pkg.np_amount).toLocaleString()} bônus
+                          {formatNP(pkg.np_amount)} + {formatNP(total - pkg.np_amount)} bônus
                         </p>
                       )}
                     </div>
@@ -339,7 +340,7 @@ const Store = () => {
                   <div className="flex items-center justify-center gap-2">
                     <Coins className="h-5 w-5 text-neon-orange" />
                     <span className="font-display text-xl font-black text-foreground">
-                      {totalNp(selectedPkg).toLocaleString()} NP
+                      {formatNP(totalNp(selectedPkg))} NP
                     </span>
                   </div>
                   <p className="mt-1 font-display text-lg font-bold text-primary">
@@ -448,7 +449,7 @@ const Store = () => {
                 Comprovante Enviado!
               </h3>
               <p className="font-body text-sm text-muted-foreground mb-4">
-                Aguarde a aprovação do administrador. Seus {totalNp(selectedPkg).toLocaleString()} NP serão creditados após a confirmação.
+                Aguarde a aprovação do administrador. Seus {formatNP(totalNp(selectedPkg))} NP serão creditados após a confirmação.
               </p>
               <Button
                 onClick={() => { setSelectedPkg(null); setConfirmed(false); }}

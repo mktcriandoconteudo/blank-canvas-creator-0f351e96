@@ -4,6 +4,7 @@ import { useState, useEffect, useCallback } from "react";
 import { useAuth } from "@/hooks/useAuth";
 import { supabase } from "@/lib/supabase";
 import { toast } from "@/hooks/use-toast";
+import { formatNP } from "@/lib/utils";
 import {
   Gauge, Zap, Shield, Star, Search,
   ShoppingCart, Heart, Loader2, Key, Clock, Fuel
@@ -398,7 +399,7 @@ const Marketplace = () => {
           </div>
           {session && user && (
             <div className="mt-2 text-right">
-              <span className="font-display text-xs text-neon-orange font-bold">{userBalance.toLocaleString()} NP</span>
+              <span className="font-display text-xs text-neon-orange font-bold">{formatNP(userBalance)} NP</span>
             </div>
           )}
         </div>

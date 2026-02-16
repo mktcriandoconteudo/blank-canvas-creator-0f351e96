@@ -3,6 +3,7 @@ import { Zap, Gauge, Wind, Shield, Wrench, Flag, Star, Plus, Coins, Volume2, Vol
 import MainNav from "@/components/MainNav";
 import { useNavigate } from "react-router-dom";
 import { useRef, useState, useEffect, useCallback } from "react";
+import { formatNP } from "@/lib/utils";
 // HD garage background images
 import bgPhantom from "@/assets/garage-bg/car-phantom-bg.jpg";
 import bgBlaze from "@/assets/garage-bg/car-blaze-bg.jpg";
@@ -166,7 +167,7 @@ const Index = () => {
           </p>
           <div className="flex items-center justify-center gap-2 text-neon-orange font-display text-sm font-bold">
             <Coins className="h-4 w-4" />
-            {state.nitroPoints.toLocaleString()} NP disponíveis
+            {formatNP(state.nitroPoints)} NP disponíveis
           </div>
           <div className="flex gap-3 justify-center pt-2">
             <button
