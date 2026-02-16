@@ -14,6 +14,54 @@ export type Database = {
   }
   public: {
     Tables: {
+      car_insurance: {
+        Row: {
+          car_id: string
+          claims_used: number
+          coverage_percent: number
+          created_at: string
+          expires_at: string
+          id: string
+          is_active: boolean
+          max_claims: number
+          owner_wallet: string
+          plan_type: string
+          premium_paid: number
+          races_remaining: number
+          updated_at: string
+        }
+        Insert: {
+          car_id: string
+          claims_used?: number
+          coverage_percent?: number
+          created_at?: string
+          expires_at: string
+          id?: string
+          is_active?: boolean
+          max_claims?: number
+          owner_wallet: string
+          plan_type?: string
+          premium_paid?: number
+          races_remaining?: number
+          updated_at?: string
+        }
+        Update: {
+          car_id?: string
+          claims_used?: number
+          coverage_percent?: number
+          created_at?: string
+          expires_at?: string
+          id?: string
+          is_active?: boolean
+          max_claims?: number
+          owner_wallet?: string
+          plan_type?: string
+          premium_paid?: number
+          races_remaining?: number
+          updated_at?: string
+        }
+        Relationships: []
+      }
       car_parts: {
         Row: {
           car_token_id: string | null
@@ -249,6 +297,50 @@ export type Database = {
         }
         Relationships: []
       }
+      insurance_claims: {
+        Row: {
+          car_id: string
+          claim_type: string
+          covered_amount: number
+          created_at: string
+          id: string
+          insurance_id: string
+          original_cost: number
+          owner_wallet: string
+          player_paid: number
+        }
+        Insert: {
+          car_id: string
+          claim_type: string
+          covered_amount: number
+          created_at?: string
+          id?: string
+          insurance_id: string
+          original_cost: number
+          owner_wallet: string
+          player_paid: number
+        }
+        Update: {
+          car_id?: string
+          claim_type?: string
+          covered_amount?: number
+          created_at?: string
+          id?: string
+          insurance_id?: string
+          original_cost?: number
+          owner_wallet?: string
+          player_paid?: number
+        }
+        Relationships: [
+          {
+            foreignKeyName: "insurance_claims_insurance_id_fkey"
+            columns: ["insurance_id"]
+            isOneToOne: false
+            referencedRelation: "car_insurance"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       onchain_events: {
         Row: {
           block_number: number
@@ -419,6 +511,15 @@ export type Database = {
       [_ in never]: never
     }
     Functions: {
+      claim_insurance: {
+        Args: {
+          _car_id: string
+          _claim_type: string
+          _original_cost: number
+          _wallet: string
+        }
+        Returns: Json
+      }
       distribute_reward: {
         Args: { _amount: number; _reason?: string; _wallet: string }
         Returns: boolean
@@ -430,6 +531,19 @@ export type Database = {
       get_economy_report: { Args: never; Returns: Json }
       process_deflationary_transaction: {
         Args: { _amount: number; _description?: string; _wallet?: string }
+        Returns: Json
+      }
+      purchase_insurance: {
+        Args: {
+          _car_id: string
+          _coverage_percent: number
+          _duration_days: number
+          _max_claims: number
+          _plan_type: string
+          _premium: number
+          _races_limit: number
+          _wallet: string
+        }
         Returns: Json
       }
       refill_fuel:
