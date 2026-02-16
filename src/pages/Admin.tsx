@@ -43,6 +43,7 @@ interface MarketplaceCarAdmin {
   durability: number;
   image_key: string;
   sale_active: boolean;
+  stock: number;
 }
 
 type TabId = "dashboard" | "players" | "economy" | "collision" | "marketplace";
@@ -274,6 +275,10 @@ const Admin = () => {
   // Marketplace admin state
   const [marketplaceCars, setMarketplaceCars] = useState<MarketplaceCarAdmin[]>([]);
   const [togglingCar, setTogglingCar] = useState<string | null>(null);
+  const [editingCar, setEditingCar] = useState<string | null>(null);
+  const [editStock, setEditStock] = useState(0);
+  const [editPrice, setEditPrice] = useState(0);
+  const [savingCar, setSavingCar] = useState(false);
 
   const loadMarketplaceCars = useCallback(async () => {
     const { data } = await supabase.from("marketplace_cars").select("*").order("created_at", { ascending: true });
@@ -299,6 +304,28 @@ const Admin = () => {
       toast({ title: `${car.name} ${!car.sale_active ? "ativado" : "desativado"} no Marketplace` });
     }
     setTogglingCar(null);
+  };
+
+  const startEditCar = (car: MarketplaceCarAdmin) => {
+    setEditingCar(car.id);
+    setEditStock(car.stock);
+    setEditPrice(car.price);
+  };
+
+  const saveCarEdit = async (car: MarketplaceCarAdmin) => {
+    setSavingCar(true);
+    const { error } = await supabase
+      .from("marketplace_cars")
+      .update({ stock: editStock, price: editPrice })
+      .eq("id", car.id);
+    if (!error) {
+      setMarketplaceCars((prev) =>
+        prev.map((c) => (c.id === car.id ? { ...c, stock: editStock, price: editPrice } : c))
+      );
+      toast({ title: `${car.name} atualizado: ${editStock} unidades · ${editPrice} NP` });
+    }
+    setSavingCar(false);
+    setEditingCar(null);
   };
 
   // Sync local config when loaded
@@ -776,62 +803,118 @@ const Admin = () => {
               </button>
             </div>
             <p className="font-body text-xs text-muted-foreground">
-              Ative ou desative a venda de cada carro no Marketplace. Carros desativados não aparecem para os jogadores.
+              Controle estoque, preço e disponibilidade de cada carro. Carros com estoque 0 aparecem como "Esgotado" para os jogadores.
             </p>
 
             <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
-              {marketplaceCars.map((car) => (
-                <div
-                  key={car.id}
-                  className={`relative overflow-hidden rounded-2xl border transition-all ${
-                    car.sale_active ? "border-neon-green/40 bg-neon-green/5" : "border-border/20 bg-card/30 opacity-60"
-                  }`}
-                >
-                  {/* Car image */}
-                  <div className="relative h-36 overflow-hidden">
-                    <img
-                      src={CAR_IMAGES[car.image_key] || carThunder}
-                      alt={car.name}
-                      className="h-full w-full object-cover"
-                    />
-                    <div className="absolute inset-0 bg-gradient-to-t from-card to-transparent" />
-                    <div className={`absolute top-3 right-3 rounded-full px-2.5 py-1 font-display text-[10px] font-bold ${
-                      car.sale_active ? "bg-neon-green/20 text-neon-green" : "bg-destructive/20 text-destructive"
-                    }`}>
-                      {car.sale_active ? "À VENDA" : "DESATIVADO"}
+              {marketplaceCars.map((car) => {
+                const isEditing = editingCar === car.id;
+                return (
+                  <div
+                    key={car.id}
+                    className={`relative overflow-hidden rounded-2xl border transition-all ${
+                      car.sale_active && car.stock > 0 ? "border-neon-green/40 bg-neon-green/5" : car.sale_active ? "border-neon-orange/40 bg-neon-orange/5" : "border-border/20 bg-card/30 opacity-60"
+                    }`}
+                  >
+                    {/* Car image */}
+                    <div className="relative h-36 overflow-hidden">
+                      <img
+                        src={CAR_IMAGES[car.image_key] || carThunder}
+                        alt={car.name}
+                        className="h-full w-full object-cover"
+                      />
+                      <div className="absolute inset-0 bg-gradient-to-t from-card to-transparent" />
+                      <div className={`absolute top-3 right-3 rounded-full px-2.5 py-1 font-display text-[10px] font-bold ${
+                        car.sale_active && car.stock > 0 ? "bg-neon-green/20 text-neon-green" : car.sale_active ? "bg-neon-orange/20 text-neon-orange" : "bg-destructive/20 text-destructive"
+                      }`}>
+                        {!car.sale_active ? "DESATIVADO" : car.stock <= 0 ? "ESGOTADO" : "À VENDA"}
+                      </div>
+                      {/* Stock badge */}
+                      <div className="absolute top-3 left-3 rounded-full bg-card/80 px-2.5 py-1 backdrop-blur-sm font-display text-[10px] font-bold text-foreground">
+                        📦 {car.stock} un.
+                      </div>
                     </div>
-                  </div>
 
-                  <div className="p-4">
-                    <div className="flex items-center justify-between mb-2">
-                      <h3 className="font-display text-sm font-bold text-foreground">{car.name}</h3>
-                      <span className="font-display text-xs text-neon-orange font-bold">{car.price} NP</span>
-                    </div>
-                    <div className="flex gap-3 text-[10px] font-body text-muted-foreground mb-3">
-                      <span>SPD: {car.speed_base}</span>
-                      <span>ACC: {car.acceleration_base}</span>
-                      <span>HDL: {car.handling_base}</span>
-                      <span>DUR: {car.durability}</span>
-                    </div>
-                    <div className="flex items-center justify-between">
-                      <span className="font-display text-[10px] uppercase tracking-wider text-muted-foreground capitalize">
-                        {car.rarity} · {car.model}
-                      </span>
-                      <button
-                        onClick={() => toggleCarSale(car)}
-                        disabled={togglingCar === car.id}
-                        className={`relative w-14 h-7 rounded-full transition-colors ${
-                          car.sale_active ? "bg-neon-green/30" : "bg-muted/30"
-                        }`}
-                      >
-                        <div className={`absolute top-1 h-5 w-5 rounded-full transition-all ${
-                          car.sale_active ? "left-8 bg-neon-green" : "left-1 bg-muted-foreground"
-                        }`} />
-                      </button>
+                    <div className="p-4">
+                      <div className="flex items-center justify-between mb-2">
+                        <h3 className="font-display text-sm font-bold text-foreground">{car.name}</h3>
+                        <span className="font-display text-xs text-neon-orange font-bold">{car.price} NP</span>
+                      </div>
+                      <div className="flex gap-3 text-[10px] font-body text-muted-foreground mb-3">
+                        <span>SPD: {car.speed_base}</span>
+                        <span>ACC: {car.acceleration_base}</span>
+                        <span>HDL: {car.handling_base}</span>
+                        <span>DUR: {car.durability}</span>
+                      </div>
+
+                      {/* Edit stock & price */}
+                      {isEditing ? (
+                        <div className="space-y-3 rounded-xl border border-primary/20 bg-card/50 p-3 mb-3">
+                          <div>
+                            <label className="font-display text-[10px] uppercase tracking-wider text-muted-foreground">Estoque</label>
+                            <input
+                              type="number"
+                              min={0}
+                              value={editStock}
+                              onChange={(e) => setEditStock(Math.max(0, Number(e.target.value)))}
+                              className="mt-1 w-full rounded-lg border border-border/30 bg-background/50 px-3 py-2 font-display text-sm text-foreground focus:border-primary/50 focus:outline-none"
+                            />
+                          </div>
+                          <div>
+                            <label className="font-display text-[10px] uppercase tracking-wider text-muted-foreground">Preço (NP)</label>
+                            <input
+                              type="number"
+                              min={1}
+                              value={editPrice}
+                              onChange={(e) => setEditPrice(Math.max(1, Number(e.target.value)))}
+                              className="mt-1 w-full rounded-lg border border-border/30 bg-background/50 px-3 py-2 font-display text-sm text-foreground focus:border-primary/50 focus:outline-none"
+                            />
+                          </div>
+                          <div className="flex gap-2">
+                            <button
+                              onClick={() => saveCarEdit(car)}
+                              disabled={savingCar}
+                              className="flex-1 rounded-lg bg-primary py-2 font-display text-[10px] uppercase tracking-wider text-primary-foreground hover:bg-primary/90 disabled:opacity-50"
+                            >
+                              {savingCar ? "Salvando..." : "Salvar"}
+                            </button>
+                            <button
+                              onClick={() => setEditingCar(null)}
+                              className="rounded-lg border border-border/30 px-3 py-2 font-display text-[10px] uppercase tracking-wider text-muted-foreground hover:bg-muted/20"
+                            >
+                              Cancelar
+                            </button>
+                          </div>
+                        </div>
+                      ) : (
+                        <button
+                          onClick={() => startEditCar(car)}
+                          className="mb-3 w-full rounded-lg border border-primary/20 bg-primary/5 py-2 font-display text-[10px] uppercase tracking-wider text-primary hover:bg-primary/10"
+                        >
+                          ✏️ Editar Estoque & Valor
+                        </button>
+                      )}
+
+                      <div className="flex items-center justify-between">
+                        <span className="font-display text-[10px] uppercase tracking-wider text-muted-foreground capitalize">
+                          {car.rarity} · {car.model}
+                        </span>
+                        <button
+                          onClick={() => toggleCarSale(car)}
+                          disabled={togglingCar === car.id}
+                          className={`relative w-14 h-7 rounded-full transition-colors ${
+                            car.sale_active ? "bg-neon-green/30" : "bg-muted/30"
+                          }`}
+                        >
+                          <div className={`absolute top-1 h-5 w-5 rounded-full transition-all ${
+                            car.sale_active ? "left-8 bg-neon-green" : "left-1 bg-muted-foreground"
+                          }`} />
+                        </button>
+                      </div>
                     </div>
                   </div>
-                </div>
-              ))}
+                );
+              })}
             </div>
 
             {marketplaceCars.length === 0 && (
