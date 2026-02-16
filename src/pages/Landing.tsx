@@ -137,11 +137,8 @@ const TokenTicker = () => {
     >
       {/* Price Card with MetaMask */}
       <div className="flex items-center gap-3 rounded-2xl border border-neon-orange/30 bg-card/50 px-5 py-3 backdrop-blur-xl shadow-[0_0_30px_hsl(30_90%_55%/0.1)]">
-        <div className="flex flex-col items-center justify-center gap-0.5">
-          <div className="flex h-10 w-10 items-center justify-center rounded-full bg-neon-orange/20">
-            <img src={metamaskLogo} alt="MetaMask" className="h-6 w-6" />
-          </div>
-          <span className="font-display text-[8px] uppercase tracking-wider text-foreground font-bold">MetaMask</span>
+        <div className="flex h-10 w-10 items-center justify-center rounded-full bg-neon-orange/20">
+          <img src={metamaskLogo} alt="MetaMask" className="h-7 w-7" />
         </div>
         <div>
           <div className="flex items-center gap-2">
