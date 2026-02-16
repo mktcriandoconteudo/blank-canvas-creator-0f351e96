@@ -227,6 +227,8 @@ export const addXpToCar = (
     updatedCar.racesCount += 1;
     updatedCar.racesSinceRevision += 1;
     if (won) updatedCar.wins += 1;
+    // Each race adds 8-15 km based on speed
+    updatedCar.totalKm += Math.round(8 + (updatedCar.speed / 100) * 7);
 
     // Durability reduces engine wear: high durability = less damage per race
     const durabilityReduction = 1 - (updatedCar.durability / 100) * 0.6; // 100 dur → 0.4x, 0 dur → 1x
