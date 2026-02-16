@@ -5,7 +5,7 @@ import {
   Shield, Users, Settings, RefreshCw, AlertTriangle, Save,
   Coins, Trophy, Flame, Eye, X, TrendingDown, TrendingUp,
   Wallet, BarChart3, Activity, Zap, Fuel, Clock, ShieldCheck,
-  AlertCircle, ChevronDown, ChevronUp, ShoppingCart, Image
+  AlertCircle, ChevronDown, ChevronUp, ShoppingCart, Image, CreditCard, CheckCircle, XCircle, Check
 } from "lucide-react";
 import MainNav from "@/components/MainNav";
 import { useAdmin, type PlayerDetail } from "@/hooks/useAdmin";
@@ -47,7 +47,7 @@ interface MarketplaceCarAdmin {
   stock: number;
 }
 
-type TabId = "dashboard" | "players" | "economy" | "collision" | "marketplace" | "branding";
+type TabId = "dashboard" | "players" | "economy" | "collision" | "marketplace" | "branding" | "store";
 
 /* ── Stat Card ── */
 const StatCard = ({ icon, label, value, sub, color = "text-primary" }: {
@@ -286,6 +286,82 @@ const Admin = () => {
   const [uploadingLogo, setUploadingLogo] = useState(false);
   const [uploadingFavicon, setUploadingFavicon] = useState(false);
 
+  // Store / NP Purchases state
+  interface PendingPurchase {
+    id: string;
+    wallet_address: string;
+    np_amount: number;
+    price_brl: number;
+    status: string;
+    created_at: string;
+    package_id: string | null;
+    username?: string;
+  }
+  const [pendingPurchases, setPendingPurchases] = useState<PendingPurchase[]>([]);
+  const [loadingPurchases, setLoadingPurchases] = useState(false);
+  const [approvingId, setApprovingId] = useState<string | null>(null);
+  const [rejectingId, setRejectingId] = useState<string | null>(null);
+
+  const loadPendingPurchases = useCallback(async () => {
+    setLoadingPurchases(true);
+    const { data } = await supabase
+      .from("np_purchases")
+      .select("*")
+      .in("status", ["awaiting_approval", "pending"])
+      .order("created_at", { ascending: false });
+
+    if (data) {
+      // Enrich with usernames
+      const wallets = [...new Set(data.map((p: any) => p.wallet_address))];
+      const { data: users } = await supabase
+        .from("users")
+        .select("wallet_address, username")
+        .in("wallet_address", wallets);
+      const usernameMap: Record<string, string> = {};
+      (users ?? []).forEach((u: any) => { usernameMap[u.wallet_address] = u.username ?? "Sem nome"; });
+
+      setPendingPurchases(data.map((p: any) => ({ ...p, username: usernameMap[p.wallet_address] })));
+    }
+    setLoadingPurchases(false);
+  }, []);
+
+  const handleApprovePurchase = useCallback(async (purchase: PendingPurchase) => {
+    setApprovingId(purchase.id);
+    try {
+      const { data, error } = await supabase.rpc("confirm_np_purchase", {
+        _purchase_id: purchase.id,
+        _wallet: purchase.wallet_address,
+      });
+      if (error) throw error;
+      const result = data as any;
+      if (result?.success) {
+        toast({ title: "✅ Crédito aprovado!", description: `+${result.np_credited.toLocaleString()} NP para ${purchase.username}` });
+        setPendingPurchases((prev) => prev.filter((p) => p.id !== purchase.id));
+      } else {
+        toast({ title: "Erro", description: result?.error || "Falha", variant: "destructive" });
+      }
+    } catch (err: any) {
+      toast({ title: "Erro", description: err.message, variant: "destructive" });
+    }
+    setApprovingId(null);
+  }, []);
+
+  const handleRejectPurchase = useCallback(async (purchase: PendingPurchase) => {
+    setRejectingId(purchase.id);
+    try {
+      const { error } = await supabase
+        .from("np_purchases")
+        .update({ status: "rejected" })
+        .eq("id", purchase.id);
+      if (error) throw error;
+      toast({ title: "❌ Compra rejeitada", description: `Pedido de ${purchase.username} foi rejeitado.` });
+      setPendingPurchases((prev) => prev.filter((p) => p.id !== purchase.id));
+    } catch (err: any) {
+      toast({ title: "Erro", description: err.message, variant: "destructive" });
+    }
+    setRejectingId(null);
+  }, []);
+
   const handleAssetUpload = async (file: File, type: "logo" | "favicon") => {
     const setUploading = type === "logo" ? setUploadingLogo : setUploadingFavicon;
     setUploading(true);
@@ -307,6 +383,9 @@ const Admin = () => {
   useEffect(() => {
     if (isAdmin && tab === "marketplace") {
       loadMarketplaceCars();
+    }
+    if (isAdmin && tab === "store") {
+      loadPendingPurchases();
     }
   }, [isAdmin, tab, loadMarketplaceCars]);
 
@@ -404,6 +483,7 @@ const Admin = () => {
     { id: "collision", label: "Colisão", icon: <Settings className="h-4 w-4" /> },
     { id: "marketplace", label: "Marketplace", icon: <ShoppingCart className="h-4 w-4" /> },
     { id: "branding", label: "Branding", icon: <Image className="h-4 w-4" /> },
+    { id: "store", label: "Loja NP", icon: <CreditCard className="h-4 w-4" /> },
   ];
 
   return (
@@ -937,7 +1017,80 @@ const Admin = () => {
           </motion.div>
         )}
 
-        {/* ── BRANDING TAB ── */}
+        {/* ═══ LOJA NP ═══ */}
+        {tab === "store" && (
+          <motion.div initial={{ opacity: 0, y: 10 }} animate={{ opacity: 1, y: 0 }} className="space-y-6">
+            <div className="flex items-center justify-between">
+              <h2 className="font-display text-xl font-black uppercase tracking-wider text-foreground">💳 Aprovação de Compras NP</h2>
+              <button
+                onClick={loadPendingPurchases}
+                className="flex items-center gap-2 rounded-lg border border-border/20 bg-card/30 px-3 py-2 font-display text-[10px] uppercase tracking-wider text-muted-foreground hover:text-foreground transition-colors"
+              >
+                <RefreshCw className="h-3.5 w-3.5" />
+                Atualizar
+              </button>
+            </div>
+
+            {loadingPurchases ? (
+              <div className="flex justify-center py-12">
+                <div className="animate-spin rounded-full h-8 w-8 border-2 border-primary border-t-transparent" />
+              </div>
+            ) : pendingPurchases.length === 0 ? (
+              <div className="py-12 text-center">
+                <CheckCircle className="mx-auto h-12 w-12 text-neon-green/40 mb-3" />
+                <p className="font-display text-sm text-muted-foreground">Nenhuma compra pendente de aprovação</p>
+              </div>
+            ) : (
+              <div className="space-y-3">
+                {pendingPurchases.map((p) => (
+                  <div key={p.id} className="rounded-xl border border-border/20 bg-card/30 p-4 backdrop-blur-sm">
+                    <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3">
+                      <div className="space-y-1">
+                        <div className="flex items-center gap-2">
+                          <span className="font-display text-sm font-bold text-foreground">{p.username || "Sem nome"}</span>
+                          <span className={`rounded-full px-2 py-0.5 font-display text-[9px] font-bold uppercase ${
+                            p.status === "awaiting_approval" ? "bg-neon-orange/20 text-neon-orange" : "bg-muted/20 text-muted-foreground"
+                          }`}>
+                            {p.status === "awaiting_approval" ? "Aguardando" : "Pendente"}
+                          </span>
+                        </div>
+                        <p className="font-mono text-[10px] text-muted-foreground">{p.wallet_address}</p>
+                        <div className="flex items-center gap-4 text-xs text-muted-foreground">
+                          <span className="flex items-center gap-1">
+                            <Coins className="h-3.5 w-3.5 text-neon-orange" />
+                            <span className="font-display font-bold text-foreground">{p.np_amount.toLocaleString()} NP</span>
+                          </span>
+                          <span className="font-display font-bold text-primary">R$ {Number(p.price_brl).toFixed(2).replace(".", ",")}</span>
+                          <span className="text-[10px]">{new Date(p.created_at).toLocaleString("pt-BR")}</span>
+                        </div>
+                      </div>
+
+                      <div className="flex items-center gap-2">
+                        <button
+                          onClick={() => handleApprovePurchase(p)}
+                          disabled={approvingId === p.id}
+                          className="flex items-center gap-1.5 rounded-lg bg-neon-green/20 border border-neon-green/30 px-4 py-2 font-display text-[10px] uppercase tracking-wider text-neon-green hover:bg-neon-green/30 transition-colors disabled:opacity-50"
+                        >
+                          <Check className="h-3.5 w-3.5" />
+                          {approvingId === p.id ? "Aprovando..." : "Aprovar"}
+                        </button>
+                        <button
+                          onClick={() => handleRejectPurchase(p)}
+                          disabled={rejectingId === p.id}
+                          className="flex items-center gap-1.5 rounded-lg bg-destructive/20 border border-destructive/30 px-4 py-2 font-display text-[10px] uppercase tracking-wider text-destructive hover:bg-destructive/30 transition-colors disabled:opacity-50"
+                        >
+                          <XCircle className="h-3.5 w-3.5" />
+                          {rejectingId === p.id ? "Rejeitando..." : "Rejeitar"}
+                        </button>
+                      </div>
+                    </div>
+                  </div>
+                ))}
+              </div>
+            )}
+          </motion.div>
+        )}
+
         {tab === "branding" && (
           <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }} className="space-y-6">
             <h2 className="font-display text-xl font-black uppercase tracking-wider text-foreground">🎨 Branding do Site</h2>
