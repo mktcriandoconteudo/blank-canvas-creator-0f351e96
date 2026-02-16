@@ -1,19 +1,51 @@
-import { useState } from "react";
+import { useState, useEffect, useCallback } from "react";
 import { motion, AnimatePresence } from "framer-motion";
 import { useNavigate } from "react-router-dom";
 import {
   Shield, Users, Settings, RefreshCw, ArrowLeft, AlertTriangle, Save,
   Coins, Trophy, Flame, Eye, X, TrendingDown, TrendingUp,
   Wallet, BarChart3, Activity, Zap, Fuel, Clock, ShieldCheck,
-  AlertCircle, ChevronDown, ChevronUp
+  AlertCircle, ChevronDown, ChevronUp, ShoppingCart
 } from "lucide-react";
 import { useAdmin, type PlayerDetail } from "@/hooks/useAdmin";
+import { supabase } from "@/lib/supabase";
+import { toast } from "@/hooks/use-toast";
 import {
   BURN_RATE_PERCENT, REWARD_POOL_RATE_PERCENT, TREASURY_RATE_PERCENT,
   MAX_SUPPLY, DEFAULT_DAILY_EMISSION_LIMIT, DEFAULT_DECAY_RATE_PERCENT, MIN_DAILY_EMISSION,
 } from "@/lib/economy/constants";
 
-type TabId = "dashboard" | "players" | "economy" | "collision";
+// Car images for marketplace admin
+import carPhantom from "@/assets/marketplace/car-phantom.jpg";
+import carInferno from "@/assets/marketplace/car-inferno.jpg";
+import carSolar from "@/assets/marketplace/car-solar.jpg";
+import carVenom from "@/assets/marketplace/car-venom.jpg";
+import carEclipse from "@/assets/marketplace/car-eclipse.jpg";
+import carFrost from "@/assets/marketplace/car-frost.jpg";
+import carThunder from "@/assets/marketplace/car-thunder.jpg";
+import carBlaze from "@/assets/marketplace/car-blaze.jpg";
+
+const CAR_IMAGES: Record<string, string> = {
+  "car-phantom": carPhantom, "car-inferno": carInferno, "car-solar": carSolar,
+  "car-venom": carVenom, "car-eclipse": carEclipse, "car-frost": carFrost,
+  "car-thunder": carThunder, "car-blaze": carBlaze,
+};
+
+interface MarketplaceCarAdmin {
+  id: string;
+  name: string;
+  model: string;
+  rarity: string;
+  price: number;
+  speed_base: number;
+  acceleration_base: number;
+  handling_base: number;
+  durability: number;
+  image_key: string;
+  sale_active: boolean;
+}
+
+type TabId = "dashboard" | "players" | "economy" | "collision" | "marketplace";
 
 /* ── Stat Card ── */
 const StatCard = ({ icon, label, value, sub, color = "text-primary" }: {
@@ -178,6 +210,36 @@ const Admin = () => {
   const [searchQuery, setSearchQuery] = useState("");
   const [economyRulesOpen, setEconomyRulesOpen] = useState(false);
 
+  // Marketplace admin state
+  const [marketplaceCars, setMarketplaceCars] = useState<MarketplaceCarAdmin[]>([]);
+  const [togglingCar, setTogglingCar] = useState<string | null>(null);
+
+  const loadMarketplaceCars = useCallback(async () => {
+    const { data } = await supabase.from("marketplace_cars").select("*").order("created_at", { ascending: true });
+    setMarketplaceCars((data as MarketplaceCarAdmin[]) ?? []);
+  }, []);
+
+  useEffect(() => {
+    if (isAdmin && tab === "marketplace") {
+      loadMarketplaceCars();
+    }
+  }, [isAdmin, tab, loadMarketplaceCars]);
+
+  const toggleCarSale = async (car: MarketplaceCarAdmin) => {
+    setTogglingCar(car.id);
+    const { error } = await supabase
+      .from("marketplace_cars")
+      .update({ sale_active: !car.sale_active })
+      .eq("id", car.id);
+    if (!error) {
+      setMarketplaceCars((prev) =>
+        prev.map((c) => (c.id === car.id ? { ...c, sale_active: !c.sale_active } : c))
+      );
+      toast({ title: `${car.name} ${!car.sale_active ? "ativado" : "desativado"} no Marketplace` });
+    }
+    setTogglingCar(null);
+  };
+
   // Sync local config when loaded
   const [synced, setSynced] = useState(false);
   if (!synced && collisionConfig.collisionChancePercent !== localConfig.collisionChancePercent) {
@@ -233,6 +295,7 @@ const Admin = () => {
     { id: "players", label: "Pilotos", icon: <Users className="h-4 w-4" /> },
     { id: "economy", label: "Economia", icon: <Coins className="h-4 w-4" /> },
     { id: "collision", label: "Colisão", icon: <Settings className="h-4 w-4" /> },
+    { id: "marketplace", label: "Marketplace", icon: <ShoppingCart className="h-4 w-4" /> },
   ];
 
   return (
@@ -624,6 +687,85 @@ const Admin = () => {
                 <span className="text-amber-400 font-bold">{localConfig.collisionDurabilityLoss}</span> de durabilidade por colisão.
               </p>
             </div>
+          </motion.div>
+        )}
+
+        {/* ═══ MARKETPLACE ═══ */}
+        {tab === "marketplace" && (
+          <motion.div initial={{ opacity: 0, y: 10 }} animate={{ opacity: 1, y: 0 }} className="space-y-6">
+            <div className="flex items-center justify-between">
+              <h2 className="font-display text-sm font-bold uppercase tracking-wider text-foreground">
+                Controle do Marketplace
+              </h2>
+              <button onClick={loadMarketplaceCars} className="flex items-center gap-2 rounded-lg border border-primary/30 bg-primary/10 px-3 py-2 font-display text-xs text-primary hover:bg-primary/20">
+                <RefreshCw className="h-3.5 w-3.5" />
+                Atualizar
+              </button>
+            </div>
+            <p className="font-body text-xs text-muted-foreground">
+              Ative ou desative a venda de cada carro no Marketplace. Carros desativados não aparecem para os jogadores.
+            </p>
+
+            <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
+              {marketplaceCars.map((car) => (
+                <div
+                  key={car.id}
+                  className={`relative overflow-hidden rounded-2xl border transition-all ${
+                    car.sale_active ? "border-neon-green/40 bg-neon-green/5" : "border-border/20 bg-card/30 opacity-60"
+                  }`}
+                >
+                  {/* Car image */}
+                  <div className="relative h-36 overflow-hidden">
+                    <img
+                      src={CAR_IMAGES[car.image_key] || carThunder}
+                      alt={car.name}
+                      className="h-full w-full object-cover"
+                    />
+                    <div className="absolute inset-0 bg-gradient-to-t from-card to-transparent" />
+                    <div className={`absolute top-3 right-3 rounded-full px-2.5 py-1 font-display text-[10px] font-bold ${
+                      car.sale_active ? "bg-neon-green/20 text-neon-green" : "bg-destructive/20 text-destructive"
+                    }`}>
+                      {car.sale_active ? "À VENDA" : "DESATIVADO"}
+                    </div>
+                  </div>
+
+                  <div className="p-4">
+                    <div className="flex items-center justify-between mb-2">
+                      <h3 className="font-display text-sm font-bold text-foreground">{car.name}</h3>
+                      <span className="font-display text-xs text-neon-orange font-bold">{car.price} NP</span>
+                    </div>
+                    <div className="flex gap-3 text-[10px] font-body text-muted-foreground mb-3">
+                      <span>SPD: {car.speed_base}</span>
+                      <span>ACC: {car.acceleration_base}</span>
+                      <span>HDL: {car.handling_base}</span>
+                      <span>DUR: {car.durability}</span>
+                    </div>
+                    <div className="flex items-center justify-between">
+                      <span className="font-display text-[10px] uppercase tracking-wider text-muted-foreground capitalize">
+                        {car.rarity} · {car.model}
+                      </span>
+                      <button
+                        onClick={() => toggleCarSale(car)}
+                        disabled={togglingCar === car.id}
+                        className={`relative w-14 h-7 rounded-full transition-colors ${
+                          car.sale_active ? "bg-neon-green/30" : "bg-muted/30"
+                        }`}
+                      >
+                        <div className={`absolute top-1 h-5 w-5 rounded-full transition-all ${
+                          car.sale_active ? "left-8 bg-neon-green" : "left-1 bg-muted-foreground"
+                        }`} />
+                      </button>
+                    </div>
+                  </div>
+                </div>
+              ))}
+            </div>
+
+            {marketplaceCars.length === 0 && (
+              <div className="py-12 text-center text-muted-foreground font-body text-sm">
+                Nenhum carro cadastrado no marketplace.
+              </div>
+            )}
           </motion.div>
         )}
       </main>
