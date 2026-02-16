@@ -7,6 +7,7 @@ interface AuthUser {
   email: string;
   username: string;
   walletAddress: string;
+  avatarUrl: string | null;
 }
 
 export const useAuth = () => {
@@ -17,7 +18,7 @@ export const useAuth = () => {
   const fetchProfile = useCallback(async (authUser: User) => {
     const { data } = await supabase
       .from("users")
-      .select("wallet_address, username")
+      .select("wallet_address, username, avatar_url")
       .eq("auth_id", authUser.id)
       .maybeSingle();
 
@@ -27,6 +28,7 @@ export const useAuth = () => {
         email: authUser.email ?? "",
         username: data.username ?? "Piloto",
         walletAddress: data.wallet_address,
+        avatarUrl: data.avatar_url ?? null,
       });
 
       // Update last_seen_at for online tracking (needs wallet header for RLS)
