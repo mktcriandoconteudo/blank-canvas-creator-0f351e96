@@ -269,7 +269,9 @@ const Landing = () => {
         className="fixed top-0 z-50 w-full border-b border-border/10 bg-background/60 backdrop-blur-2xl"
       >
         <div className="mx-auto flex max-w-7xl items-center justify-between px-4 py-3 sm:px-8">
-          <span className="font-display text-lg font-black uppercase tracking-wider text-foreground">Turbo<span className="text-primary">Nitro</span></span>
+          <button onClick={() => window.scrollTo({ top: 0, behavior: 'smooth' })} className="shrink-0">
+            <img src={effectiveLogo} alt="TurboNitro" className="h-7 w-auto sm:h-9 mix-blend-screen" />
+          </button>
           <div className="hidden items-center gap-8 sm:flex">
             <a href="#features" className="font-display text-xs uppercase tracking-wider text-muted-foreground transition-colors hover:text-primary">Features</a>
             <a href="#nft" className="font-display text-xs uppercase tracking-wider text-muted-foreground transition-colors hover:text-primary">NFTs</a>
