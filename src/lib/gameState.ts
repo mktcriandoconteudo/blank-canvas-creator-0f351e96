@@ -54,6 +54,15 @@ export const calculateXpToNext = (level: number): number => {
   return Math.round(100 * Math.pow(XP_MULTIPLIER, level - 1));
 };
 
+/** Max fuel tanks based on car rarity/model */
+export const getMaxFuel = (model: string): number => {
+  switch (model) {
+    case "legendary": return 7;
+    case "rare": return 6;
+    default: return 5;
+  }
+};
+
 export const needsOilChange = (car: CarData): boolean => {
   return (car.totalKm - car.lastOilChangeKm) >= OIL_CHANGE_INTERVAL_KM;
 };
@@ -86,7 +95,7 @@ const defaultCar: CarData = {
   rentalRacesRemaining: 0,
   licensePlate: "",
   purchasedAt: new Date().toISOString(),
-  fuelTanks: 5,
+  fuelTanks: 7, // legendary default
   lastFuelRefill: new Date().toISOString(),
 };
 
@@ -118,7 +127,7 @@ function mapCarRow(row: any): CarData {
     rentalRacesRemaining: 0,
     licensePlate: row.license_plate ?? "",
     purchasedAt: row.purchased_at ?? new Date().toISOString(),
-    fuelTanks: row.fuel_tanks ?? 5,
+    fuelTanks: row.fuel_tanks ?? getMaxFuel(row.model ?? "standard"),
     lastFuelRefill: row.last_fuel_refill ?? new Date().toISOString(),
   };
 }
@@ -203,12 +212,13 @@ export async function loadGameStateFromSupabase(wallet: string = DEFAULT_WALLET)
     // Per-car 24h fuel refill
     const lastRefill = new Date(car.lastFuelRefill);
     const hoursSinceRefill = (now.getTime() - lastRefill.getTime()) / (1000 * 60 * 60);
-    if (hoursSinceRefill >= 24 && car.fuelTanks < 5) {
-      car.fuelTanks = 5;
+    const maxFuel = getMaxFuel(car.model);
+    if (hoursSinceRefill >= 24 && car.fuelTanks < maxFuel) {
+      car.fuelTanks = maxFuel;
       car.lastFuelRefill = now.toISOString();
       await wc
         .from("cars")
-        .update({ fuel_tanks: 5, last_fuel_refill: now.toISOString() })
+        .update({ fuel_tanks: maxFuel, last_fuel_refill: now.toISOString() })
         .eq("id", car.id);
     }
     return car;

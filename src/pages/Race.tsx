@@ -7,7 +7,7 @@ import RaceResultModal from "@/components/race/RaceResultModal";
 import RaceVideoPlayer from "@/components/race/RaceVideoPlayer";
 import SimpleVideoPlayer from "@/components/race/SimpleVideoPlayer";
 import { useGameState } from "@/hooks/useGameState";
-import { RENTAL_STAT_PENALTY } from "@/lib/gameState";
+import { RENTAL_STAT_PENALTY, getMaxFuel } from "@/lib/gameState";
 import { useCarVideos } from "@/hooks/useCarVideos";
 import { getCollisionConfig, rollCollision, logCollision, type CollisionResult } from "@/lib/collision";
 
@@ -507,7 +507,7 @@ const Race = () => {
             </div>
             <div className="flex items-center gap-1">
               <Fuel className="h-3 w-3 text-neon-orange" />
-              <span className="font-display text-[9px] text-foreground/70 sm:text-[10px]">{selectedCar?.fuelTanks ?? 0}/5</span>
+              <span className="font-display text-[9px] text-foreground/70 sm:text-[10px]">{selectedCar?.fuelTanks ?? 0}/{getMaxFuel(selectedCar?.model ?? "standard")}</span>
             </div>
             <div className="flex items-center gap-1">
               <Wrench className="h-3 w-3 text-primary" />
@@ -706,7 +706,7 @@ const Race = () => {
               <div className="flex items-center gap-2 rounded-lg border border-primary/15 bg-primary/5 px-4 py-2">
                 <Fuel className="h-4 w-4 text-primary" />
                 <span className="font-display text-sm text-primary">
-                  {selectedCar?.fuelTanks ?? 0}/5 Tanques
+                  {selectedCar?.fuelTanks ?? 0}/{getMaxFuel(selectedCar?.model ?? "standard")} Tanques
                 </span>
               </div>
               <button
