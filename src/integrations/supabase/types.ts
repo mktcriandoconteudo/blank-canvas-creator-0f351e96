@@ -193,9 +193,11 @@ export type Database = {
           id: string
           last_oil_change_km: number
           level: number
+          license_plate: string
           model: string
           name: string
           owner_wallet: string
+          purchased_at: string
           races_count: number
           races_since_revision: number
           speed_base: number
@@ -217,9 +219,11 @@ export type Database = {
           id?: string
           last_oil_change_km?: number
           level?: number
+          license_plate?: string
           model?: string
           name?: string
           owner_wallet: string
+          purchased_at?: string
           races_count?: number
           races_since_revision?: number
           speed_base?: number
@@ -241,9 +245,11 @@ export type Database = {
           id?: string
           last_oil_change_km?: number
           level?: number
+          license_plate?: string
           model?: string
           name?: string
           owner_wallet?: string
+          purchased_at?: string
           races_count?: number
           races_since_revision?: number
           speed_base?: number
@@ -778,6 +784,47 @@ export type Database = {
         }
         Relationships: []
       }
+      used_car_listings: {
+        Row: {
+          buyer_wallet: string | null
+          car_id: string
+          created_at: string
+          id: string
+          price: number
+          seller_wallet: string
+          sold_at: string | null
+          status: string
+        }
+        Insert: {
+          buyer_wallet?: string | null
+          car_id: string
+          created_at?: string
+          id?: string
+          price: number
+          seller_wallet: string
+          sold_at?: string | null
+          status?: string
+        }
+        Update: {
+          buyer_wallet?: string | null
+          car_id?: string
+          created_at?: string
+          id?: string
+          price?: number
+          seller_wallet?: string
+          sold_at?: string | null
+          status?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "used_car_listings_car_id_fkey"
+            columns: ["car_id"]
+            isOneToOne: false
+            referencedRelation: "cars"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       user_roles: {
         Row: {
           id: string
@@ -856,6 +903,10 @@ export type Database = {
         Args: { _car_id: string; _wallet: string }
         Returns: Json
       }
+      buy_used_car: {
+        Args: { _listing_id: string; _wallet: string }
+        Returns: Json
+      }
       check_is_admin: { Args: never; Returns: boolean }
       claim_insurance: {
         Args: {
@@ -878,6 +929,7 @@ export type Database = {
         Args: { _amount: number; _reason?: string; _wallet: string }
         Returns: Json
       }
+      generate_license_plate: { Args: never; Returns: string }
       get_economy_report: { Args: never; Returns: Json }
       has_role: {
         Args: {
@@ -885,6 +937,10 @@ export type Database = {
           _user_id: string
         }
         Returns: boolean
+      }
+      list_car_for_sale: {
+        Args: { _car_id: string; _price: number; _wallet: string }
+        Returns: Json
       }
       process_deflationary_transaction: {
         Args: { _amount: number; _description?: string; _wallet?: string }
