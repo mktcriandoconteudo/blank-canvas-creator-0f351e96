@@ -415,6 +415,7 @@ export type Database = {
           rarity: string
           sale_active: boolean
           speed_base: number
+          stock: number
           updated_at: string
         }
         Insert: {
@@ -430,6 +431,7 @@ export type Database = {
           rarity?: string
           sale_active?: boolean
           speed_base?: number
+          stock?: number
           updated_at?: string
         }
         Update: {
@@ -445,6 +447,7 @@ export type Database = {
           rarity?: string
           sale_active?: boolean
           speed_base?: number
+          stock?: number
           updated_at?: string
         }
         Relationships: []

@@ -45,6 +45,7 @@ interface MarketplaceCar {
   durability: number;
   image_key: string;
   sale_active: boolean;
+  stock: number;
 }
 
 const RARITY_LABELS: Record<Rarity, string> = {
@@ -113,6 +114,7 @@ const CarNFTCard = ({ car, index, onBuy, buying, userBalance }: {
   const [liked, setLiked] = useState(false);
   const canAfford = userBalance >= car.price;
   const isBuying = buying === car.id;
+  const inStock = car.stock > 0;
 
   return (
     <motion.div
@@ -131,8 +133,11 @@ const CarNFTCard = ({ car, index, onBuy, buying, userBalance }: {
         />
         <div className="absolute inset-0 bg-gradient-to-t from-card via-card/30 to-transparent" />
 
-        <div className="absolute left-3 top-3 rounded-md bg-card/80 px-2 py-0.5 backdrop-blur-xl">
-          <span className="font-display text-[9px] uppercase tracking-[0.2em] text-muted-foreground">0 KM</span>
+        <div className="absolute left-3 top-3 flex gap-1.5">
+          <span className="rounded-md bg-card/80 px-2 py-0.5 backdrop-blur-xl font-display text-[9px] uppercase tracking-[0.2em] text-muted-foreground">0 KM</span>
+          <span className={`rounded-md px-2 py-0.5 backdrop-blur-xl font-display text-[9px] font-bold uppercase tracking-wider ${inStock ? "bg-neon-green/20 text-neon-green" : "bg-destructive/20 text-destructive"}`}>
+            {inStock ? `📦 ${car.stock}` : "ESGOTADO"}
+          </span>
         </div>
 
         <div className={`absolute right-3 top-3 rounded-md px-2.5 py-1 backdrop-blur-xl ${config.badge}`}>
@@ -149,9 +154,11 @@ const CarNFTCard = ({ car, index, onBuy, buying, userBalance }: {
           <Heart className={`h-4 w-4 ${liked ? "fill-red-500 text-red-500" : "text-muted-foreground"}`} />
         </button>
 
-        <div className="absolute bottom-3 left-3 rounded-md bg-neon-green/20 px-2 py-0.5 backdrop-blur-xl">
-          <span className="font-display text-[10px] font-bold text-neon-green">NOVO</span>
-        </div>
+        {inStock && (
+          <div className="absolute bottom-3 left-3 rounded-md bg-neon-green/20 px-2 py-0.5 backdrop-blur-xl">
+            <span className="font-display text-[10px] font-bold text-neon-green">NOVO</span>
+          </div>
+        )}
       </div>
 
       {/* Info */}
@@ -183,7 +190,7 @@ const CarNFTCard = ({ car, index, onBuy, buying, userBalance }: {
           </div>
           <Button
             size="sm"
-            disabled={!canAfford || isBuying}
+            disabled={!canAfford || isBuying || !inStock}
             onClick={() => onBuy(car)}
             className="h-9 rounded-lg bg-primary px-4 font-display text-[10px] uppercase tracking-wider text-primary-foreground hover:bg-primary/90 disabled:opacity-50"
           >
@@ -192,7 +199,7 @@ const CarNFTCard = ({ car, index, onBuy, buying, userBalance }: {
             ) : (
               <ShoppingCart className="mr-1 h-3 w-3" />
             )}
-            {isBuying ? "Comprando..." : !canAfford ? "Saldo Insuf." : "Comprar"}
+            {isBuying ? "Comprando..." : !inStock ? "Esgotado" : !canAfford ? "Saldo Insuf." : "Comprar"}
           </Button>
         </div>
       </div>
@@ -260,8 +267,11 @@ const Marketplace = () => {
           description: `${result.car_name} adicionado à garagem! 🔥 ${result.burned} NP queimados · Saldo: ${result.remaining_balance} NP`,
         });
         setUserBalance(result.remaining_balance);
+        // Update stock locally
+        setCars((prev) => prev.map((c) => c.id === car.id ? { ...c, stock: result.stock_remaining ?? c.stock - 1 } : c));
       } else {
         const errorMsg = result?.error === "insufficient_funds" ? "Saldo insuficiente!" :
+          result?.error === "out_of_stock" ? "Estoque esgotado!" :
           result?.error === "car_not_available" ? "Carro indisponível!" : "Erro na compra.";
         toast({ title: errorMsg, variant: "destructive" });
       }
