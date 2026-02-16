@@ -14,7 +14,7 @@ import raceVictoryVideo from "@/assets/race-victory-video.mp4";
 import azulGanha from "@/assets/azul_ganha.mp4";
 import raceDefeatVideo from "@/assets/race-defeat-video.mp4";
 import azulPerde from "@/assets/azul_perde.mp4";
-// raceStartVideo removed
+
 import raceScenePlayer from "@/assets/race-scene-main.jpg";
 import raceBgm from "@/assets/race-bgm.mp3";
 
@@ -109,27 +109,8 @@ const Race = () => {
   finishRaceRef.current = finishRace;
   const bgmRef = useRef<HTMLAudioElement | null>(null);
 
-  
-  const countdownVideoRef = useRef<HTMLVideoElement | null>(null);
 
-  // Force video playback on first user interaction (iOS + Android workaround)
-  useEffect(() => {
-    const tryPlay = () => {
-      if (countdownVideoRef.current && countdownVideoRef.current.paused) {
-        countdownVideoRef.current.load();
-        countdownVideoRef.current.play().catch(() => {});
-      }
-    };
-    // Try immediately
-    tryPlay();
-    // Also listen for user gesture
-    document.addEventListener("touchstart", tryPlay, { once: true });
-    document.addEventListener("click", tryPlay, { once: true });
-    return () => {
-      document.removeEventListener("touchstart", tryPlay);
-      document.removeEventListener("click", tryPlay);
-    };
-  }, []);
+
 
   // Cleanup audio on unmount
   useEffect(() => {
