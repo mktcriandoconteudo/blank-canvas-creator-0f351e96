@@ -8,6 +8,7 @@ import RaceVideoPlayer from "@/components/race/RaceVideoPlayer";
 import SimpleVideoPlayer from "@/components/race/SimpleVideoPlayer";
 import { useGameState } from "@/hooks/useGameState";
 import { RENTAL_STAT_PENALTY } from "@/lib/gameState";
+import { useCarVideos } from "@/hooks/useCarVideos";
 import { getCollisionConfig, rollCollision, logCollision, type CollisionResult } from "@/lib/collision";
 
 // Cinematic videos — starting grid + race clips + victory/defeat finales
@@ -44,6 +45,12 @@ const Race = () => {
     ? { speed: Math.round(selectedCar.speed * rentalMult), acceleration: Math.round(selectedCar.acceleration * rentalMult), handling: Math.round(selectedCar.handling * rentalMult), engineHealth: selectedCar.engineHealth, name: selectedCar.name, level: selectedCar.level }
     : { speed: 70, acceleration: 60, handling: 50, engineHealth: 100, name: "Unknown", level: 1 };
   const noCars = !loading && state.cars.length === 0;
+
+  // Dynamic car videos from DB
+  const { videos: carVideoMap } = useCarVideos();
+  // Build image key from car name (e.g. "Thunder Bolt" → "car-thunder")
+  const carImageKey = selectedCar?.name ? `car-${selectedCar.name.toLowerCase().split(" ")[0]}` : "";
+  const dynamicVideos = carVideoMap[carImageKey] ?? {};
 
   const noFuel = !loading && state.fuelTanks <= 0;
 
@@ -239,11 +246,18 @@ const Race = () => {
       console.log("[RACE FINISH]", { carName, carKey, isThunder, won, preWin });
       
       if (!isThunder) {
-        const hasCustom = !!(CAR_VICTORY_VIDEOS[carKey]);
-        if (hasCustom) {
-          setFinaleVideoSrc(won ? CAR_VICTORY_VIDEOS[carKey] : CAR_DEFEAT_VIDEOS[carKey]);
+        // Priority: dynamic DB videos > hardcoded fallbacks
+        const dynVictory = dynamicVideos.victory;
+        const dynDefeat = dynamicVideos.defeat;
+        if (dynVictory || dynDefeat) {
+          setFinaleVideoSrc(won ? (dynVictory ?? raceVictoryVideo) : (dynDefeat ?? raceDefeatVideo));
         } else {
-          setFinaleVideoSrc(won ? raceDefeatVideo : raceVictoryVideo);
+          const hasCustom = !!(CAR_VICTORY_VIDEOS[carKey]);
+          if (hasCustom) {
+            setFinaleVideoSrc(won ? CAR_VICTORY_VIDEOS[carKey] : CAR_DEFEAT_VIDEOS[carKey]);
+          } else {
+            setFinaleVideoSrc(won ? raceDefeatVideo : raceVictoryVideo);
+          }
         }
       }
       
@@ -323,14 +337,18 @@ const Race = () => {
       {/* ====== Race videos ====== */}
       {isThunder ? (
         <SimpleVideoPlayer
-          videoSrc={preWin ? azulGanha : azulPerde}
+          videoSrc={
+            preWin
+              ? (dynamicVideos.victory ?? azulGanha)
+              : (dynamicVideos.defeat ?? azulPerde)
+          }
           isActive={true}
           nitroActive={nitroActive}
           isRacing={isRacing}
         />
       ) : (
         <RaceVideoPlayer
-          videos={RACE_VIDEOS}
+          videos={dynamicVideos.start ? [dynamicVideos.start] : RACE_VIDEOS}
           finaleVideo={finaleVideoSrc}
           isActive={true}
           poster={raceScenePlayer}

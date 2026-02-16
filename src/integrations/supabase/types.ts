@@ -154,6 +154,33 @@ export type Database = {
           },
         ]
       }
+      car_race_videos: {
+        Row: {
+          car_image_key: string
+          created_at: string
+          id: string
+          updated_at: string
+          video_type: string
+          video_url: string
+        }
+        Insert: {
+          car_image_key: string
+          created_at?: string
+          id?: string
+          updated_at?: string
+          video_type: string
+          video_url: string
+        }
+        Update: {
+          car_image_key?: string
+          created_at?: string
+          id?: string
+          updated_at?: string
+          video_type?: string
+          video_url?: string
+        }
+        Relationships: []
+      }
       cars: {
         Row: {
           acceleration_base: number

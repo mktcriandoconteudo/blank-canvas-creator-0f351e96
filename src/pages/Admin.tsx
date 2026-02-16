@@ -5,7 +5,8 @@ import {
   Shield, Users, Settings, RefreshCw, AlertTriangle, Save,
   Coins, Trophy, Flame, Eye, X, TrendingDown,
   Wallet, BarChart3, Activity, Zap, Fuel,
-  ChevronDown, ChevronUp, ShoppingCart, Image, CreditCard, CheckCircle, XCircle, Check
+  ChevronDown, ChevronUp, ShoppingCart, Image, CreditCard, CheckCircle, XCircle, Check,
+  Upload, Video, Trash2, Loader2
 } from "lucide-react";
 import MainNav from "@/components/MainNav";
 import { useAdmin, type PlayerDetail } from "@/hooks/useAdmin";
@@ -16,6 +17,7 @@ import {
   MAX_SUPPLY, DEFAULT_DAILY_EMISSION_LIMIT, DEFAULT_DECAY_RATE_PERCENT, MIN_DAILY_EMISSION,
 } from "@/lib/economy/constants";
 import { useSiteAssets, uploadSiteAsset } from "@/hooks/useSiteAssets";
+import { useCarVideos, uploadCarVideo, deleteCarVideo } from "@/hooks/useCarVideos";
 import carPhantom from "@/assets/marketplace/car-phantom.jpg";
 import carInferno from "@/assets/marketplace/car-inferno.jpg";
 import carSolar from "@/assets/marketplace/car-solar.jpg";
@@ -334,6 +336,10 @@ const Admin = () => {
   const [uploadingLogo, setUploadingLogo] = useState(false);
   const [uploadingFavicon, setUploadingFavicon] = useState(false);
 
+  // Car videos state
+  const carVideos = useCarVideos();
+  const [uploadingVideo, setUploadingVideo] = useState<string | null>(null); // "carKey-videoType"
+
   // Store / NP Purchases state
   interface PendingPurchase {
     id: string; wallet_address: string; np_amount: number; price_brl: number;
@@ -406,7 +412,7 @@ const Admin = () => {
   }, []);
 
   useEffect(() => {
-    if (isAdmin && tab === "marketplace") loadMarketplaceCars();
+    if (isAdmin && tab === "marketplace") { loadMarketplaceCars(); carVideos.refresh(); }
     if (isAdmin && tab === "store") loadPendingPurchases();
   }, [isAdmin, tab, loadMarketplaceCars]);
 
@@ -917,6 +923,72 @@ const Admin = () => {
                           ✏️ Editar
                         </button>
                       )}
+
+                      {/* ── Video Upload Section ── */}
+                      <div className="mb-3 rounded-xl border border-border/20 bg-card/30 p-2.5">
+                        <p className="font-display text-[9px] uppercase tracking-wider text-muted-foreground mb-2 flex items-center gap-1">
+                          <Video className="h-3 w-3" /> Vídeos da Corrida
+                        </p>
+                        <div className="grid grid-cols-2 gap-1.5">
+                          {(["start", "victory", "defeat", "collision"] as const).map((vtype) => {
+                            const vKey = `${car.image_key}-${vtype}`;
+                            const hasVideo = !!carVideos.videos[car.image_key]?.[vtype];
+                            const isUploading = uploadingVideo === vKey;
+                            const labels: Record<string, string> = { start: "Largada", victory: "Vitória", defeat: "Derrota", collision: "Colisão" };
+                            const colors: Record<string, string> = { start: "text-primary", victory: "text-neon-green", defeat: "text-destructive", collision: "text-neon-orange" };
+                            return (
+                              <div key={vtype} className="relative">
+                                <label className={`flex cursor-pointer flex-col items-center gap-1 rounded-lg border p-2 transition-all ${
+                                  hasVideo ? "border-neon-green/30 bg-neon-green/5" : "border-border/20 bg-background/30 hover:border-primary/30"
+                                } ${isUploading ? "opacity-60 pointer-events-none" : ""}`}>
+                                  <input
+                                    type="file"
+                                    accept="video/mp4,video/webm,video/*"
+                                    className="hidden"
+                                    onChange={async (e) => {
+                                      const file = e.target.files?.[0];
+                                      if (!file) return;
+                                      setUploadingVideo(vKey);
+                                      const url = await uploadCarVideo(car.image_key, vtype, file);
+                                      if (url) {
+                                        toast({ title: `✅ Vídeo ${labels[vtype]} enviado!`, description: car.name });
+                                        carVideos.refresh();
+                                      } else {
+                                        toast({ title: "Erro no upload", variant: "destructive" });
+                                      }
+                                      setUploadingVideo(null);
+                                      e.target.value = "";
+                                    }}
+                                  />
+                                  {isUploading ? (
+                                    <Loader2 className="h-4 w-4 animate-spin text-primary" />
+                                  ) : hasVideo ? (
+                                    <CheckCircle className="h-4 w-4 text-neon-green" />
+                                  ) : (
+                                    <Upload className="h-4 w-4 text-muted-foreground" />
+                                  )}
+                                  <span className={`font-display text-[8px] uppercase tracking-wider ${hasVideo ? colors[vtype] : "text-muted-foreground"}`}>
+                                    {labels[vtype]}
+                                  </span>
+                                </label>
+                                {hasVideo && !isUploading && (
+                                  <button
+                                    onClick={async (e) => {
+                                      e.stopPropagation();
+                                      await deleteCarVideo(car.image_key, vtype);
+                                      carVideos.refresh();
+                                      toast({ title: `Vídeo ${labels[vtype]} removido` });
+                                    }}
+                                    className="absolute -right-1 -top-1 flex h-4 w-4 items-center justify-center rounded-full bg-destructive text-destructive-foreground hover:bg-destructive/80"
+                                  >
+                                    <Trash2 className="h-2.5 w-2.5" />
+                                  </button>
+                                )}
+                              </div>
+                            );
+                          })}
+                        </div>
+                      </div>
 
                       <div className="flex items-center justify-between">
                         <span className="font-display text-[9px] sm:text-[10px] uppercase tracking-wider text-muted-foreground capitalize">
