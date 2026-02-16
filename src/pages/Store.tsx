@@ -9,7 +9,7 @@ import MainNav from "@/components/MainNav";
 import { Button } from "@/components/ui/button";
 import { useAuth } from "@/hooks/useAuth";
 import { useGameState } from "@/hooks/useGameState";
-import { supabase, getWalletClient } from "@/lib/supabase";
+import { supabase } from "@/lib/supabase";
 import { toast } from "@/hooks/use-toast";
 import { formatNP } from "@/lib/utils";
 
@@ -103,9 +103,8 @@ const Store = () => {
       setPixCode(generatePixCode(pkg.price_brl));
       setCountdown(300); // 5 min simulated
 
-      // Create purchase record (use wallet client for RLS via x-wallet-address header)
-      const wc = getWalletClient(user.walletAddress);
-      const { data, error } = await wc
+      // Create purchase record (use authenticated client — RLS resolves wallet via auth.uid())
+      const { data, error } = await supabase
         .from("np_purchases")
         .insert({
           wallet_address: user.walletAddress,
@@ -131,9 +130,8 @@ const Store = () => {
     if (!purchaseId || !user) return;
     setConfirming(true);
     try {
-      // Mark purchase as "awaiting_approval" (use wallet client for RLS)
-      const wc = getWalletClient(user.walletAddress);
-      const { error } = await wc
+      // Mark purchase as "awaiting_approval" (use authenticated client)
+      const { error } = await supabase
         .from("np_purchases")
         .update({ status: "awaiting_approval" })
         .eq("id", purchaseId);
