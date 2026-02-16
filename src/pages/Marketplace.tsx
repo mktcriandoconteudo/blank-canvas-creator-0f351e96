@@ -661,8 +661,8 @@ const Marketplace = () => {
               </div>
 
               <div className="relative flex flex-col sm:flex-row items-start sm:items-center gap-4">
-                <div className="flex h-20 w-20 shrink-0 items-center justify-center">
-                  <img src={mysteryBoxImg} alt="Mystery Box" className="h-20 w-20 object-contain drop-shadow-[0_0_15px_hsl(270_60%_60%/0.4)]" />
+                <div className="flex h-[110px] w-[110px] shrink-0 items-center justify-center">
+                  <img src={mysteryBoxImg} alt="Mystery Box" className="h-[110px] w-[110px] object-contain drop-shadow-[0_0_15px_hsl(270_60%_60%/0.4)]" />
                 </div>
 
                 <div className="flex-1">
