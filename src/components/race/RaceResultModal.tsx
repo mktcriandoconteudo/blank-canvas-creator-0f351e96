@@ -135,7 +135,7 @@ const RaceResultModal = ({ isOpen, victory, nitroPoints, xpGained, leveledUp, ne
               transition={{ delay: 0.9 }}
               className="mt-4 font-body text-xs text-muted-foreground"
             >
-              Motor: -{victory ? 3 : 5}% · Durabilidade: -{victory ? 2 : 4}%
+              Desgaste do motor aplicado · Durabilidade reduz o dano
             </motion.p>
 
             <motion.div
