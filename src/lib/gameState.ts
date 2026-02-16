@@ -228,8 +228,12 @@ export const addXpToCar = (
     updatedCar.racesSinceRevision += 1;
     if (won) updatedCar.wins += 1;
 
-    updatedCar.engineHealth = Math.max(0, updatedCar.engineHealth - (won ? 3 : 5));
-    updatedCar.durability = Math.max(0, updatedCar.durability - (won ? 2 : 4));
+    // Durability reduces engine wear: high durability = less damage per race
+    const durabilityReduction = 1 - (updatedCar.durability / 100) * 0.6; // 100 dur → 0.4x, 0 dur → 1x
+    const baseEngineDmg = won ? 5 : 8;
+    updatedCar.engineHealth = Math.max(0, updatedCar.engineHealth - Math.round(baseEngineDmg * durabilityReduction));
+    // Durability itself degrades slowly
+    updatedCar.durability = Math.max(0, updatedCar.durability - (won ? 1 : 2));
 
     while (updatedCar.xp >= updatedCar.xpToNext) {
       updatedCar.xp -= updatedCar.xpToNext;

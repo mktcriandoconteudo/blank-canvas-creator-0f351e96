@@ -43,19 +43,38 @@ const Race = () => {
 
   const noFuel = !loading && state.fuelTanks <= 0;
 
-  // Pre-determine race outcome so Thunder Bolt can play the right video from the start
-  const [preWin] = useState(() => Math.random() > 0.45); // ~55% win chance
-  
+  // Generate opponent based on player level
   const [opponent] = useState(() => {
     const lvl = selectedCar?.level ?? 1;
     const base = 50 + lvl * 5;
     return {
       speed: Math.min(100, base + Math.round(Math.random() * 20 - 10)),
       acceleration: Math.min(100, base + Math.round(Math.random() * 20 - 10)),
+      handling: Math.min(100, base + Math.round(Math.random() * 20 - 10)),
       name: ["Viper MK3", "Shadow GT", "Blaze R8", "Neon Fury"][Math.floor(Math.random() * 4)],
       health: 100,
       level: Math.max(1, lvl + Math.floor(Math.random() * 3 - 1)),
     };
+  });
+
+  // Calculate win chance based on real stats
+  const [preWin] = useState(() => {
+    const pSpeed = playerStats.speed;
+    const pAccel = selectedCar?.acceleration ?? 60;
+    const pHandling = selectedCar?.handling ?? 50;
+    const pHealth = playerStats.engineHealth / 100;
+
+    // Player power = weighted stats * engine health penalty
+    const playerPower = (pSpeed * 0.4 + pAccel * 0.35 + pHandling * 0.25) * pHealth;
+    // Opponent power (full health)
+    const oppPower = opponent.speed * 0.4 + opponent.acceleration * 0.35 + opponent.handling * 0.25;
+
+    // Win probability: sigmoid-like curve centered at equal power
+    const diff = playerPower - oppPower;
+    const winChance = 1 / (1 + Math.exp(-diff / 12)); // ~50% when equal, scales smoothly
+    const roll = Math.random();
+    console.log("[RACE] Win calc:", { playerPower: playerPower.toFixed(1), oppPower: oppPower.toFixed(1), winChance: (winChance * 100).toFixed(1) + "%", roll: roll.toFixed(3) });
+    return roll < winChance;
   });
 
   const [raceState, setRaceState] = useState<"countdown" | "racing" | "finished">("countdown");
@@ -166,20 +185,27 @@ const Race = () => {
   }, [raceState]);
 
 
-  // Race tick + parallax
+  // Race tick + parallax — handling reduces randomness, engine health penalizes hard
   useEffect(() => {
     if (raceState !== "racing") return;
     const interval = setInterval(() => {
       setPlayerProgress((prev) => {
-        const r = 0.8 + Math.random() * 0.4;
+        // Handling: higher = less variance (0.6-1.0 range narrows to 0.85-1.0 at 100)
+        const handlingFactor = (selectedCar?.handling ?? 50) / 100;
+        const variance = 0.4 * (1 - handlingFactor * 0.6); // max handling → variance 0.16
+        const r = (1 - variance / 2) + Math.random() * variance;
         const s = (playerStats.speed / 100) * 0.6;
         const a = ((selectedCar?.acceleration ?? 60) / 100) * 0.4;
-        const h = playerStats.engineHealth / 100;
+        // Engine health: severe penalty below 50% (quadratic curve)
+        const rawH = playerStats.engineHealth / 100;
+        const h = rawH > 0.5 ? rawH : 0.5 * Math.pow(rawH / 0.5, 2); // e.g. 25% health → 0.125 multiplier
         const boost = nitroActive ? 1.6 : 1;
         return Math.min(prev + (s + a) * r * h * 0.35 * boost, FINISH_LINE);
       });
       setOpponentProgress((prev) => {
-        const r = 0.8 + Math.random() * 0.4;
+        const oppHandling = (opponent.handling ?? 50) / 100;
+        const variance = 0.4 * (1 - oppHandling * 0.6);
+        const r = (1 - variance / 2) + Math.random() * variance;
         const s = (opponent.speed / 100) * 0.6;
         const a = (opponent.acceleration / 100) * 0.4;
         const h = opponent.health / 100;
