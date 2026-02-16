@@ -9,6 +9,7 @@ import { useAuth } from "@/hooks/useAuth";
 import { supabase } from "@/lib/supabase";
 import { useSiteAssets } from "@/hooks/useSiteAssets";
 import turboNitroLogo from "@/assets/turbonitro-logo.png";
+import { formatNP } from "@/lib/utils";
 
 interface MainNavProps {
   /** Optional: show NP balance */
@@ -104,7 +105,7 @@ const MainNav = ({ nitroPoints, transparent = false }: MainNavProps) => {
             <div className="flex items-center gap-1.5 rounded-lg bg-card/30 px-2.5 py-1.5 backdrop-blur-sm border border-border/10">
               <Coins className="h-4 w-4 text-neon-orange" />
               <span className="font-display text-[10px] font-bold text-foreground sm:text-xs">
-                {nitroPoints.toLocaleString()} NP
+                {formatNP(nitroPoints)} NP
               </span>
             </div>
           )}
@@ -175,8 +176,8 @@ const MainNav = ({ nitroPoints, transparent = false }: MainNavProps) => {
                     {user.username ?? "Piloto"}
                   </span>
                   {nitroPoints !== undefined && (
-                    <span className="ml-auto font-display text-xs font-bold text-neon-orange">
-                      {nitroPoints.toLocaleString()} NP
+                     <span className="ml-auto font-display text-xs font-bold text-neon-orange">
+                      {formatNP(nitroPoints)} NP
                     </span>
                   )}
                 </div>

@@ -2,6 +2,7 @@ import { motion, AnimatePresence } from "framer-motion";
 import { Trophy, Skull, Coins, Star, ArrowUp, Volume2, VolumeX } from "lucide-react";
 import GlowButton from "@/components/garage/GlowButton";
 import { useNavigate } from "react-router-dom";
+import { formatNP } from "@/lib/utils";
 
 interface RaceResultModalProps {
   isOpen: boolean;
@@ -103,7 +104,7 @@ const RaceResultModal = ({ isOpen, victory, nitroPoints, xpGained, leveledUp, ne
               <div className="flex flex-col items-center gap-1 rounded-xl bg-muted/50 px-5 py-3">
                 <Coins className="h-5 w-5 text-neon-orange" />
                 <span className="font-display text-xl font-bold text-foreground">
-                  {victory ? "+" : ""}{nitroPoints}
+                  {victory ? "+" : ""}{formatNP(nitroPoints)}
                 </span>
                 <span className="font-display text-[10px] uppercase tracking-wider text-muted-foreground">NP</span>
               </div>

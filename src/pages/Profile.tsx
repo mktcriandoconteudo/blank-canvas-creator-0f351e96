@@ -13,6 +13,7 @@ import { Input } from "@/components/ui/input";
 import { useAuth } from "@/hooks/useAuth";
 import { useGameState } from "@/hooks/useGameState";
 import { supabase, getWalletClient } from "@/lib/supabase";
+import { formatNP } from "@/lib/utils";
 import { needsOilChange, kmSinceOilChange } from "@/lib/gameState";
 import { toast } from "@/hooks/use-toast";
 
@@ -464,7 +465,7 @@ const Profile = () => {
               <div className="flex flex-wrap items-center gap-3 justify-center sm:justify-start">
                 <div className="rounded-lg bg-neon-orange/10 border border-neon-orange/20 px-3 py-1.5">
                   <span className="font-display text-[10px] uppercase tracking-wider text-neon-orange">
-                    💰 {state.nitroPoints.toLocaleString()} NP
+                    💰 {formatNP(state.nitroPoints)} NP
                   </span>
                 </div>
                 <div className="rounded-lg bg-primary/10 border border-primary/20 px-3 py-1.5">

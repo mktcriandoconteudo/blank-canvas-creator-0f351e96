@@ -2,6 +2,7 @@ import { useState, useEffect, useCallback } from "react";
 import { motion, AnimatePresence } from "framer-motion";
 import { useAuth } from "@/hooks/useAuth";
 import { supabase, getWalletClient } from "@/lib/supabase";
+import { formatNP } from "@/lib/utils";
 import { toast } from "@/hooks/use-toast";
 import {
   Trophy, Clock, Coins, Star, Lock, ArrowDownToLine,
@@ -147,7 +148,7 @@ const Rewards = () => {
             {/* Summary Cards */}
             <div className="mt-4 grid grid-cols-2 sm:grid-cols-4 gap-3">
               {[
-                { label: "Total NP", value: totalNP.toLocaleString(), icon: <Coins className="h-4 w-4" />, color: "text-neon-orange" },
+                { label: "Total NP", value: formatNP(totalNP), icon: <Coins className="h-4 w-4" />, color: "text-neon-orange" },
                 { label: "Total XP", value: totalXP.toLocaleString(), icon: <Star className="h-4 w-4" />, color: "text-neon-green" },
                 { label: `${config?.token_name ?? "KLEIN"} Acumulado`, value: totalTokens.toLocaleString(), icon: <Trophy className="h-4 w-4" />, color: "text-primary" },
                 { label: "Taxa de Vitória", value: `${winRate}%`, icon: <Trophy className="h-4 w-4" />, color: "text-accent" },
@@ -316,7 +317,7 @@ const Rewards = () => {
                             {r.car_name}
                           </td>
                           <td className="px-3 py-2.5 font-display text-xs font-bold text-neon-orange">
-                            +{r.np_earned}
+                            +{formatNP(r.np_earned)}
                           </td>
                           <td className="px-3 py-2.5 font-display text-xs font-bold text-neon-green">
                             +{r.xp_earned}

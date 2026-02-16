@@ -4,6 +4,7 @@ import { useState, useEffect, useCallback } from "react";
 import { useAuth } from "@/hooks/useAuth";
 import { supabase } from "@/lib/supabase";
 import { toast } from "@/hooks/use-toast";
+import { formatNP } from "@/lib/utils";
 import {
   Search, Loader2,
   ShoppingCart, Tag, Clock, AlertTriangle
@@ -419,19 +420,19 @@ const UsedMarketplace = () => {
                       <div className="mt-2 rounded-lg bg-muted/10 p-2 text-[10px] font-body text-muted-foreground space-y-0.5">
                         <div className="flex justify-between">
                           <span>Preço de venda</span>
-                          <span className="text-foreground font-bold">{parseInt(sellPrice).toLocaleString()} NP</span>
+                          <span className="text-foreground font-bold">{formatNP(parseInt(sellPrice))} NP</span>
                         </div>
                         <div className="flex justify-between text-destructive">
                           <span>🔥 Burn (10%)</span>
-                          <span>-{Math.ceil(parseInt(sellPrice) * 0.1).toLocaleString()} NP</span>
+                          <span>-{formatNP(Math.ceil(parseInt(sellPrice) * 0.1))} NP</span>
                         </div>
                         <div className="flex justify-between text-primary">
                           <span>🏆 Pool (10%)</span>
-                          <span>-{Math.ceil(parseInt(sellPrice) * 0.1).toLocaleString()} NP</span>
+                          <span>-{formatNP(Math.ceil(parseInt(sellPrice) * 0.1))} NP</span>
                         </div>
                         <div className="flex justify-between text-neon-green font-bold border-t border-border/20 pt-1 mt-1">
                           <span>Você recebe</span>
-                          <span>{Math.floor(parseInt(sellPrice) * 0.8).toLocaleString()} NP</span>
+                          <span>{formatNP(Math.floor(parseInt(sellPrice) * 0.8))} NP</span>
                         </div>
                       </div>
                     )}

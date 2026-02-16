@@ -18,6 +18,7 @@ import {
 } from "@/lib/economy/constants";
 import { useSiteAssets, uploadSiteAsset } from "@/hooks/useSiteAssets";
 import { useCarVideos, uploadCarVideo, deleteCarVideo } from "@/hooks/useCarVideos";
+import { formatNP } from "@/lib/utils";
 import carPhantom from "@/assets/marketplace/car-phantom.jpg";
 import carInferno from "@/assets/marketplace/car-inferno.jpg";
 import carSolar from "@/assets/marketplace/car-solar.jpg";
@@ -100,7 +101,7 @@ const PlayerCard = ({ player, onView }: { player: any; onView: () => void }) => 
       <div className="grid grid-cols-4 gap-2">
         <div className="rounded-lg bg-neon-orange/5 p-2 text-center">
           <p className="text-[8px] text-muted-foreground uppercase">NP</p>
-          <p className="font-display text-xs font-bold text-neon-orange">{player.nitroPoints.toLocaleString()}</p>
+          <p className="font-display text-xs font-bold text-neon-orange">{formatNP(player.nitroPoints)}</p>
         </div>
         <div className="rounded-lg bg-primary/5 p-2 text-center">
           <p className="text-[8px] text-muted-foreground uppercase">Carros</p>
@@ -637,7 +638,7 @@ const Admin = () => {
                       <span className="font-display text-sm text-foreground truncate">{p.username || "Sem nome"}</span>
                     </div>
                     <div className="flex items-center gap-2 sm:gap-4 text-xs shrink-0">
-                      <span className="font-display text-neon-orange font-bold">{p.nitroPoints.toLocaleString()}</span>
+                      <span className="font-display text-neon-orange font-bold">{formatNP(p.nitroPoints)}</span>
                       <span className="text-muted-foreground hidden sm:inline">{p.totalWins}W/{p.totalRaces}R</span>
                     </div>
                   </div>
@@ -712,7 +713,7 @@ const Admin = () => {
                         </td>
                         <td className="px-4 py-3 font-display text-sm text-foreground">{p.username || "Sem nome"}</td>
                         <td className="px-4 py-3 font-mono text-xs text-muted-foreground">{p.walletAddress.slice(0, 8)}...{p.walletAddress.slice(-4)}</td>
-                        <td className="px-4 py-3 text-center font-display text-sm text-neon-orange font-bold">{p.nitroPoints.toLocaleString()}</td>
+                        <td className="px-4 py-3 text-center font-display text-sm text-neon-orange font-bold">{formatNP(p.nitroPoints)}</td>
                         <td className="px-4 py-3 text-center font-display text-sm text-foreground">{p.carsCount}</td>
                         <td className="px-4 py-3 text-center font-display text-xs">
                           <span className="text-neon-green">{p.totalWins}W</span>
@@ -798,9 +799,9 @@ const Admin = () => {
                           <div>
                             <h4 className="font-display text-sm font-bold text-foreground mb-1">Emissão</h4>
                             <ul className="list-disc list-inside space-y-0.5 text-[11px]">
-                              <li>Base: <span className="text-foreground font-bold">{DEFAULT_DAILY_EMISSION_LIMIT.toLocaleString()} NP/dia</span></li>
+                              <li>Base: <span className="text-foreground font-bold">{formatNP(DEFAULT_DAILY_EMISSION_LIMIT)} NP/dia</span></li>
                               <li>Decay: <span className="text-foreground font-bold">{DEFAULT_DECAY_RATE_PERCENT}%</span>/semana</li>
-                              <li>Piso: <span className="text-foreground font-bold">{MIN_DAILY_EMISSION.toLocaleString()} NP/dia</span></li>
+                              <li>Piso: <span className="text-foreground font-bold">{formatNP(MIN_DAILY_EMISSION)} NP/dia</span></li>
                             </ul>
                           </div>
                         </div>
