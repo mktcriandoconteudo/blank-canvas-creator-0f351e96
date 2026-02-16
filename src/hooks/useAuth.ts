@@ -39,29 +39,11 @@ export const useAuth = () => {
     }
   }, []);
 
-  // Heartbeat: update last_seen_at every 5 minutes while user is active
-  useEffect(() => {
-    if (!user) return;
-    const ping = () => {
-      const walletClient = getWalletClient(user.walletAddress);
-      walletClient
-        .from("users")
-        .update({ last_seen_at: new Date().toISOString() })
-        .eq("wallet_address", user.walletAddress)
-        .then(() => {});
-    };
-    // Ping immediately on mount
-    ping();
-    const interval = setInterval(ping, 5 * 60 * 1000); // every 5 min
-    return () => clearInterval(interval);
-  }, [user]);
-
   useEffect(() => {
     const { data: { subscription } } = supabase.auth.onAuthStateChange(
       async (_event, session) => {
         setSession(session);
         if (session?.user) {
-          // Use setTimeout to avoid Supabase deadlock
           setTimeout(() => fetchProfile(session.user), 0);
         } else {
           setUser(null);
@@ -80,6 +62,22 @@ export const useAuth = () => {
 
     return () => subscription.unsubscribe();
   }, [fetchProfile]);
+
+  // Heartbeat: update last_seen_at every 5 minutes while user is active
+  useEffect(() => {
+    if (!user) return;
+    const ping = () => {
+      const walletClient = getWalletClient(user.walletAddress);
+      walletClient
+        .from("users")
+        .update({ last_seen_at: new Date().toISOString() })
+        .eq("wallet_address", user.walletAddress)
+        .then(() => {});
+    };
+    ping();
+    const interval = setInterval(ping, 5 * 60 * 1000);
+    return () => clearInterval(interval);
+  }, [user]);
 
   const signUp = async (email: string, password: string, username: string) => {
     const { error } = await supabase.auth.signUp({
