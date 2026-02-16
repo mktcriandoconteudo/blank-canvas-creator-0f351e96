@@ -109,7 +109,7 @@ const PlayerDetailModal = ({ player, onClose }: { player: PlayerDetail; onClose:
         <div className="flex items-center gap-3 mb-1">
           <h2 className="font-display text-xl font-black text-foreground">{player.username || "Sem nome"}</h2>
           {(() => {
-            const online = new Date(player.updatedAt).getTime() > Date.now() - 15 * 60 * 1000;
+            const online = player.lastSeenAt ? new Date(player.lastSeenAt).getTime() > Date.now() - 15 * 60 * 1000 : false;
             return (
               <span className={`inline-flex items-center gap-1.5 rounded-full px-2 py-0.5 font-display text-[10px] font-bold ${online ? "bg-neon-green/20 text-neon-green" : "bg-muted/20 text-muted-foreground"}`}>
                 <span className={`h-2 w-2 rounded-full ${online ? "bg-neon-green animate-pulse" : "bg-muted-foreground/40"}`} />
@@ -538,7 +538,7 @@ const Admin = () => {
                 </thead>
                 <tbody>
                   {filteredPlayers.map((p) => {
-                    const isOnline = new Date(p.updatedAt).getTime() > Date.now() - 15 * 60 * 1000;
+                    const isOnline = p.lastSeenAt ? new Date(p.lastSeenAt).getTime() > Date.now() - 15 * 60 * 1000 : false;
                     return (
                     <tr key={p.id} className="border-b border-border/10 hover:bg-muted/10 transition-colors">
                       <td className="px-4 py-3">

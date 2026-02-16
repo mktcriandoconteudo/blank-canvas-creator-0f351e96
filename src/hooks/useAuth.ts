@@ -28,6 +28,13 @@ export const useAuth = () => {
         username: data.username ?? "Piloto",
         walletAddress: data.wallet_address,
       });
+
+      // Update last_seen_at for online tracking
+      supabase
+        .from("users")
+        .update({ last_seen_at: new Date().toISOString() })
+        .eq("auth_id", authUser.id)
+        .then(() => {});
     }
   }, []);
 

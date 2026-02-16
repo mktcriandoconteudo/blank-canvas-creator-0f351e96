@@ -697,6 +697,7 @@ export type Database = {
           fuel_tanks: number
           id: string
           last_fuel_refill: string
+          last_seen_at: string | null
           nitro_points: number
           total_losses: number
           total_races: number
@@ -712,6 +713,7 @@ export type Database = {
           fuel_tanks?: number
           id?: string
           last_fuel_refill?: string
+          last_seen_at?: string | null
           nitro_points?: number
           total_losses?: number
           total_races?: number
@@ -727,6 +729,7 @@ export type Database = {
           fuel_tanks?: number
           id?: string
           last_fuel_refill?: string
+          last_seen_at?: string | null
           nitro_points?: number
           total_losses?: number
           total_races?: number

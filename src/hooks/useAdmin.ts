@@ -17,6 +17,7 @@ export interface Player {
   totalLosses: number;
   createdAt: string;
   updatedAt: string;
+  lastSeenAt: string | null;
   carsCount: number;
   avatarUrl: string | null;
 }
@@ -114,9 +115,9 @@ export const useAdmin = () => {
 
     if (!users) return;
 
-    // Count online users (active in last 15 minutes)
+    // Count online users (active in last 15 minutes based on last_seen_at)
     const fifteenMinAgo = new Date(Date.now() - 15 * 60 * 1000).toISOString();
-    const online = users.filter((u: any) => u.updated_at >= fifteenMinAgo).length;
+    const online = users.filter((u: any) => u.last_seen_at && u.last_seen_at >= fifteenMinAgo).length;
     setOnlineCount(online);
 
     const { data: cars } = await supabase.from("cars").select("owner_wallet");
@@ -138,6 +139,7 @@ export const useAdmin = () => {
         totalLosses: u.total_losses,
         createdAt: u.created_at,
         updatedAt: u.updated_at,
+        lastSeenAt: u.last_seen_at,
         carsCount: carCounts[u.wallet_address] || 0,
         avatarUrl: u.avatar_url,
       }))
