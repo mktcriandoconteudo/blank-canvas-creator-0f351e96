@@ -166,11 +166,40 @@ const RaceResultModal = ({ isOpen, victory, playerPosition, nitroPoints, xpGaine
               </motion.div>
             )}
 
+            {/* Position reward table */}
+            <motion.div
+              initial={{ opacity: 0 }}
+              animate={{ opacity: 1 }}
+              transition={{ delay: 0.85 }}
+              className="mt-4 rounded-xl border border-border/20 bg-muted/20 p-3"
+            >
+              <span className="font-display text-[9px] uppercase tracking-wider text-muted-foreground">Prêmios por posição</span>
+              <div className="mt-1.5 grid grid-cols-4 gap-1">
+                {["1º", "2º", "3º", "4º"].map((label, i) => (
+                  <div
+                    key={label}
+                    className={`rounded-lg px-2 py-1.5 text-center transition-all ${
+                      playerPosition === i + 1
+                        ? `${POSITION_STYLES[i]?.bg} ${POSITION_STYLES[i]?.border} border`
+                        : "bg-muted/10"
+                    }`}
+                  >
+                    <span className={`block font-display text-[10px] font-black ${
+                      playerPosition === i + 1 ? POSITION_STYLES[i]?.text : "text-muted-foreground/60"
+                    }`}>{label}</span>
+                    <span className={`block font-mono text-[8px] ${
+                      playerPosition === i + 1 ? "text-foreground" : "text-muted-foreground/40"
+                    }`}>{["100%", "40%", "15%", "5%"][i]}</span>
+                  </div>
+                ))}
+              </div>
+            </motion.div>
+
             <motion.p
               initial={{ opacity: 0 }}
               animate={{ opacity: 1 }}
-              transition={{ delay: 0.9 }}
-              className="mt-4 font-body text-xs text-muted-foreground"
+              transition={{ delay: 0.95 }}
+              className="mt-3 font-body text-xs text-muted-foreground"
             >
               60% NP livre · 40% bloqueado para upgrades · Desgaste aplicado
             </motion.p>
