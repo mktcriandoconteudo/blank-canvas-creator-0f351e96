@@ -6,7 +6,7 @@ import {
   Coins, Trophy, Flame, Eye, X, TrendingDown,
   Wallet, BarChart3, Activity, Zap, Fuel,
   ChevronDown, ChevronUp, ShoppingCart, Image, CreditCard, CheckCircle, XCircle, Check,
-  Upload, Video, Trash2, Loader2
+  Upload, Video, Trash2, Loader2, Bug, Play
 } from "lucide-react";
 import MainNav from "@/components/MainNav";
 import { useAdmin, type PlayerDetail } from "@/hooks/useAdmin";
@@ -19,6 +19,7 @@ import {
 import { useSiteAssets, uploadSiteAsset } from "@/hooks/useSiteAssets";
 import { useCarVideos, uploadCarVideo, deleteCarVideo } from "@/hooks/useCarVideos";
 import { formatNP } from "@/lib/utils";
+import { simulateBotAttack, type SimulationReport } from "@/lib/antiBot/botSimulator";
 import carPhantom from "@/assets/marketplace/car-phantom.jpg";
 import carInferno from "@/assets/marketplace/car-inferno.jpg";
 import carSolar from "@/assets/marketplace/car-solar.jpg";
@@ -40,7 +41,7 @@ interface MarketplaceCarAdmin {
   durability: number; image_key: string; sale_active: boolean; stock: number;
 }
 
-type TabId = "dashboard" | "players" | "economy" | "collision" | "marketplace" | "branding" | "store";
+type TabId = "dashboard" | "players" | "economy" | "collision" | "marketplace" | "branding" | "store" | "simulation";
 
 /* ── Stat Card ── */
 const StatCard = ({ icon, label, value, sub, color = "text-primary" }: {
@@ -354,6 +355,10 @@ const Admin = () => {
   // More tabs drawer for mobile
   const [moreOpen, setMoreOpen] = useState(false);
 
+  // Bot simulation state
+  const [simReport, setSimReport] = useState<SimulationReport | null>(null);
+  const [simRunning, setSimRunning] = useState(false);
+
   const loadPendingPurchases = useCallback(async () => {
     setLoadingPurchases(true);
     const { data } = await supabase
@@ -490,6 +495,7 @@ const Admin = () => {
     { id: "collision", label: "Colisão", icon: <Settings className="h-4 w-4" /> },
     { id: "marketplace", label: "Marketplace", icon: <ShoppingCart className="h-4 w-4" /> },
     { id: "branding", label: "Branding", icon: <Image className="h-4 w-4" /> },
+    { id: "simulation", label: "Simulação Bot", icon: <Bug className="h-4 w-4" /> },
   ];
 
   const ALL_TABS = [...PRIMARY_TABS, ...SECONDARY_TABS];
@@ -1072,6 +1078,211 @@ const Admin = () => {
                   </div>
                 ))}
               </div>
+            )}
+          </motion.div>
+        )}
+
+        {/* ═══ BOT SIMULATION ═══ */}
+        {tab === "simulation" && (
+          <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }} className="space-y-4 sm:space-y-6">
+            <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3">
+              <div>
+                <h2 className="font-display text-sm font-bold uppercase tracking-wider text-foreground flex items-center gap-2">
+                  <Bug className="h-5 w-5 text-destructive" /> Simulação de Ataque — 1.000 Bots
+                </h2>
+                <p className="font-body text-xs text-muted-foreground mt-1">
+                  Simula 800 bots + 200 humanos reais para testar eficácia do AntiBotEngine.
+                </p>
+              </div>
+              <button
+                onClick={() => {
+                  setSimRunning(true);
+                  // Use setTimeout to allow UI to update before heavy computation
+                  setTimeout(() => {
+                    const report = simulateBotAttack(1000, 0.20);
+                    setSimReport(report);
+                    setSimRunning(false);
+                  }, 50);
+                }}
+                disabled={simRunning}
+                className="flex items-center gap-2 rounded-xl bg-destructive px-6 py-3 font-display text-sm font-bold uppercase tracking-wider text-destructive-foreground hover:brightness-110 disabled:opacity-50 transition-all"
+              >
+                <Play className="h-4 w-4" />
+                {simRunning ? "Simulando..." : "Iniciar Simulação"}
+              </button>
+            </div>
+
+            {simReport && (
+              <>
+                {/* Key Metrics */}
+                <div className="grid grid-cols-2 gap-2 sm:gap-3 sm:grid-cols-4">
+                  <StatCard
+                    icon={<Bug className="h-4 w-4" />}
+                    label="Detecção de Bots"
+                    value={`${simReport.detectionRate.toFixed(1)}%`}
+                    sub={`${simReport.totalDetected}/${simReport.totalBots} detectados`}
+                    color={simReport.detectionRate >= 70 ? "text-neon-green" : "text-destructive"}
+                  />
+                  <StatCard
+                    icon={<Shield className="h-4 w-4" />}
+                    label="Proteção Econômica"
+                    value={`${simReport.economicProtection.toFixed(1)}%`}
+                    sub={`${simReport.totalNPBlocked.toLocaleString()} NP bloqueados`}
+                    color="text-primary"
+                  />
+                  <StatCard
+                    icon={<AlertTriangle className="h-4 w-4" />}
+                    label="Falsos Positivos"
+                    value={`${simReport.falsePositiveRate.toFixed(1)}%`}
+                    sub={`${simReport.falsePositives}/${simReport.totalHumans} humanos afetados`}
+                    color={simReport.falsePositiveRate < 10 ? "text-neon-green" : "text-neon-orange"}
+                  />
+                  <StatCard
+                    icon={<Zap className="h-4 w-4" />}
+                    label="Tempo"
+                    value={`${simReport.duration}ms`}
+                    sub="Processamento local"
+                    color="text-accent"
+                  />
+                </div>
+
+                {/* Risk Distribution */}
+                <div className="rounded-2xl border border-border/30 bg-card/40 p-4 sm:p-6 backdrop-blur-xl">
+                  <h3 className="font-display text-xs font-bold uppercase tracking-wider text-muted-foreground mb-4">
+                    Distribuição de Risco
+                  </h3>
+                  <div className="space-y-3">
+                    {([
+                      { key: "LOW" as const, label: "LOW (Humano)", color: "from-neon-green to-neon-green/60" },
+                      { key: "MEDIUM" as const, label: "MEDIUM (Suspeito)", color: "from-neon-orange to-neon-orange/60" },
+                      { key: "HIGH" as const, label: "HIGH (Provável Bot)", color: "from-destructive to-destructive/60" },
+                      { key: "CRITICAL" as const, label: "CRITICAL (Bloqueado)", color: "from-destructive to-destructive/30" },
+                    ]).map(({ key, label, color }) => (
+                      <div key={key}>
+                        <div className="flex items-center justify-between mb-1">
+                          <span className="font-display text-[10px] uppercase tracking-wider text-muted-foreground">{label}</span>
+                          <span className="font-display text-xs font-bold text-foreground">{simReport.riskDistribution[key]}</span>
+                        </div>
+                        <div className="relative h-3 w-full overflow-hidden rounded-full bg-muted/30">
+                          <div
+                            className={`absolute inset-y-0 left-0 rounded-full bg-gradient-to-r ${color} transition-all duration-700`}
+                            style={{ width: `${(simReport.riskDistribution[key] / 1000) * 100}%` }}
+                          />
+                        </div>
+                      </div>
+                    ))}
+                  </div>
+                </div>
+
+                {/* Breakdown by Bot Type */}
+                <div className="rounded-2xl border border-border/30 bg-card/40 p-4 sm:p-6 backdrop-blur-xl">
+                  <h3 className="font-display text-xs font-bold uppercase tracking-wider text-muted-foreground mb-4">
+                    Detecção por Tipo
+                  </h3>
+                  <div className="space-y-3">
+                    {simReport.breakdown.map((b) => {
+                      const typeLabels: Record<string, string> = {
+                        HUMAN: "👤 Humano",
+                        NAIVE_BOT: "🤖 Bot Ingênuo",
+                        SMART_BOT: "🧠 Bot Inteligente",
+                        FARM_BOT: "🚜 Farm Bot",
+                        HYBRID: "🔄 Híbrido",
+                      };
+                      const isBot = b.type !== "HUMAN";
+                      const good = isBot ? b.detectionRate >= 70 : b.detectionRate < 10;
+                      return (
+                        <div key={b.type} className="rounded-xl border border-border/20 bg-muted/10 p-3 sm:p-4">
+                          <div className="flex items-center justify-between mb-2">
+                            <span className="font-display text-sm font-bold text-foreground">{typeLabels[b.type] ?? b.type}</span>
+                            <span className={`rounded-full px-2 py-0.5 font-display text-[10px] font-bold ${
+                              good ? "bg-neon-green/20 text-neon-green" : "bg-destructive/20 text-destructive"
+                            }`}>
+                              {isBot ? `${b.detectionRate.toFixed(0)}% detectados` : `${b.detectionRate.toFixed(0)}% falso+`}
+                            </span>
+                          </div>
+                          <div className="grid grid-cols-4 gap-2 text-[10px] font-body text-muted-foreground">
+                            <div className="rounded-lg bg-primary/5 p-2 text-center">
+                              <div className="text-[8px] uppercase">Total</div>
+                              <div className="text-foreground font-bold text-xs">{b.count}</div>
+                            </div>
+                            <div className="rounded-lg bg-destructive/5 p-2 text-center">
+                              <div className="text-[8px] uppercase">Flagged</div>
+                              <div className="text-destructive font-bold text-xs">{b.detected}</div>
+                            </div>
+                            <div className="rounded-lg bg-neon-orange/5 p-2 text-center">
+                              <div className="text-[8px] uppercase">Score Médio</div>
+                              <div className="text-neon-orange font-bold text-xs">{b.avgScore}</div>
+                            </div>
+                            <div className="rounded-lg bg-neon-green/5 p-2 text-center">
+                              <div className="text-[8px] uppercase">NP Bloq.</div>
+                              <div className="text-neon-green font-bold text-xs">{b.npBlocked.toLocaleString()}</div>
+                            </div>
+                          </div>
+                        </div>
+                      );
+                    })}
+                  </div>
+                </div>
+
+                {/* Top 20 worst scores */}
+                <div className="rounded-2xl border border-border/30 bg-card/40 p-4 sm:p-6 backdrop-blur-xl">
+                  <h3 className="font-display text-xs font-bold uppercase tracking-wider text-muted-foreground mb-4">
+                    🚨 Top 20 — Piores Scores
+                  </h3>
+                  <div className="space-y-1.5 max-h-[400px] overflow-y-auto">
+                    {simReport.bots.slice(0, 20).map((bot) => (
+                      <div key={bot.id} className="flex items-center justify-between rounded-lg bg-muted/10 px-3 py-2">
+                        <div className="flex items-center gap-2 min-w-0">
+                          <span className={`h-2.5 w-2.5 rounded-full shrink-0 ${
+                            bot.riskLevel === "CRITICAL" ? "bg-destructive" :
+                            bot.riskLevel === "HIGH" ? "bg-neon-orange" :
+                            bot.riskLevel === "MEDIUM" ? "bg-accent" : "bg-neon-green"
+                          }`} />
+                          <span className="font-mono text-xs text-foreground truncate">{bot.name}</span>
+                          <span className={`rounded-full px-1.5 py-0.5 font-display text-[8px] font-bold ${
+                            bot.type === "HUMAN" ? "bg-neon-green/20 text-neon-green" : "bg-destructive/20 text-destructive"
+                          }`}>
+                            {bot.type === "HUMAN" ? "HUMANO" : bot.type.replace("_", " ")}
+                          </span>
+                        </div>
+                        <div className="flex items-center gap-3 shrink-0">
+                          <span className="font-display text-xs font-bold text-foreground">Score: {bot.behaviorScore}</span>
+                          <span className={`font-display text-[10px] font-bold ${
+                            bot.blocked ? "text-destructive" : "text-neon-orange"
+                          }`}>
+                            {bot.blocked ? "BLOQUEADO" : `${(bot.rewardMultiplier * 100).toFixed(0)}% reward`}
+                          </span>
+                        </div>
+                      </div>
+                    ))}
+                  </div>
+                </div>
+
+                {/* Summary */}
+                <div className="rounded-2xl border-2 border-primary/30 bg-primary/5 p-4 sm:p-6">
+                  <h3 className="font-display text-sm font-bold uppercase tracking-wider text-primary mb-3">
+                    📊 Resumo da Simulação
+                  </h3>
+                  <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 text-sm font-body text-foreground">
+                    <div>✅ <strong>{simReport.detectionRate.toFixed(1)}%</strong> dos bots foram detectados</div>
+                    <div>🛡️ <strong>{simReport.totalNPBlocked.toLocaleString()} NP</strong> foram bloqueados</div>
+                    <div>⚠️ <strong>{simReport.falsePositives}</strong> humanos afetados ({simReport.falsePositiveRate.toFixed(1)}%)</div>
+                    <div>💰 Proteção econômica de <strong>{simReport.economicProtection.toFixed(1)}%</strong></div>
+                    <div>🤖 {simReport.totalBots} bots simulados · {simReport.totalHumans} humanos</div>
+                    <div>⚡ Processado em <strong>{simReport.duration}ms</strong></div>
+                  </div>
+                  <div className={`mt-4 rounded-xl p-3 font-display text-sm font-bold text-center ${
+                    simReport.detectionRate >= 70 
+                      ? "bg-neon-green/20 text-neon-green" 
+                      : "bg-destructive/20 text-destructive"
+                  }`}>
+                    {simReport.detectionRate >= 70
+                      ? `✅ META ATINGIDA: ${simReport.detectionRate.toFixed(1)}% de detecção (meta: 70%)`
+                      : `❌ META NÃO ATINGIDA: ${simReport.detectionRate.toFixed(1)}% de detecção (meta: 70%)`
+                    }
+                  </div>
+                </div>
+              </>
             )}
           </motion.div>
         )}
