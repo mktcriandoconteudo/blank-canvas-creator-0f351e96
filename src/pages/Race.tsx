@@ -105,22 +105,43 @@ const Race = () => {
   const [bgOffset, setBgOffset] = useState(0);
   const [collisionResult, setCollisionResult] = useState<CollisionResult | null>(null);
   const [showCollisionFlash, setShowCollisionFlash] = useState(false);
+  const [behaviorBlocked, setBehaviorBlocked] = useState(false);
+  const [behaviorPenalty, setBehaviorPenalty] = useState<string>("none");
+  const [behaviorBlockWait, setBehaviorBlockWait] = useState(0);
   // Redirect if no cars
   useEffect(() => {
     if (noCars) navigate("/garage");
   }, [noCars, navigate]);
 
-  // Check race eligibility (anti-bot: cooldown + diminishing rewards)
+  // Check behavior block + race eligibility (anti-bot)
   useEffect(() => {
     if (!selectedCar?.id || !state.walletAddress) return;
-    supabase.rpc("check_race_eligibility" as any, {
+
+    // First check behavior block
+    supabase.rpc("check_behavior_block" as any, {
       _wallet: state.walletAddress,
-      _car_id: selectedCar.id,
     }).then(({ data }: any) => {
-      if (data) {
-        setRewardMultiplier(data.reward_multiplier ?? 1.0);
-        setRaceNumber(data.race_number ?? 1);
+      if (data?.blocked) {
+        setBehaviorBlocked(true);
+        setBehaviorPenalty(data.penalty_tier ?? "blocked");
+        setBehaviorBlockWait(data.wait_seconds ?? 0);
+        return;
       }
+      // Apply behavior reward multiplier on top of diminishing rewards
+      const behaviorMult = data?.reward_multiplier ?? 1.0;
+      setBehaviorPenalty(data?.penalty_tier ?? "none");
+
+      // Then check race eligibility
+      supabase.rpc("check_race_eligibility" as any, {
+        _wallet: state.walletAddress,
+        _car_id: selectedCar.id,
+      }).then(({ data: eligData }: any) => {
+        if (eligData) {
+          const baseMult = eligData.reward_multiplier ?? 1.0;
+          setRewardMultiplier(baseMult * behaviorMult);
+          setRaceNumber(eligData.race_number ?? 1);
+        }
+      });
     });
   }, [selectedCar?.id, state.walletAddress]);
 
@@ -733,6 +754,74 @@ const Race = () => {
                 ⛽ Ir para Garagem
               </button>
             </motion.div>
+          </motion.div>
+        )}
+      </AnimatePresence>
+
+      {/* Behavior block overlay */}
+      <AnimatePresence>
+        {behaviorBlocked && (
+          <motion.div
+            initial={{ opacity: 0 }}
+            animate={{ opacity: 1 }}
+            className="absolute inset-0 z-[35] flex flex-col items-center justify-center bg-background/95 backdrop-blur-xl"
+          >
+            <motion.div
+              initial={{ scale: 0.8, opacity: 0 }}
+              animate={{ scale: 1, opacity: 1 }}
+              transition={{ delay: 0.2 }}
+              className="flex flex-col items-center gap-6 rounded-2xl border border-destructive/30 bg-card/50 p-8 backdrop-blur-xl sm:p-12"
+            >
+              <div className="flex h-20 w-20 items-center justify-center rounded-full border border-destructive/30 bg-destructive/10">
+                <Zap className="h-10 w-10 text-destructive" />
+              </div>
+              <div className="text-center">
+                <h2 className="font-display text-2xl font-black uppercase tracking-wider text-destructive sm:text-3xl">
+                  Acesso Restrito
+                </h2>
+                <p className="mt-2 max-w-sm font-body text-sm text-muted-foreground">
+                  Atividade suspeita detectada. Seu acesso às corridas está temporariamente bloqueado.
+                </p>
+                {behaviorBlockWait > 0 && (
+                  <p className="mt-3 font-display text-lg font-bold text-destructive">
+                    ⏳ {Math.ceil(behaviorBlockWait / 60)} min restantes
+                  </p>
+                )}
+              </div>
+              <div className="rounded-lg border border-destructive/15 bg-destructive/5 px-4 py-2">
+                <span className="font-display text-xs uppercase tracking-wider text-destructive/80">
+                  Tier: {behaviorPenalty}
+                </span>
+              </div>
+              <button
+                onClick={() => navigate("/garage")}
+                className="rounded-xl bg-muted px-8 py-3 font-display text-sm font-bold uppercase tracking-wider text-foreground transition-all hover:bg-muted/80 active:scale-95"
+              >
+                Voltar à Garagem
+              </button>
+            </motion.div>
+          </motion.div>
+        )}
+      </AnimatePresence>
+
+      {/* Behavior penalty warning banner (non-blocking) */}
+      <AnimatePresence>
+        {!behaviorBlocked && behaviorPenalty !== "none" && raceState === "countdown" && (
+          <motion.div
+            initial={{ y: -50, opacity: 0 }}
+            animate={{ y: 0, opacity: 1 }}
+            exit={{ y: -50, opacity: 0 }}
+            className="absolute left-1/2 top-4 z-[25] -translate-x-1/2"
+          >
+            <div className={`rounded-lg border px-4 py-2 backdrop-blur-md ${
+              behaviorPenalty === "warning" ? "border-yellow-500/30 bg-yellow-500/10 text-yellow-400" :
+              behaviorPenalty === "suspect" ? "border-orange-500/30 bg-orange-500/10 text-orange-400" :
+              "border-destructive/30 bg-destructive/10 text-destructive"
+            }`}>
+              <span className="font-display text-xs font-bold uppercase tracking-wider">
+                ⚠️ Penalidade ativa: recompensas a {Math.round(rewardMultiplier * 100)}%
+              </span>
+            </div>
           </motion.div>
         )}
       </AnimatePresence>

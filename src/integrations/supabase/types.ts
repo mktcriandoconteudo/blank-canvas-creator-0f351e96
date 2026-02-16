@@ -64,12 +64,16 @@ export type Database = {
       }
       behavior_scores: {
         Row: {
+          blocked_until: string | null
           created_at: string
           flagged: boolean
+          forced_cooldown_seconds: number
           id: string
           interval_score: number
           last_calculated_at: string
           pattern_score: number
+          penalty_tier: string
+          reward_multiplier: number
           score: number
           updated_at: string
           variability_score: number
@@ -77,12 +81,16 @@ export type Database = {
           winrate_score: number
         }
         Insert: {
+          blocked_until?: string | null
           created_at?: string
           flagged?: boolean
+          forced_cooldown_seconds?: number
           id?: string
           interval_score?: number
           last_calculated_at?: string
           pattern_score?: number
+          penalty_tier?: string
+          reward_multiplier?: number
           score?: number
           updated_at?: string
           variability_score?: number
@@ -90,12 +98,16 @@ export type Database = {
           winrate_score?: number
         }
         Update: {
+          blocked_until?: string | null
           created_at?: string
           flagged?: boolean
+          forced_cooldown_seconds?: number
           id?: string
           interval_score?: number
           last_calculated_at?: string
           pattern_score?: number
+          penalty_tier?: string
+          reward_multiplier?: number
           score?: number
           updated_at?: string
           variability_score?: number
@@ -1182,6 +1194,7 @@ export type Database = {
         Args: { _earned_at: string }
         Returns: number
       }
+      check_behavior_block: { Args: { _wallet: string }; Returns: Json }
       check_is_admin: { Args: never; Returns: boolean }
       check_race_eligibility: {
         Args: { _car_id: string; _wallet: string }
