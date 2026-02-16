@@ -197,9 +197,9 @@ const Landing = () => {
       {/* ─── HERO ─── */}
       <section ref={heroRef} className="relative flex min-h-screen items-end overflow-hidden pb-24 pt-16 sm:items-center sm:pb-0">
         {/* Shader plasma lines - bottom layer */}
-        <div className="absolute inset-x-0 top-0 h-[50%] z-0 opacity-60">
+        <div className="absolute inset-x-0 top-0 h-[60%] z-0 opacity-100">
           <ShaderBackground />
-          <div className="absolute inset-0 bg-gradient-to-b from-transparent to-background" />
+          <div className="absolute inset-0 bg-gradient-to-b from-transparent via-transparent to-background" />
         </div>
 
         {/* Car image on top of shader */}
