@@ -5,7 +5,7 @@ import {
   Shield, Users, Settings, RefreshCw, ArrowLeft, AlertTriangle, Save,
   Coins, Trophy, Flame, Eye, X, TrendingDown, TrendingUp,
   Wallet, BarChart3, Activity, Zap, Fuel, Clock, ShieldCheck,
-  AlertCircle, ChevronDown, ChevronUp, ShoppingCart
+  AlertCircle, ChevronDown, ChevronUp, ShoppingCart, Image
 } from "lucide-react";
 import { useAdmin, type PlayerDetail } from "@/hooks/useAdmin";
 import { supabase } from "@/lib/supabase";
@@ -14,7 +14,7 @@ import {
   BURN_RATE_PERCENT, REWARD_POOL_RATE_PERCENT, TREASURY_RATE_PERCENT,
   MAX_SUPPLY, DEFAULT_DAILY_EMISSION_LIMIT, DEFAULT_DECAY_RATE_PERCENT, MIN_DAILY_EMISSION,
 } from "@/lib/economy/constants";
-
+import { useSiteAssets, uploadSiteAsset } from "@/hooks/useSiteAssets";
 // Car images for marketplace admin
 import carPhantom from "@/assets/marketplace/car-phantom.jpg";
 import carInferno from "@/assets/marketplace/car-inferno.jpg";
@@ -46,7 +46,7 @@ interface MarketplaceCarAdmin {
   stock: number;
 }
 
-type TabId = "dashboard" | "players" | "economy" | "collision" | "marketplace";
+type TabId = "dashboard" | "players" | "economy" | "collision" | "marketplace" | "branding";
 
 /* ── Stat Card ── */
 const StatCard = ({ icon, label, value, sub, color = "text-primary" }: {
@@ -280,6 +280,24 @@ const Admin = () => {
   const [editPrice, setEditPrice] = useState(0);
   const [savingCar, setSavingCar] = useState(false);
 
+  // Branding state
+  const siteAssets = useSiteAssets();
+  const [uploadingLogo, setUploadingLogo] = useState(false);
+  const [uploadingFavicon, setUploadingFavicon] = useState(false);
+
+  const handleAssetUpload = async (file: File, type: "logo" | "favicon") => {
+    const setUploading = type === "logo" ? setUploadingLogo : setUploadingFavicon;
+    setUploading(true);
+    const url = await uploadSiteAsset(file, type);
+    if (url) {
+      toast({ title: `${type === "logo" ? "Logo" : "Favicon"} atualizado com sucesso!` });
+      siteAssets.refresh();
+    } else {
+      toast({ title: "Erro ao fazer upload", variant: "destructive" });
+    }
+    setUploading(false);
+  };
+
   const loadMarketplaceCars = useCallback(async () => {
     const { data } = await supabase.from("marketplace_cars").select("*").order("created_at", { ascending: true });
     setMarketplaceCars((data as MarketplaceCarAdmin[]) ?? []);
@@ -384,6 +402,7 @@ const Admin = () => {
     { id: "economy", label: "Economia", icon: <Coins className="h-4 w-4" /> },
     { id: "collision", label: "Colisão", icon: <Settings className="h-4 w-4" /> },
     { id: "marketplace", label: "Marketplace", icon: <ShoppingCart className="h-4 w-4" /> },
+    { id: "branding", label: "Branding", icon: <Image className="h-4 w-4" /> },
   ];
 
   return (
@@ -922,6 +941,83 @@ const Admin = () => {
                 Nenhum carro cadastrado no marketplace.
               </div>
             )}
+          </motion.div>
+        )}
+
+        {/* ── BRANDING TAB ── */}
+        {tab === "branding" && (
+          <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }} className="space-y-6">
+            <h2 className="font-display text-xl font-black uppercase tracking-wider text-foreground">🎨 Branding do Site</h2>
+            <p className="font-body text-sm text-muted-foreground">
+              Faça upload da logo e do favicon do site. As imagens serão aplicadas dinamicamente em toda a plataforma.
+            </p>
+
+            <div className="grid gap-6 sm:grid-cols-2">
+              {/* Logo Upload */}
+              <div className="rounded-2xl border border-border/30 bg-card/40 p-6 backdrop-blur-xl">
+                <div className="flex items-center gap-2 mb-4">
+                  <Image className="h-5 w-5 text-primary" />
+                  <h3 className="font-display text-sm font-bold uppercase tracking-wider text-foreground">Logo</h3>
+                </div>
+                <p className="font-body text-xs text-muted-foreground mb-4">
+                  PNG transparente recomendado · Aparece na landing page e navbar
+                </p>
+                {siteAssets.logoUrl && (
+                  <div className="mb-4 rounded-xl border border-border/20 bg-background/50 p-4 flex items-center justify-center">
+                    <img src={siteAssets.logoUrl} alt="Logo atual" className="h-20 w-auto max-w-full mix-blend-screen" />
+                  </div>
+                )}
+                <label className={`flex cursor-pointer items-center justify-center gap-2 rounded-xl border-2 border-dashed border-primary/30 bg-primary/5 px-4 py-6 transition-all hover:border-primary/60 hover:bg-primary/10 ${uploadingLogo ? "opacity-50 pointer-events-none" : ""}`}>
+                  <Image className="h-5 w-5 text-primary" />
+                  <span className="font-display text-xs font-bold uppercase tracking-wider text-primary">
+                    {uploadingLogo ? "Enviando..." : "Selecionar Logo"}
+                  </span>
+                  <input
+                    type="file"
+                    accept="image/*"
+                    className="hidden"
+                    onChange={(e) => {
+                      const file = e.target.files?.[0];
+                      if (file) handleAssetUpload(file, "logo");
+                      e.target.value = "";
+                    }}
+                  />
+                </label>
+              </div>
+
+              {/* Favicon Upload */}
+              <div className="rounded-2xl border border-border/30 bg-card/40 p-6 backdrop-blur-xl">
+                <div className="flex items-center gap-2 mb-4">
+                  <Image className="h-5 w-5 text-neon-orange" />
+                  <h3 className="font-display text-sm font-bold uppercase tracking-wider text-foreground">Favicon</h3>
+                </div>
+                <p className="font-body text-xs text-muted-foreground mb-4">
+                  ICO, PNG ou SVG · 32x32 ou 64x64px recomendado · Ícone da aba do navegador
+                </p>
+                {siteAssets.faviconUrl && (
+                  <div className="mb-4 rounded-xl border border-border/20 bg-background/50 p-4 flex items-center justify-center gap-4">
+                    <img src={siteAssets.faviconUrl} alt="Favicon atual" className="h-8 w-8" />
+                    <img src={siteAssets.faviconUrl} alt="Favicon atual" className="h-16 w-16" />
+                  </div>
+                )}
+                <label className={`flex cursor-pointer items-center justify-center gap-2 rounded-xl border-2 border-dashed border-neon-orange/30 bg-neon-orange/5 px-4 py-6 transition-all hover:border-neon-orange/60 hover:bg-neon-orange/10 ${uploadingFavicon ? "opacity-50 pointer-events-none" : ""}`}>
+                  <Image className="h-5 w-5 text-neon-orange" />
+                  <span className="font-display text-xs font-bold uppercase tracking-wider text-neon-orange">
+                    {uploadingFavicon ? "Enviando..." : "Selecionar Favicon"}
+                  </span>
+                  <input
+                    type="file"
+                    accept="image/*,.ico"
+                    className="hidden"
+                    onChange={(e) => {
+                      const file = e.target.files?.[0];
+                      if (file) handleAssetUpload(file, "favicon");
+                      e.target.value = "";
+                    }}
+                  />
+                </label>
+              </div>
+            </div>
           </motion.div>
         )}
       </main>
