@@ -335,11 +335,20 @@ const Index = () => {
                       <h3 className="font-display text-[10px] font-bold uppercase tracking-[0.3em] text-muted-foreground">
                         Atributos
                       </h3>
-                      <div className="flex items-center gap-1 text-xs">
-                        <Shield className="h-3 w-3 text-muted-foreground" />
-                        <span className="font-body text-muted-foreground">
-                          Motor: <span className={selectedCar.engineHealth < 30 ? "text-destructive" : "text-foreground"}>{selectedCar.engineHealth}%</span>
-                        </span>
+                      <div className="flex items-center gap-2 text-xs">
+                        <div className="flex items-center gap-1">
+                          <Gauge className="h-3 w-3 text-muted-foreground" />
+                          <span className="font-body text-muted-foreground">
+                            {selectedCar.totalKm.toLocaleString()} km
+                          </span>
+                        </div>
+                        <span className="text-muted-foreground/30">|</span>
+                        <div className="flex items-center gap-1">
+                          <Shield className="h-3 w-3 text-muted-foreground" />
+                          <span className="font-body text-muted-foreground">
+                            Motor: <span className={selectedCar.engineHealth < 30 ? "text-destructive" : "text-foreground"}>{selectedCar.engineHealth}%</span>
+                          </span>
+                        </div>
                       </div>
                     </div>
 

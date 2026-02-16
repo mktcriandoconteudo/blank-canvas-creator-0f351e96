@@ -32,6 +32,8 @@ interface CarNFT {
   handling: number;
   durability: number;
   level: number;
+  totalKm: number;
+  engineHealth: number;
   owner?: string;
   listed: boolean;
 }
@@ -66,35 +68,35 @@ const RARITY_CONFIG: Record<Rarity, { border: string; badge: string; glow: strin
 const MARKETPLACE_CARS: CarNFT[] = [
   {
     id: "1", name: "Phantom X9", model: "Hypercar", image: carPhantom,
-    rarity: "Lendário", price: 2500, speed: 95, acceleration: 88, handling: 82, durability: 90, level: 15, listed: true,
+    rarity: "Lendário", price: 2500, speed: 95, acceleration: 88, handling: 82, durability: 90, level: 15, totalKm: 4280, engineHealth: 72, listed: true,
   },
   {
     id: "2", name: "Inferno GT", model: "Muscle", image: carInferno,
-    rarity: "Épico", price: 1200, speed: 78, acceleration: 92, handling: 65, durability: 85, level: 10, listed: true,
+    rarity: "Épico", price: 1200, speed: 78, acceleration: 92, handling: 65, durability: 85, level: 10, totalKm: 1850, engineHealth: 88, listed: true,
   },
   {
     id: "3", name: "Solar Flare", model: "Racer", image: carSolar,
-    rarity: "Lendário", price: 3200, speed: 98, acceleration: 85, handling: 90, durability: 75, level: 18, listed: true,
+    rarity: "Lendário", price: 3200, speed: 98, acceleration: 85, handling: 90, durability: 75, level: 18, totalKm: 6120, engineHealth: 45, listed: true,
   },
   {
     id: "4", name: "Venom Strike", model: "Street", image: carVenom,
-    rarity: "Épico", price: 980, speed: 82, acceleration: 78, handling: 88, durability: 80, level: 8, listed: true,
+    rarity: "Épico", price: 980, speed: 82, acceleration: 78, handling: 88, durability: 80, level: 8, totalKm: 920, engineHealth: 95, listed: true,
   },
   {
     id: "5", name: "Eclipse Nova", model: "Concept", image: carEclipse,
-    rarity: "Raro", price: 650, speed: 72, acceleration: 70, handling: 75, durability: 78, level: 5, listed: true,
+    rarity: "Raro", price: 650, speed: 72, acceleration: 70, handling: 75, durability: 78, level: 5, totalKm: 340, engineHealth: 100, listed: true,
   },
   {
     id: "6", name: "Frost Byte", model: "GT Sport", image: carFrost,
-    rarity: "Épico", price: 1450, speed: 85, acceleration: 80, handling: 92, durability: 82, level: 12, listed: true,
+    rarity: "Épico", price: 1450, speed: 85, acceleration: 80, handling: 92, durability: 82, level: 12, totalKm: 3100, engineHealth: 68, listed: true,
   },
   {
     id: "7", name: "Thunder Bolt", model: "Classic", image: carThunder,
-    rarity: "Raro", price: 520, speed: 68, acceleration: 65, handling: 72, durability: 88, level: 4, listed: true,
+    rarity: "Raro", price: 520, speed: 68, acceleration: 65, handling: 72, durability: 88, level: 4, totalKm: 150, engineHealth: 100, listed: true,
   },
   {
     id: "8", name: "Blaze Runner", model: "Turbo", image: carBlaze,
-    rarity: "Lendário", price: 2800, speed: 92, acceleration: 95, handling: 78, durability: 85, level: 16, listed: true,
+    rarity: "Lendário", price: 2800, speed: 92, acceleration: 95, handling: 78, durability: 85, level: 16, totalKm: 5400, engineHealth: 55, listed: true,
   },
 ];
 
@@ -184,6 +186,14 @@ const CarNFTCard = ({ car, index }: { car: CarNFT; index: number }) => {
           <StatMini icon={<Gauge className="h-3 w-3" />} label="Speed" value={car.speed} color="text-primary" />
           <StatMini icon={<Zap className="h-3 w-3" />} label="Accel" value={car.acceleration} color="text-neon-orange" />
           <StatMini icon={<Shield className="h-3 w-3" />} label="Handle" value={car.handling} color="text-accent" />
+        </div>
+
+        {/* KM & Engine */}
+        <div className="mt-2 flex items-center justify-between text-[10px] font-body text-muted-foreground">
+          <span>🛣️ {car.totalKm.toLocaleString()} km</span>
+          <span className={car.engineHealth < 50 ? "text-destructive" : ""}>
+            🔧 Motor: {car.engineHealth}%
+          </span>
         </div>
 
         {/* Price & Action */}
