@@ -314,7 +314,9 @@ export const addXpToCar = (
     const baseEngineDmg = won ? 5 : 8;
     const oilOverdue = needsOilChange(updatedCar);
     const oilMultiplier = oilOverdue ? 1.5 : 1;
-    updatedCar.engineHealth = Math.max(0, updatedCar.engineHealth - Math.round(baseEngineDmg * durabilityReduction * oilMultiplier));
+    // Critical state: engine below 10% has high risk of blowing (2x extra damage)
+    const criticalMultiplier = updatedCar.engineHealth > 0 && updatedCar.engineHealth <= 10 ? 2.0 : 1.0;
+    updatedCar.engineHealth = Math.max(0, updatedCar.engineHealth - Math.round(baseEngineDmg * durabilityReduction * oilMultiplier * criticalMultiplier));
     updatedCar.durability = Math.max(0, updatedCar.durability - (won ? 1 : 2));
 
     while (updatedCar.xp >= updatedCar.xpToNext) {
