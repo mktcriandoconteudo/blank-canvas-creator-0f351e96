@@ -2,6 +2,7 @@ import { motion, useScroll, useTransform, AnimatePresence } from "framer-motion"
 import ShaderBackground from "@/components/ui/shader-background";
 import { useNavigate } from "react-router-dom";
 import { useRef, useState } from "react";
+import { useAuth } from "@/hooks/useAuth";
 import {
   Zap, Trophy, Gauge, Shield, Coins, Fuel, Users, Star,
   ChevronRight, ArrowRight, Sparkles, Car, Wrench, Flag,
@@ -136,6 +137,7 @@ const RoadmapStep = ({
 /* ═══════════════════════════════════════════ */
 const Landing = () => {
   const navigate = useNavigate();
+  const { user, session, signOut } = useAuth();
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
   const heroRef = useRef<HTMLDivElement>(null);
   const { scrollYProgress } = useScroll({ target: heroRef, offset: ["start start", "end start"] });
@@ -164,18 +166,40 @@ const Landing = () => {
             <button onClick={() => navigate("/marketplace")} className="font-display text-xs uppercase tracking-wider text-muted-foreground transition-colors hover:text-primary">Marketplace</button>
           </div>
           <div className="flex items-center gap-2 sm:gap-3">
-            <button
-              onClick={() => navigate("/auth")}
-              className="hidden rounded-xl border border-primary/30 bg-primary/10 px-4 py-2 font-display text-xs font-bold uppercase tracking-wider text-primary transition-all hover:bg-primary/20 hover:shadow-[0_0_20px_hsl(185_80%_55%/0.2)] sm:block"
-            >
-              Login
-            </button>
-            <button
-              onClick={() => navigate("/auth")}
-              className="rounded-xl bg-primary px-4 py-2 font-display text-xs font-bold uppercase tracking-wider text-primary-foreground transition-all hover:brightness-110 glow-cyan"
-            >
-              Jogar
-            </button>
+            {session ? (
+              <>
+                <span className="hidden font-display text-xs uppercase tracking-wider text-primary sm:block">
+                  {user?.username ?? "Piloto"}
+                </span>
+                <button
+                  onClick={() => navigate("/garage")}
+                  className="rounded-xl bg-primary px-4 py-2 font-display text-xs font-bold uppercase tracking-wider text-primary-foreground transition-all hover:brightness-110 glow-cyan"
+                >
+                  Garagem
+                </button>
+                <button
+                  onClick={signOut}
+                  className="hidden rounded-xl border border-destructive/30 bg-destructive/10 px-3 py-2 font-display text-[10px] font-bold uppercase tracking-wider text-destructive transition-all hover:bg-destructive/20 sm:block"
+                >
+                  Sair
+                </button>
+              </>
+            ) : (
+              <>
+                <button
+                  onClick={() => navigate("/auth")}
+                  className="hidden rounded-xl border border-primary/30 bg-primary/10 px-4 py-2 font-display text-xs font-bold uppercase tracking-wider text-primary transition-all hover:bg-primary/20 hover:shadow-[0_0_20px_hsl(185_80%_55%/0.2)] sm:block"
+                >
+                  Login
+                </button>
+                <button
+                  onClick={() => navigate("/auth")}
+                  className="rounded-xl bg-primary px-4 py-2 font-display text-xs font-bold uppercase tracking-wider text-primary-foreground transition-all hover:brightness-110 glow-cyan"
+                >
+                  Jogar
+                </button>
+              </>
+            )}
             <button
               onClick={() => setMobileMenuOpen(!mobileMenuOpen)}
               className="flex h-9 w-9 items-center justify-center rounded-lg border border-border/30 bg-card/30 text-foreground backdrop-blur-xl sm:hidden"
@@ -196,12 +220,23 @@ const Landing = () => {
               className="overflow-hidden border-t border-border/10 bg-background/95 backdrop-blur-2xl sm:hidden"
             >
               <div className="flex flex-col gap-1 px-4 py-3">
+                {session && (
+                  <div className="mb-2 rounded-lg bg-primary/5 px-3 py-2 text-center">
+                    <span className="font-display text-xs uppercase tracking-wider text-primary">{user?.username ?? "Piloto"}</span>
+                  </div>
+                )}
                 {[
                   { label: "Features", action: () => { document.getElementById("features")?.scrollIntoView({ behavior: "smooth" }); setMobileMenuOpen(false); } },
                   { label: "NFTs", action: () => { document.getElementById("nft")?.scrollIntoView({ behavior: "smooth" }); setMobileMenuOpen(false); } },
                   { label: "Roadmap", action: () => { document.getElementById("roadmap")?.scrollIntoView({ behavior: "smooth" }); setMobileMenuOpen(false); } },
                   { label: "Marketplace", action: () => { navigate("/marketplace"); setMobileMenuOpen(false); } },
-                  { label: "Login", action: () => { navigate("/auth"); setMobileMenuOpen(false); } },
+                  ...(session
+                    ? [
+                        { label: "Garagem", action: () => { navigate("/garage"); setMobileMenuOpen(false); } },
+                        { label: "Sair", action: () => { signOut(); setMobileMenuOpen(false); } },
+                      ]
+                    : [{ label: "Login", action: () => { navigate("/auth"); setMobileMenuOpen(false); } }]
+                  ),
                 ].map((item) => (
                   <button
                     key={item.label}

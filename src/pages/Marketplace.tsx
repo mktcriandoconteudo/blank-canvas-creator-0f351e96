@@ -1,6 +1,7 @@
 import { motion } from "framer-motion";
 import { useNavigate } from "react-router-dom";
 import { useState } from "react";
+import { useAuth } from "@/hooks/useAuth";
 import {
   Gauge, Zap, Shield, Star, ArrowLeft, Search, SlidersHorizontal,
   ShoppingCart, Heart, Eye
@@ -221,6 +222,7 @@ const CarNFTCard = ({ car, index }: { car: CarNFT; index: number }) => {
 /* ═══════════════════════════════════════════ */
 const Marketplace = () => {
   const navigate = useNavigate();
+  const { user, session } = useAuth();
   const [selectedRarity, setSelectedRarity] = useState<Rarity | "Todos">("Todos");
   const [searchQuery, setSearchQuery] = useState("");
 
@@ -271,6 +273,11 @@ const Marketplace = () => {
               <SlidersHorizontal className="mr-1.5 h-3.5 w-3.5" />
               <span className="text-xs">Filtros</span>
             </Button>
+            {session && (
+              <span className="font-display text-xs uppercase tracking-wider text-primary">
+                {user?.username ?? "Piloto"}
+              </span>
+            )}
           </div>
         </div>
       </header>
