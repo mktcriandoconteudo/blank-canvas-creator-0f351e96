@@ -1,6 +1,6 @@
 import { useState } from "react";
 import { motion } from "framer-motion";
-import { Mail, Lock, User, LogIn, UserPlus } from "lucide-react";
+import { Mail, Lock, User, LogIn, UserPlus, X } from "lucide-react";
 import { useAuth } from "@/hooks/useAuth";
 import { useNavigate } from "react-router-dom";
 import garageScene from "@/assets/garage-scene.jpg";
@@ -59,6 +59,15 @@ const Auth = () => {
       <div className="absolute inset-0 bg-gradient-to-b from-background/80 via-background/60 to-background/90" />
 
       <div className="relative z-10 flex min-h-screen items-center justify-center px-4">
+        {/* Botão fechar / voltar para home */}
+        <button
+          onClick={() => navigate("/")}
+          className="absolute right-4 top-4 z-20 flex h-10 w-10 items-center justify-center rounded-full border border-border bg-muted/50 text-muted-foreground backdrop-blur-sm transition-colors hover:bg-muted hover:text-foreground"
+          aria-label="Voltar para home"
+        >
+          <X className="h-5 w-5" />
+        </button>
+
         <motion.div
           initial={{ opacity: 0, y: 30 }}
           animate={{ opacity: 1, y: 0 }}
