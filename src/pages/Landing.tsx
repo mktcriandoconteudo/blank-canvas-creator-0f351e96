@@ -12,6 +12,7 @@ import {
   TrendingUp, DollarSign
 } from "lucide-react";
 import turboNitroLogo from "@/assets/turbonitro-logo.png";
+import metamaskLogo from "@/assets/metamask-logo.png";
 import landingHero from "@/assets/landing-hero-v2.jpg";
 import nftCard from "@/assets/nft-card-preview.jpg";
 import featureGarage from "@/assets/feature-garage.jpg";
@@ -134,6 +135,12 @@ const TokenTicker = () => {
       transition={{ delay: 0.9, duration: 0.6 }}
       className="mt-8 inline-flex flex-col gap-2 sm:flex-row sm:items-center sm:gap-3"
     >
+      {/* MetaMask badge */}
+      <div className="flex items-center gap-2 rounded-2xl border border-neon-orange/20 bg-card/40 px-3 py-2.5 backdrop-blur-xl">
+        <img src={metamaskLogo} alt="MetaMask" className="h-6 w-6" />
+        <span className="font-display text-[10px] uppercase tracking-wider text-neon-orange font-bold">MetaMask</span>
+      </div>
+
       {/* Price Card */}
       <div className="flex items-center gap-3 rounded-2xl border border-neon-orange/30 bg-card/50 px-5 py-3 backdrop-blur-xl shadow-[0_0_30px_hsl(30_90%_55%/0.1)]">
         <div className="flex h-10 w-10 items-center justify-center rounded-full bg-neon-orange/20">
