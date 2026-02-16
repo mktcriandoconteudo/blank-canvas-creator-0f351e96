@@ -45,6 +45,16 @@ import { useInsurance } from "@/hooks/useInsurance";
 import { INSURANCE_PLANS } from "@/lib/insurance";
 
 
+interface LastRaceResult {
+  victory: boolean;
+  npEarned: number;
+  xpEarned: number;
+  leveledUp: boolean;
+  newLevel: number;
+  carName: string;
+  timestamp: number;
+}
+
 const Index = () => {
   const navigate = useNavigate();
   const { state, selectedCar, addPoint, repair, oilChange, updateState, selectCar, loading } = useGameState();
@@ -54,7 +64,23 @@ const Index = () => {
   const [showStats, setShowStats] = useState(window.innerWidth >= 768);
   const [showInsurance, setShowInsurance] = useState(false);
   const [purchasingPlan, setPurchasingPlan] = useState<string | null>(null);
+  const [lastRace, setLastRace] = useState<LastRaceResult | null>(null);
   const garageBgmRef = useRef<HTMLAudioElement | null>(null);
+
+  // Load last race result from localStorage
+  useEffect(() => {
+    try {
+      const stored = localStorage.getItem("lastRaceResult");
+      if (stored) {
+        const parsed: LastRaceResult = JSON.parse(stored);
+        // Only show if less than 30 minutes old
+        if (Date.now() - parsed.timestamp < 30 * 60 * 1000) {
+          setLastRace(parsed);
+        }
+        localStorage.removeItem("lastRaceResult");
+      }
+    } catch {}
+  }, []);
 
   const { policy, isInsured, daysLeft, claimsLeft, purchase } = useInsurance(
     selectedCar?.id ?? null,
@@ -270,6 +296,108 @@ const Index = () => {
                 )}
               </div>
             </motion.div>
+
+            {/* Last Race Result Banner */}
+            <AnimatePresence>
+              {lastRace && (
+                <motion.div
+                  initial={{ opacity: 0, y: -10, scale: 0.95 }}
+                  animate={{ opacity: 1, y: 0, scale: 1 }}
+                  exit={{ opacity: 0, y: -10 }}
+                  className={`mt-3 w-full max-w-xs rounded-xl border p-3 backdrop-blur-sm ${
+                    lastRace.victory
+                      ? "border-neon-green/30 bg-neon-green/10"
+                      : "border-destructive/30 bg-destructive/10"
+                  }`}
+                >
+                  <div className="flex items-center justify-between">
+                    <span className={`font-display text-xs font-bold uppercase tracking-wider ${
+                      lastRace.victory ? "text-neon-green" : "text-destructive"
+                    }`}>
+                      {lastRace.victory ? "🏆 Última Corrida: Vitória!" : "💀 Última Corrida: Derrota"}
+                    </span>
+                    <button
+                      onClick={() => setLastRace(null)}
+                      className="text-muted-foreground/50 hover:text-muted-foreground text-xs"
+                    >
+                      ✕
+                    </button>
+                  </div>
+                  <div className="mt-2 flex items-center gap-4">
+                    <div className="flex items-center gap-1.5">
+                      <Coins className="h-4 w-4 text-neon-orange" />
+                      <span className="font-display text-sm font-bold text-foreground">
+                        +{lastRace.npEarned} NP
+                      </span>
+                    </div>
+                    <div className="flex items-center gap-1.5">
+                      <Star className="h-4 w-4 text-neon-green" />
+                      <span className="font-display text-sm font-bold text-foreground">
+                        +{lastRace.xpEarned} XP
+                      </span>
+                    </div>
+                  </div>
+                  {lastRace.leveledUp && (
+                    <div className="mt-1.5 flex items-center gap-1 text-neon-green">
+                      <Zap className="h-3 w-3" />
+                      <span className="font-display text-[10px] font-bold">
+                        NÍVEL {lastRace.newLevel}! +3 pontos de atributo
+                      </span>
+                    </div>
+                  )}
+                </motion.div>
+              )}
+            </AnimatePresence>
+
+            {/* Mechanic Warnings */}
+            {(selectedCar.engineHealth < 50 || oilNeeded || selectedCar.durability < 30) && (
+              <motion.div
+                initial={{ opacity: 0, x: -20 }}
+                animate={{ opacity: 1, x: 0 }}
+                transition={{ delay: 0.6 }}
+                className="mt-3 w-full max-w-xs rounded-xl border border-neon-orange/30 bg-card/40 p-3 backdrop-blur-sm"
+              >
+                <div className="flex items-start gap-3">
+                  <div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-full bg-neon-orange/20 text-lg">
+                    🔧
+                  </div>
+                  <div className="flex-1 space-y-1.5">
+                    <span className="font-display text-xs font-bold text-neon-orange">
+                      Mecânico diz:
+                    </span>
+                    <div className="space-y-1">
+                      {selectedCar.engineHealth < 50 && (
+                        <p className="font-body text-[11px] text-destructive">
+                          ⚠️ "Motor em {selectedCar.engineHealth}%! Tá quase fundindo, chefe. Faz uma revisão urgente!"
+                        </p>
+                      )}
+                      {selectedCar.engineHealth >= 50 && selectedCar.engineHealth < 80 && (
+                        <p className="font-body text-[11px] text-neon-orange">
+                          🔶 "Motor em {selectedCar.engineHealth}%. Tá aguentando, mas não força muito não."
+                        </p>
+                      )}
+                      {oilNeeded && (
+                        <p className="font-body text-[11px] text-destructive">
+                          🛢️ "Óleo vencido há {kmSinceOil - 100}km! O motor tá desgastando 1.5x mais rápido!"
+                        </p>
+                      )}
+                      {selectedCar.durability < 30 && (
+                        <p className="font-body text-[11px] text-destructive">
+                          🛞 "Durabilidade em {selectedCar.durability}%! Os pneus tão carecas, vai perder aderência!"
+                        </p>
+                      )}
+                    </div>
+                    <button
+                      onClick={() => setShowStats(true)}
+                      className="mt-1 flex items-center gap-1.5 rounded-lg border border-neon-orange/30 bg-neon-orange/10 px-3 py-1.5 font-display text-[10px] font-bold uppercase tracking-wider text-neon-orange transition-colors hover:bg-neon-orange/20"
+                    >
+                      <Wrench className="h-3 w-3" />
+                      Ir para Oficina
+                    </button>
+                  </div>
+                </div>
+              </motion.div>
+            )}
 
           </motion.div>
 

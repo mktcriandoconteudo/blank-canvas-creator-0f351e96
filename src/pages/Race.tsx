@@ -264,6 +264,21 @@ const Race = () => {
       const result = finishRaceRef.current(won);
       setXpResult(result);
 
+      // Save last race result to localStorage for garage display
+      const isRented = selectedCar?.isRented ?? false;
+      const baseNPCalc = isRented ? (won ? 40 : 10) : (won ? 150 : 20);
+      const health = selectedCar?.engineHealth ?? 100;
+      const earnedNPCalc = Math.round((baseNPCalc * health) / 100);
+      localStorage.setItem("lastRaceResult", JSON.stringify({
+        victory: won,
+        npEarned: earnedNPCalc,
+        xpEarned: won ? 80 : 25,
+        leveledUp: result.leveledUp,
+        newLevel: result.newLevel,
+        carName: selectedCar?.name ?? "",
+        timestamp: Date.now(),
+      }));
+
       // Collision check — async, runs after race ends
       (async () => {
         try {
