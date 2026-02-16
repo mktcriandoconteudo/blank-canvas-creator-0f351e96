@@ -223,7 +223,7 @@ const Landing = () => {
               <h1 className="font-display text-4xl font-black uppercase leading-[0.95] tracking-tight text-foreground sm:text-6xl lg:text-7xl">
                 O Futuro das{" "}
                 <span className="text-primary text-glow-cyan">Corridas</span>{" "}
-                é <span className="text-accent">NFT</span>
+                é <span className="text-foreground">NFT</span>
               </h1>
               <p className="mt-6 max-w-lg font-body text-base leading-relaxed text-muted-foreground sm:text-lg">
                 Colecione carros lendários, evolua atributos, dispute corridas PvP e acumule Nitro Points. Cada corrida é uma batalha pela supremacia.
