@@ -14,6 +14,7 @@ import Admin from "./pages/Admin";
 import Profile from "./pages/Profile";
 import Store from "./pages/Store";
 import UsedMarketplace from "./pages/UsedMarketplace";
+import Rewards from "./pages/Rewards";
 
 const queryClient = new QueryClient();
 
@@ -40,6 +41,7 @@ const App = () => (
           <Route path="/admin" element={<ProtectedRoute><Admin /></ProtectedRoute>} />
           <Route path="/loja" element={<Store />} />
           <Route path="/usados" element={<UsedMarketplace />} />
+          <Route path="/rewards" element={<ProtectedRoute><Rewards /></ProtectedRoute>} />
           <Route path="*" element={<NotFound />} />
         </Routes>
       </BrowserRouter>

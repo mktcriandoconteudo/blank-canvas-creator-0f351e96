@@ -269,15 +269,35 @@ const Race = () => {
       const baseNPCalc = isRented ? (won ? 40 : 10) : (won ? 150 : 20);
       const health = selectedCar?.engineHealth ?? 100;
       const earnedNPCalc = Math.round((baseNPCalc * health) / 100);
-      localStorage.setItem("lastRaceResult", JSON.stringify({
+      const xpEarnedCalc = won ? 80 : 25;
+      const raceResult = {
         victory: won,
         npEarned: earnedNPCalc,
-        xpEarned: won ? 80 : 25,
+        xpEarned: xpEarnedCalc,
         leveledUp: result.leveledUp,
         newLevel: result.newLevel,
         carName: selectedCar?.name ?? "",
         timestamp: Date.now(),
-      }));
+      };
+      localStorage.setItem("lastRaceResult", JSON.stringify(raceResult));
+
+      // Record race reward to DB for wallet/rewards history
+      import("@/lib/supabase").then(({ getWalletClient }) => {
+        const wc = getWalletClient(state.walletAddress);
+        wc.from("race_rewards").insert({
+          wallet_address: state.walletAddress,
+          car_id: selectedCar?.id ?? "",
+          car_name: selectedCar?.name ?? "",
+          victory: won,
+          np_earned: earnedNPCalc,
+          xp_earned: xpEarnedCalc,
+          tokens_earned: earnedNPCalc, // tokens mirror NP earned
+          position: won ? 1 : 2,
+          collisions: 0, // updated below if collision occurs
+        }).then(() => {});
+        // Also update user token_balance
+        wc.rpc("emit_tokens" as any, { _wallet: state.walletAddress, _amount: 0, _reason: "balance_sync" }).then(() => {});
+      });
 
       // Collision check — async, runs after race ends
       (async () => {
