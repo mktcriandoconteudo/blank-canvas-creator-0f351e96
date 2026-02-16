@@ -72,6 +72,17 @@ export const kmSinceOilChange = (car: CarData): number => {
   return Math.round(car.totalKm - car.lastOilChangeKm);
 };
 
+/** Engine is blown when health reaches 0% — car cannot race */
+export const isEngineBlown = (car: CarData): boolean => {
+  return car.engineHealth <= 0;
+};
+
+/** Repair cost: normal = 50 + level*10, blown = 3x (mechanic queue premium) */
+export const getRepairCost = (car: CarData): number => {
+  const baseCost = 50 + car.level * 10;
+  return isEngineBlown(car) ? baseCost * 3 : baseCost;
+};
+
 const defaultCar: CarData = {
   id: "car-001",
   tokenId: "#4829",

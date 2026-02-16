@@ -14,7 +14,7 @@ import { useAuth } from "@/hooks/useAuth";
 import { useGameState } from "@/hooks/useGameState";
 import { supabase, getWalletClient } from "@/lib/supabase";
 import { formatNP } from "@/lib/utils";
-import { needsOilChange, kmSinceOilChange } from "@/lib/gameState";
+import { needsOilChange, kmSinceOilChange, isEngineBlown, getRepairCost } from "@/lib/gameState";
 import { toast } from "@/hooks/use-toast";
 
 // ─── Avatar Component ───
@@ -81,10 +81,11 @@ const WorkshopCar = ({
 }) => {
   const oilNeeded = needsOilChange(car);
   const kmSinceOil = kmSinceOilChange(car);
-  const repairCost = 50 + car.level * 10;
+  const repairCost = getRepairCost(car);
   const oilCost = 30 + car.level * 5;
   const engineCritical = car.engineHealth < 30;
   const engineWarn = car.engineHealth < 50;
+  const blown = isEngineBlown(car);
 
   return (
     <motion.div
@@ -170,8 +171,29 @@ const WorkshopCar = ({
         </div>
       </div>
 
+      {/* Blown Engine Alert */}
+      {blown && (
+        <motion.div
+          initial={{ opacity: 0 }}
+          animate={{ opacity: 1 }}
+          className="flex items-center gap-3 rounded-xl bg-destructive/15 border-2 border-destructive/40 px-4 py-3"
+        >
+          <div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-full bg-destructive/20">
+            <AlertTriangle className="h-5 w-5 text-destructive animate-pulse" />
+          </div>
+          <div>
+            <p className="font-display text-xs font-black uppercase tracking-wider text-destructive">
+              🔥 Motor Fundido!
+            </p>
+            <p className="font-body text-[10px] text-muted-foreground mt-0.5">
+              Carro bloqueado para corridas. Reparo com custo 3x na fila prioritária do Mecânico Raul.
+            </p>
+          </div>
+        </motion.div>
+      )}
+
       {/* Alerts */}
-      {engineCritical && (
+      {engineCritical && !blown && (
         <div className="flex items-center gap-2 rounded-lg bg-destructive/10 border border-destructive/20 px-3 py-2">
           <AlertTriangle className="h-4 w-4 text-destructive" />
           <span className="font-display text-[10px] uppercase tracking-wider text-destructive">
@@ -181,7 +203,7 @@ const WorkshopCar = ({
       )}
 
       {/* NPC Mechanic Message */}
-      {(engineCritical || oilNeeded || car.durability < 50) && (
+      {(blown || engineCritical || oilNeeded || car.durability < 50) && (
         <div className="rounded-xl border border-primary/20 bg-primary/5 p-3">
           <div className="flex items-start gap-2">
             <div className="flex h-8 w-8 items-center justify-center rounded-full bg-primary/20 text-lg shrink-0">
@@ -190,7 +212,9 @@ const WorkshopCar = ({
             <div>
               <p className="font-display text-xs font-bold text-primary">Mecânico Raul diz:</p>
               <p className="font-body text-[11px] text-muted-foreground mt-0.5">
-                {engineCritical
+                {blown
+                  ? '"O motor FUNDIU, chefe! Vai custar caro — 3x o preço normal. Fila prioritária do Raul. Sem reparo, sem corrida!"'
+                  : engineCritical
                   ? '"Esse motor tá pra fundir, parceiro! Traga pra revisão urgente antes que vire sucata!"'
                   : oilNeeded
                   ? '"Óleo tá vencido. Se continuar assim, o desgaste vai triplicar. Troca logo!"'
@@ -207,10 +231,14 @@ const WorkshopCar = ({
           size="sm"
           disabled={car.engineHealth >= 100 && car.durability >= 100 || balance < repairCost || repairing}
           onClick={onRepair}
-          className="h-10 bg-neon-green/20 text-neon-green border border-neon-green/20 hover:bg-neon-green/30 font-display text-[10px] uppercase tracking-wider disabled:opacity-40"
+          className={`h-10 font-display text-[10px] uppercase tracking-wider disabled:opacity-40 ${
+            blown
+              ? "bg-destructive/20 text-destructive border border-destructive/30 hover:bg-destructive/30"
+              : "bg-neon-green/20 text-neon-green border border-neon-green/20 hover:bg-neon-green/30"
+          }`}
         >
           {repairing ? <Loader2 className="mr-1 h-3 w-3 animate-spin" /> : <Wrench className="mr-1 h-3 w-3" />}
-          Revisão ({repairCost} NP)
+          {blown ? `Reparo Motor (${repairCost} NP)` : `Revisão (${repairCost} NP)`}
         </Button>
         <Button
           size="sm"
