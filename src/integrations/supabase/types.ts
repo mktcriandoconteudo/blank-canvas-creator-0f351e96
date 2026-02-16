@@ -186,6 +186,36 @@ export type Database = {
           },
         ]
       }
+      collision_events: {
+        Row: {
+          car_id: string
+          created_at: string
+          damage_durability: number
+          damage_engine: number
+          id: string
+          owner_wallet: string
+          race_id: string | null
+        }
+        Insert: {
+          car_id: string
+          created_at?: string
+          damage_durability?: number
+          damage_engine?: number
+          id?: string
+          owner_wallet: string
+          race_id?: string | null
+        }
+        Update: {
+          car_id?: string
+          created_at?: string
+          damage_durability?: number
+          damage_engine?: number
+          id?: string
+          owner_wallet?: string
+          race_id?: string | null
+        }
+        Relationships: []
+      }
       economy_events: {
         Row: {
           amount: number
@@ -294,6 +324,36 @@ export type Database = {
           min_daily_limit?: number
           start_date?: string
           updated_at?: string
+        }
+        Relationships: []
+      }
+      game_config: {
+        Row: {
+          collision_chance_percent: number
+          collision_durability_loss: number
+          collision_max_damage: number
+          collision_min_damage: number
+          id: string
+          updated_at: string
+          updated_by: string | null
+        }
+        Insert: {
+          collision_chance_percent?: number
+          collision_durability_loss?: number
+          collision_max_damage?: number
+          collision_min_damage?: number
+          id?: string
+          updated_at?: string
+          updated_by?: string | null
+        }
+        Update: {
+          collision_chance_percent?: number
+          collision_durability_loss?: number
+          collision_max_damage?: number
+          collision_min_damage?: number
+          id?: string
+          updated_at?: string
+          updated_by?: string | null
         }
         Relationships: []
       }
@@ -465,6 +525,7 @@ export type Database = {
           created_at: string
           fuel_tanks: number
           id: string
+          is_admin: boolean
           last_fuel_refill: string
           nitro_points: number
           total_losses: number
@@ -480,6 +541,7 @@ export type Database = {
           created_at?: string
           fuel_tanks?: number
           id?: string
+          is_admin?: boolean
           last_fuel_refill?: string
           nitro_points?: number
           total_losses?: number
@@ -495,6 +557,7 @@ export type Database = {
           created_at?: string
           fuel_tanks?: number
           id?: string
+          is_admin?: boolean
           last_fuel_refill?: string
           nitro_points?: number
           total_losses?: number
