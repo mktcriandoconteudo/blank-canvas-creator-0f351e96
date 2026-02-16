@@ -115,6 +115,7 @@ const CarNFTCard = ({ car, index, onBuy, buying, userBalance }: {
   const canAfford = userBalance >= car.price;
   const isBuying = buying === car.id;
   const inStock = car.stock > 0;
+  const available = car.sale_active && inStock;
 
   return (
     <motion.div
@@ -122,21 +123,23 @@ const CarNFTCard = ({ car, index, onBuy, buying, userBalance }: {
       whileInView={{ opacity: 1, y: 0 }}
       viewport={{ once: true }}
       transition={{ duration: 0.5, delay: index * 0.08 }}
-      className={`group relative overflow-hidden rounded-2xl border ${config.border} bg-card/50 backdrop-blur-xl transition-all duration-500 hover:scale-[1.02] ${config.glow}`}
+      className={`group relative overflow-hidden rounded-2xl border ${available ? config.border : "border-border/20"} bg-card/50 backdrop-blur-xl transition-all duration-500 ${available ? `hover:scale-[1.02] ${config.glow}` : "opacity-60"}`}
     >
       {/* Image container */}
       <div className="relative aspect-square overflow-hidden">
         <img
           src={CAR_IMAGES[car.image_key] || carThunder}
           alt={car.name}
-          className="h-full w-full object-cover transition-transform duration-700 group-hover:scale-110"
+          className={`h-full w-full object-cover transition-transform duration-700 ${available ? "group-hover:scale-110" : "grayscale"}`}
         />
         <div className="absolute inset-0 bg-gradient-to-t from-card via-card/30 to-transparent" />
 
         <div className="absolute left-3 top-3 flex gap-1.5">
           <span className="rounded-md bg-card/80 px-2 py-0.5 backdrop-blur-xl font-display text-[9px] uppercase tracking-[0.2em] text-muted-foreground">0 KM</span>
-          <span className={`rounded-md px-2 py-0.5 backdrop-blur-xl font-display text-[9px] font-bold uppercase tracking-wider ${inStock ? "bg-neon-green/20 text-neon-green" : "bg-destructive/20 text-destructive"}`}>
-            {inStock ? `📦 ${car.stock}` : "ESGOTADO"}
+          <span className={`rounded-md px-2 py-0.5 backdrop-blur-xl font-display text-[9px] font-bold uppercase tracking-wider ${
+            !car.sale_active ? "bg-muted/30 text-muted-foreground" : inStock ? "bg-neon-green/20 text-neon-green" : "bg-destructive/20 text-destructive"
+          }`}>
+            {!car.sale_active ? "INDISPONÍVEL" : inStock ? `📦 ${car.stock}` : "ESGOTADO"}
           </span>
         </div>
 
@@ -190,7 +193,7 @@ const CarNFTCard = ({ car, index, onBuy, buying, userBalance }: {
           </div>
           <Button
             size="sm"
-            disabled={!canAfford || isBuying || !inStock}
+            disabled={!available || !canAfford || isBuying}
             onClick={() => onBuy(car)}
             className="h-9 rounded-lg bg-primary px-4 font-display text-[10px] uppercase tracking-wider text-primary-foreground hover:bg-primary/90 disabled:opacity-50"
           >
@@ -199,7 +202,7 @@ const CarNFTCard = ({ car, index, onBuy, buying, userBalance }: {
             ) : (
               <ShoppingCart className="mr-1 h-3 w-3" />
             )}
-            {isBuying ? "Comprando..." : !inStock ? "Esgotado" : !canAfford ? "Saldo Insuf." : "Comprar"}
+            {isBuying ? "Comprando..." : !car.sale_active ? "Indisponível" : !inStock ? "Esgotado" : !canAfford ? "Saldo Insuf." : "Comprar"}
           </Button>
         </div>
       </div>
@@ -223,8 +226,7 @@ const Marketplace = () => {
     const { data } = await supabase
       .from("marketplace_cars")
       .select("*")
-      .eq("sale_active", true)
-      .order("created_at", { ascending: false });
+      .order("price", { ascending: true });
     setCars((data as MarketplaceCar[]) ?? []);
     setLoading(false);
   }, []);
