@@ -21,6 +21,8 @@ export interface CarData {
   racesCount: number;
   racesSinceRevision: number;
   lastOilChangeKm: number;
+  isRented: boolean;
+  rentalRacesRemaining: number;
 }
 
 export interface GameState {
@@ -37,7 +39,12 @@ const DEFAULT_WALLET = "0x7f3a...e1b2";
 const XP_PER_WIN = 80;
 const XP_PER_LOSS = 25;
 const XP_MULTIPLIER = 1.5;
-const OIL_CHANGE_INTERVAL_KM = 100; // needs oil change every 100 km
+const OIL_CHANGE_INTERVAL_KM = 100;
+const RENTAL_NP_WIN = 40;
+const RENTAL_NP_LOSS = 10;
+export const RENTAL_STAT_PENALTY = 0.8; // -20% stats
+const OWNED_NP_WIN = 150;
+const OWNED_NP_LOSS = 20;
 
 export const calculateXpToNext = (level: number): number => {
   return Math.round(100 * Math.pow(XP_MULTIPLIER, level - 1));
@@ -71,6 +78,8 @@ const defaultCar: CarData = {
   racesCount: 0,
   racesSinceRevision: 0,
   lastOilChangeKm: 0,
+  isRented: false,
+  rentalRacesRemaining: 0,
 };
 
 
@@ -97,6 +106,8 @@ function mapCarRow(row: any): CarData {
     racesCount: row.races_count,
     racesSinceRevision: row.races_since_revision,
     lastOilChangeKm: Number(row.last_oil_change_km ?? 0),
+    isRented: false,
+    rentalRacesRemaining: 0,
   };
 }
 
@@ -158,7 +169,24 @@ export async function loadGameStateFromSupabase(wallet: string = DEFAULT_WALLET)
     .select("*")
     .eq("owner_wallet", wallet);
 
-  const cars = (carsData ?? []).map(mapCarRow);
+  // Load active rentals to flag rented cars
+  const { data: rentalsData } = await supabase
+    .from("active_rentals")
+    .select("car_id, races_remaining")
+    .eq("owner_wallet", wallet)
+    .eq("is_active", true);
+
+  const rentalMap = new Map<string, number>();
+  (rentalsData ?? []).forEach((r: any) => rentalMap.set(r.car_id, r.races_remaining));
+
+  const cars = (carsData ?? []).map((row: any) => {
+    const car = mapCarRow(row);
+    if (rentalMap.has(car.id)) {
+      car.isRented = true;
+      car.rentalRacesRemaining = rentalMap.get(car.id) ?? 0;
+    }
+    return car;
+  });
 
   // Daily fuel refill
   const today = new Date().toISOString().split("T")[0];
@@ -269,7 +297,10 @@ export const addXpToCar = (
 
   const car = state.cars.find((c) => c.id === carId);
   const health = car?.engineHealth ?? 100;
-  const basePoints = won ? 150 : 20;
+  const isRented = car?.isRented ?? false;
+  const basePoints = isRented
+    ? (won ? RENTAL_NP_WIN : RENTAL_NP_LOSS)
+    : (won ? OWNED_NP_WIN : OWNED_NP_LOSS);
   const earnedPoints = Math.round((basePoints * health) / 100);
 
   const newState: GameState = {

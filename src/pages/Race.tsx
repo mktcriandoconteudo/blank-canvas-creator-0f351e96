@@ -7,6 +7,7 @@ import RaceResultModal from "@/components/race/RaceResultModal";
 import RaceVideoPlayer from "@/components/race/RaceVideoPlayer";
 import SimpleVideoPlayer from "@/components/race/SimpleVideoPlayer";
 import { useGameState } from "@/hooks/useGameState";
+import { RENTAL_STAT_PENALTY } from "@/lib/gameState";
 import { getCollisionConfig, rollCollision, logCollision, type CollisionResult } from "@/lib/collision";
 
 // Cinematic videos — starting grid + race clips + victory/defeat finales
@@ -37,7 +38,11 @@ const TICK_MS = 50;
 const Race = () => {
   const navigate = useNavigate();
   const { state, selectedCar, finishRace, loading, updateState } = useGameState();
-  const playerStats = selectedCar ?? { speed: 70, acceleration: 60, engineHealth: 100, name: "Unknown", level: 1 };
+  const isRentedCar = selectedCar?.isRented ?? false;
+  const rentalMult = isRentedCar ? RENTAL_STAT_PENALTY : 1;
+  const playerStats = selectedCar
+    ? { speed: Math.round(selectedCar.speed * rentalMult), acceleration: Math.round(selectedCar.acceleration * rentalMult), handling: Math.round(selectedCar.handling * rentalMult), engineHealth: selectedCar.engineHealth, name: selectedCar.name, level: selectedCar.level }
+    : { speed: 70, acceleration: 60, handling: 50, engineHealth: 100, name: "Unknown", level: 1 };
   const noCars = !loading && state.cars.length === 0;
 
   const noFuel = !loading && state.fuelTanks <= 0;
@@ -302,7 +307,8 @@ const Race = () => {
       if (bgmRef.current) { bgmRef.current.play().catch(() => {}); }
     }
   }, []);
-  const earnedNP = Math.round(((victory ? 150 : 20) * playerStats.engineHealth) / 100);
+  const baseNP = isRentedCar ? (victory ? 40 : 10) : (victory ? 150 : 20);
+  const earnedNP = Math.round((baseNP * playerStats.engineHealth) / 100);
   const speedKmh = raceState === "countdown" ? 0 : Math.round((playerProgress / 100) * 320 + (nitroActive ? 80 : 0));
   const isRacing = raceState === "racing";
 
@@ -431,9 +437,16 @@ const Race = () => {
         className="absolute left-3 top-[8%] z-[10] sm:left-5 sm:top-[10%]"
       >
         <div className="rounded-xl border border-primary/15 bg-background/15 px-3 py-2 backdrop-blur-xl sm:px-4 sm:py-2.5">
-          <h1 className="font-display text-[10px] font-black uppercase tracking-[0.3em] text-primary text-glow-cyan sm:text-xs">
-            TurboNitro
-          </h1>
+          <div className="flex items-center gap-2">
+            <h1 className="font-display text-[10px] font-black uppercase tracking-[0.3em] text-primary text-glow-cyan sm:text-xs">
+              TurboNitro
+            </h1>
+            {isRentedCar && (
+              <span className="rounded bg-neon-orange/20 px-1.5 py-0.5 font-display text-[8px] font-bold uppercase tracking-wider text-neon-orange">
+                🔑 Alugado · -{Math.round((1 - RENTAL_STAT_PENALTY) * 100)}%
+              </span>
+            )}
+          </div>
           <div className="mt-1 flex items-center gap-2 sm:mt-1.5 sm:gap-3">
             <div className="flex items-center gap-1">
               <Star className="h-3 w-3 text-neon-orange" />
