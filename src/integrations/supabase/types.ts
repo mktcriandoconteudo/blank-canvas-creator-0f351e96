@@ -62,6 +62,48 @@ export type Database = {
           },
         ]
       }
+      behavior_scores: {
+        Row: {
+          created_at: string
+          flagged: boolean
+          id: string
+          interval_score: number
+          last_calculated_at: string
+          pattern_score: number
+          score: number
+          updated_at: string
+          variability_score: number
+          wallet_address: string
+          winrate_score: number
+        }
+        Insert: {
+          created_at?: string
+          flagged?: boolean
+          id?: string
+          interval_score?: number
+          last_calculated_at?: string
+          pattern_score?: number
+          score?: number
+          updated_at?: string
+          variability_score?: number
+          wallet_address: string
+          winrate_score?: number
+        }
+        Update: {
+          created_at?: string
+          flagged?: boolean
+          id?: string
+          interval_score?: number
+          last_calculated_at?: string
+          pattern_score?: number
+          score?: number
+          updated_at?: string
+          variability_score?: number
+          wallet_address?: string
+          winrate_score?: number
+        }
+        Relationships: []
+      }
       car_insurance: {
         Row: {
           car_id: string
@@ -1135,6 +1177,7 @@ export type Database = {
         Args: { _listing_id: string; _wallet: string }
         Returns: Json
       }
+      calculate_behavior_score: { Args: { _wallet: string }; Returns: Json }
       calculate_withdrawal_fee: {
         Args: { _earned_at: string }
         Returns: number

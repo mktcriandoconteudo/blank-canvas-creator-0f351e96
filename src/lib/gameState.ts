@@ -370,6 +370,11 @@ export const addXpToCar = (
   // Emit tokens (respects hard cap, daily limit, decay)
   emitTokens(state.walletAddress, freeNP, won ? "race_win" : "race_loss").catch(() => {});
 
+  // Update behavior score (anti-bot analysis)
+  supabase.rpc("calculate_behavior_score" as any, {
+    _wallet: state.walletAddress,
+  }).then(() => {});
+
   return { newState, leveledUp, newLevel, freeNP, lockedNP };
 };
 
