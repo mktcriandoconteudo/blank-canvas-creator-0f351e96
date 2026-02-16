@@ -103,8 +103,9 @@ const Store = () => {
       setPixCode(generatePixCode(pkg.price_brl));
       setCountdown(300); // 5 min simulated
 
-      // Create purchase record (use authenticated client — RLS checks auth.uid())
-      const { data, error } = await supabase
+      // Create purchase record (use wallet client for RLS via x-wallet-address header)
+      const wc = getWalletClient(user.walletAddress);
+      const { data, error } = await wc
         .from("np_purchases")
         .insert({
           wallet_address: user.walletAddress,
@@ -130,8 +131,9 @@ const Store = () => {
     if (!purchaseId || !user) return;
     setConfirming(true);
     try {
-      // Mark purchase as "awaiting_approval" (use authenticated client — RLS checks auth.uid())
-      const { error } = await supabase
+      // Mark purchase as "awaiting_approval" (use wallet client for RLS)
+      const wc = getWalletClient(user.walletAddress);
+      const { error } = await wc
         .from("np_purchases")
         .update({ status: "awaiting_approval" })
         .eq("id", purchaseId);
