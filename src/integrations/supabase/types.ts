@@ -67,6 +67,7 @@ export type Database = {
           engine_health: number
           handling_base: number
           id: string
+          last_oil_change_km: number
           level: number
           model: string
           name: string
@@ -89,6 +90,7 @@ export type Database = {
           engine_health?: number
           handling_base?: number
           id?: string
+          last_oil_change_km?: number
           level?: number
           model?: string
           name?: string
@@ -111,6 +113,7 @@ export type Database = {
           engine_health?: number
           handling_base?: number
           id?: string
+          last_oil_change_km?: number
           level?: number
           model?: string
           name?: string
