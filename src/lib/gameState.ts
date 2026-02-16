@@ -1,4 +1,5 @@
 import { supabase, getWalletClient } from "@/lib/supabase";
+import { processTransaction, emitTokens } from "@/lib/economy";
 
 export interface CarData {
   id: string;
@@ -283,6 +284,10 @@ export const addXpToCar = (
   if (updatedCar) saveCarToSupabase(updatedCar);
   saveUserToSupabase(state.walletAddress, newState.nitroPoints, newState.fuelTanks);
 
+  // Sistema deflacionário: emitir tokens controlados ao invés de criar do nada
+  // A emissão respeita hard cap, limite diário e decay progressivo
+  emitTokens(state.walletAddress, earnedPoints, won ? "race_win" : "race_loss").catch(() => {});
+
   return { newState, leveledUp, newLevel };
 };
 
@@ -335,6 +340,9 @@ export const repairCar = (
   if (updatedCar) saveCarToSupabase(updatedCar);
   saveUserToSupabase(state.walletAddress, newState.nitroPoints, newState.fuelTanks);
 
+  // Transação deflacionária: 10% burn, 20% reward pool, 70% treasury
+  processTransaction(cost, state.walletAddress, "car_repair").catch(() => {});
+
   return newState;
 };
 
@@ -362,6 +370,9 @@ export const changeOil = (
   const updatedCar = newCars.find((c) => c.id === carId);
   if (updatedCar) saveCarToSupabase(updatedCar);
   saveUserToSupabase(state.walletAddress, newState.nitroPoints, newState.fuelTanks);
+
+  // Transação deflacionária: 10% burn, 20% reward pool, 70% treasury
+  processTransaction(cost, state.walletAddress, "oil_change").catch(() => {});
 
   return newState;
 };

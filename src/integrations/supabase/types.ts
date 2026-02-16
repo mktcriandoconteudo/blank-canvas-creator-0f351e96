@@ -138,6 +138,117 @@ export type Database = {
           },
         ]
       }
+      economy_events: {
+        Row: {
+          amount: number
+          burn_amount: number
+          created_at: string
+          description: string | null
+          event_type: string
+          id: string
+          metadata: Json | null
+          reward_amount: number
+          treasury_amount: number
+          wallet: string | null
+        }
+        Insert: {
+          amount?: number
+          burn_amount?: number
+          created_at?: string
+          description?: string | null
+          event_type: string
+          id?: string
+          metadata?: Json | null
+          reward_amount?: number
+          treasury_amount?: number
+          wallet?: string | null
+        }
+        Update: {
+          amount?: number
+          burn_amount?: number
+          created_at?: string
+          description?: string | null
+          event_type?: string
+          id?: string
+          metadata?: Json | null
+          reward_amount?: number
+          treasury_amount?: number
+          wallet?: string | null
+        }
+        Relationships: []
+      }
+      economy_state: {
+        Row: {
+          created_at: string
+          daily_emitted: number
+          id: string
+          last_emission_reset: string
+          max_supply: number
+          reward_pool_balance: number
+          total_burned: number
+          total_minted: number
+          treasury_balance: number
+          updated_at: string
+        }
+        Insert: {
+          created_at?: string
+          daily_emitted?: number
+          id?: string
+          last_emission_reset?: string
+          max_supply?: number
+          reward_pool_balance?: number
+          total_burned?: number
+          total_minted?: number
+          treasury_balance?: number
+          updated_at?: string
+        }
+        Update: {
+          created_at?: string
+          daily_emitted?: number
+          id?: string
+          last_emission_reset?: string
+          max_supply?: number
+          reward_pool_balance?: number
+          total_burned?: number
+          total_minted?: number
+          treasury_balance?: number
+          updated_at?: string
+        }
+        Relationships: []
+      }
+      emission_config: {
+        Row: {
+          active_player_bonus: number
+          base_daily_limit: number
+          decay_rate_percent: number
+          id: string
+          max_player_bonus_cap: number
+          min_daily_limit: number
+          start_date: string
+          updated_at: string
+        }
+        Insert: {
+          active_player_bonus?: number
+          base_daily_limit?: number
+          decay_rate_percent?: number
+          id?: string
+          max_player_bonus_cap?: number
+          min_daily_limit?: number
+          start_date?: string
+          updated_at?: string
+        }
+        Update: {
+          active_player_bonus?: number
+          base_daily_limit?: number
+          decay_rate_percent?: number
+          id?: string
+          max_player_bonus_cap?: number
+          min_daily_limit?: number
+          start_date?: string
+          updated_at?: string
+        }
+        Relationships: []
+      }
       onchain_events: {
         Row: {
           block_number: number
@@ -308,6 +419,19 @@ export type Database = {
       [_ in never]: never
     }
     Functions: {
+      distribute_reward: {
+        Args: { _amount: number; _reason?: string; _wallet: string }
+        Returns: boolean
+      }
+      emit_tokens: {
+        Args: { _amount: number; _reason?: string; _wallet: string }
+        Returns: Json
+      }
+      get_economy_report: { Args: never; Returns: Json }
+      process_deflationary_transaction: {
+        Args: { _amount: number; _description?: string; _wallet?: string }
+        Returns: Json
+      }
       refill_fuel:
         | { Args: { _wallet_address: string }; Returns: boolean }
         | {
