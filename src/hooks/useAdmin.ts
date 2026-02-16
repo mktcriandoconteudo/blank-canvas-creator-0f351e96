@@ -40,6 +40,13 @@ export interface PlayerCar {
   totalKm: number;
   wins: number;
   racesCount: number;
+  xp: number;
+  xpToNext: number;
+  attributePoints: number;
+  racesSinceRevision: number;
+  lastOilChangeKm: number;
+  tokenId: string;
+  fuelTanks: number;
 }
 
 export interface PlayerInsurance {
@@ -160,6 +167,13 @@ export const useAdmin = () => {
         totalKm: Number(c.total_km),
         wins: c.wins,
         racesCount: c.races_count,
+        xp: c.xp,
+        xpToNext: c.xp_to_next,
+        attributePoints: c.attribute_points,
+        racesSinceRevision: c.races_since_revision,
+        lastOilChangeKm: Number(c.last_oil_change_km),
+        tokenId: c.token_id,
+        fuelTanks: c.fuel_tanks ?? 5,
       })),
       insurances: (insRes.data ?? []).map((i: any) => ({
         id: i.id,

@@ -105,7 +105,18 @@ const PlayerDetailModal = ({ player, onClose }: { player: PlayerDetail; onClose:
 
       {/* Header */}
       <div className="mb-6">
-        <h2 className="font-display text-xl font-black text-foreground">{player.username || "Sem nome"}</h2>
+        <div className="flex items-center gap-3 mb-1">
+          <h2 className="font-display text-xl font-black text-foreground">{player.username || "Sem nome"}</h2>
+          {(() => {
+            const online = new Date(player.updatedAt).getTime() > Date.now() - 15 * 60 * 1000;
+            return (
+              <span className={`inline-flex items-center gap-1.5 rounded-full px-2 py-0.5 font-display text-[10px] font-bold ${online ? "bg-neon-green/20 text-neon-green" : "bg-muted/20 text-muted-foreground"}`}>
+                <span className={`h-2 w-2 rounded-full ${online ? "bg-neon-green animate-pulse" : "bg-muted-foreground/40"}`} />
+                {online ? "Online" : "Offline"}
+              </span>
+            );
+          })()}
+        </div>
         <p className="font-mono text-xs text-muted-foreground mt-1">Wallet: {player.walletAddress}</p>
         {player.authId && <p className="font-mono text-[10px] text-muted-foreground">Auth ID: {player.authId}</p>}
         <p className="font-body text-xs text-muted-foreground mt-1">
@@ -126,26 +137,76 @@ const PlayerDetailModal = ({ player, onClose }: { player: PlayerDetail; onClose:
         <h3 className="font-display text-xs font-bold uppercase tracking-wider text-muted-foreground mb-3">
           🏎️ Veículos ({player.cars.length})
         </h3>
-        <div className="space-y-2">
+        <div className="space-y-3">
           {player.cars.map((c) => (
-            <div key={c.id} className="rounded-xl border border-border/20 bg-muted/10 p-3">
-              <div className="flex items-center justify-between mb-2">
-                <span className="font-display text-sm font-bold text-foreground">{c.name}</span>
-                <span className="font-display text-xs text-primary">Lv.{c.level}</span>
+            <div key={c.id} className="rounded-xl border border-border/20 bg-muted/10 p-4">
+              <div className="flex items-center justify-between mb-3">
+                <div>
+                  <span className="font-display text-sm font-bold text-foreground">{c.name}</span>
+                  <span className="ml-2 font-display text-[10px] uppercase tracking-wider text-muted-foreground capitalize">{c.model}</span>
+                </div>
+                <div className="flex items-center gap-2">
+                  <span className="font-display text-xs text-primary font-bold">Lv.{c.level}</span>
+                  <span className="font-mono text-[9px] text-muted-foreground">{c.tokenId}</span>
+                </div>
               </div>
-              <div className="grid grid-cols-4 gap-2 text-[10px] font-body text-muted-foreground">
-                <div>SPD: <span className="text-foreground font-bold">{c.speed}</span></div>
-                <div>ACC: <span className="text-foreground font-bold">{c.acceleration}</span></div>
-                <div>HDL: <span className="text-foreground font-bold">{c.handling}</span></div>
-                <div>DUR: <span className="text-foreground font-bold">{c.durability}</span></div>
+
+              {/* Stats grid */}
+              <div className="grid grid-cols-4 gap-2 text-[10px] font-body text-muted-foreground mb-2">
+                <div className="rounded-lg bg-primary/5 p-1.5 text-center">
+                  <div className="text-[8px] uppercase tracking-wider">Speed</div>
+                  <div className="text-foreground font-bold text-sm">{c.speed}</div>
+                </div>
+                <div className="rounded-lg bg-neon-orange/5 p-1.5 text-center">
+                  <div className="text-[8px] uppercase tracking-wider">Accel</div>
+                  <div className="text-foreground font-bold text-sm">{c.acceleration}</div>
+                </div>
+                <div className="rounded-lg bg-accent/5 p-1.5 text-center">
+                  <div className="text-[8px] uppercase tracking-wider">Handle</div>
+                  <div className="text-foreground font-bold text-sm">{c.handling}</div>
+                </div>
+                <div className="rounded-lg bg-neon-green/5 p-1.5 text-center">
+                  <div className="text-[8px] uppercase tracking-wider">Durab.</div>
+                  <div className="text-foreground font-bold text-sm">{c.durability}</div>
+                </div>
               </div>
-              <div className="flex gap-4 mt-1 text-[10px] font-body text-muted-foreground">
-                <span>Motor: <span className={c.engineHealth < 30 ? "text-destructive" : "text-foreground"}>{c.engineHealth}%</span></span>
-                <span>KM: {c.totalKm.toLocaleString()}</span>
-                <span>{c.wins}W / {c.racesCount}R</span>
+
+              {/* Health & KM */}
+              <div className="grid grid-cols-2 gap-3 mt-2">
+                <div>
+                  <div className="flex items-center justify-between mb-1">
+                    <span className="text-[10px] text-muted-foreground">Motor</span>
+                    <span className={`font-display text-xs font-bold ${c.engineHealth < 30 ? "text-destructive" : c.engineHealth < 60 ? "text-neon-orange" : "text-neon-green"}`}>{c.engineHealth}%</span>
+                  </div>
+                  <div className="h-1.5 w-full rounded-full bg-muted/30 overflow-hidden">
+                    <div className={`h-full rounded-full ${c.engineHealth < 30 ? "bg-destructive" : c.engineHealth < 60 ? "bg-neon-orange" : "bg-neon-green"}`} style={{ width: `${c.engineHealth}%` }} />
+                  </div>
+                </div>
+                <div>
+                  <div className="flex items-center justify-between mb-1">
+                    <span className="text-[10px] text-muted-foreground">XP</span>
+                    <span className="font-display text-xs font-bold text-primary">{c.xp}/{c.xpToNext}</span>
+                  </div>
+                  <div className="h-1.5 w-full rounded-full bg-muted/30 overflow-hidden">
+                    <div className="h-full rounded-full bg-primary" style={{ width: `${(c.xp / c.xpToNext) * 100}%` }} />
+                  </div>
+                </div>
+              </div>
+
+              {/* Details row */}
+              <div className="grid grid-cols-3 gap-2 mt-3 text-[10px] font-body text-muted-foreground">
+                <div>🛣️ KM: <span className="text-foreground font-bold">{c.totalKm.toLocaleString()}</span></div>
+                <div>🏆 {c.wins}W / {c.racesCount}R</div>
+                <div>🔧 Rev: {c.racesSinceRevision} corridas</div>
+                <div>🛢️ Óleo: {c.lastOilChangeKm.toLocaleString()} km</div>
+                <div>⭐ Pts: {c.attributePoints}</div>
+                <div>⛽ Fuel: {c.fuelTanks}/5</div>
               </div>
             </div>
           ))}
+          {player.cars.length === 0 && (
+            <p className="text-xs text-muted-foreground text-center py-4">Nenhum veículo</p>
+          )}
         </div>
       </div>
 
@@ -435,7 +496,8 @@ const Admin = () => {
             <div className="overflow-x-auto rounded-xl border border-border/20 bg-card/30 backdrop-blur-sm">
               <table className="w-full text-sm">
                 <thead>
-                  <tr className="border-b border-border/20">
+                 <tr className="border-b border-border/20">
+                    <th className="px-4 py-3 text-left font-display text-xs uppercase tracking-wider text-muted-foreground">Status</th>
                     <th className="px-4 py-3 text-left font-display text-xs uppercase tracking-wider text-muted-foreground">Piloto</th>
                     <th className="px-4 py-3 text-left font-display text-xs uppercase tracking-wider text-muted-foreground">Wallet</th>
                     <th className="px-4 py-3 text-center font-display text-xs uppercase tracking-wider text-muted-foreground">NP</th>
@@ -448,8 +510,18 @@ const Admin = () => {
                   </tr>
                 </thead>
                 <tbody>
-                  {filteredPlayers.map((p) => (
+                  {filteredPlayers.map((p) => {
+                    const isOnline = new Date(p.updatedAt).getTime() > Date.now() - 15 * 60 * 1000;
+                    return (
                     <tr key={p.id} className="border-b border-border/10 hover:bg-muted/10 transition-colors">
+                      <td className="px-4 py-3">
+                        <div className="flex items-center gap-2">
+                          <div className={`h-2.5 w-2.5 rounded-full ${isOnline ? "bg-neon-green animate-pulse" : "bg-muted-foreground/30"}`} />
+                          <span className={`font-display text-[10px] uppercase tracking-wider ${isOnline ? "text-neon-green" : "text-muted-foreground"}`}>
+                            {isOnline ? "Online" : "Offline"}
+                          </span>
+                        </div>
+                      </td>
                       <td className="px-4 py-3 font-display text-sm text-foreground">{p.username || "Sem nome"}</td>
                       <td className="px-4 py-3 font-mono text-xs text-muted-foreground">{p.walletAddress.slice(0, 8)}...{p.walletAddress.slice(-4)}</td>
                       <td className="px-4 py-3 text-center font-display text-sm text-neon-orange font-bold">{p.nitroPoints.toLocaleString()}</td>
@@ -472,10 +544,11 @@ const Admin = () => {
                         </button>
                       </td>
                     </tr>
-                  ))}
+                    );
+                  })}
                   {filteredPlayers.length === 0 && (
                     <tr>
-                      <td colSpan={9} className="px-4 py-8 text-center text-muted-foreground">
+                      <td colSpan={10} className="px-4 py-8 text-center text-muted-foreground">
                         {searchQuery ? "Nenhum piloto encontrado." : "Nenhum piloto cadastrado."}
                       </td>
                     </tr>
