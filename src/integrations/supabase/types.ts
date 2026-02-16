@@ -346,6 +346,7 @@ export type Database = {
         Row: {
           created_at: string
           daily_emitted: number
+          dynamic_burn_rate: number
           id: string
           last_emission_reset: string
           max_supply: number
@@ -358,6 +359,7 @@ export type Database = {
         Insert: {
           created_at?: string
           daily_emitted?: number
+          dynamic_burn_rate?: number
           id?: string
           last_emission_reset?: string
           max_supply?: number
@@ -370,6 +372,7 @@ export type Database = {
         Update: {
           created_at?: string
           daily_emitted?: number
+          dynamic_burn_rate?: number
           id?: string
           last_emission_reset?: string
           max_supply?: number
@@ -1086,6 +1089,7 @@ export type Database = {
         Returns: Json
       }
       generate_license_plate: { Args: never; Returns: string }
+      get_dynamic_burn_rate: { Args: never; Returns: number }
       get_economy_report: { Args: never; Returns: Json }
       has_role: {
         Args: {
