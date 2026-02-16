@@ -817,13 +817,13 @@ const Admin = () => {
                     }`}
                   >
                     {/* Car image */}
-                    <div className="relative h-36 overflow-hidden">
+                    <div className="relative aspect-[16/10] overflow-hidden">
                       <img
                         src={CAR_IMAGES[car.image_key] || carThunder}
                         alt={car.name}
-                        className="h-full w-full object-cover"
+                        className="h-full w-full object-cover object-center"
                       />
-                      <div className="absolute inset-0 bg-gradient-to-t from-card to-transparent" />
+                      <div className="absolute inset-0 bg-gradient-to-t from-card via-transparent to-transparent" />
                       <div className={`absolute top-3 right-3 rounded-full px-2.5 py-1 font-display text-[10px] font-bold ${
                         car.sale_active && car.stock > 0 ? "bg-neon-green/20 text-neon-green" : car.sale_active ? "bg-neon-orange/20 text-neon-orange" : "bg-destructive/20 text-destructive"
                       }`}>
