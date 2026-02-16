@@ -7,6 +7,7 @@ import { formatNP } from "@/lib/utils";
 interface RaceResultModalProps {
   isOpen: boolean;
   victory: boolean;
+  playerPosition?: number; // 1-4
   nitroPoints: number;
   xpGained: number;
   leveledUp: boolean;
@@ -15,6 +16,14 @@ interface RaceResultModalProps {
   soundOn?: boolean;
   onToggleSound?: () => void;
 }
+
+const POSITION_LABELS = ["1º", "2º", "3º", "4º"];
+const POSITION_STYLES = [
+  { bg: "bg-neon-green/20", border: "border-neon-green/40", text: "text-neon-green", glow: "shadow-[0_0_20px_hsl(150,70%,50%,0.3)]" },
+  { bg: "bg-primary/20", border: "border-primary/40", text: "text-primary", glow: "shadow-[0_0_20px_hsl(185,80%,55%,0.3)]" },
+  { bg: "bg-neon-orange/20", border: "border-neon-orange/40", text: "text-neon-orange", glow: "" },
+  { bg: "bg-muted/20", border: "border-muted-foreground/30", text: "text-muted-foreground", glow: "" },
+];
 
 const Confetti = ({ count = 40 }: { count?: number }) => {
   const colors = [
@@ -41,7 +50,7 @@ const Confetti = ({ count = 40 }: { count?: number }) => {
   );
 };
 
-const RaceResultModal = ({ isOpen, victory, nitroPoints, xpGained, leveledUp, newLevel, onClose, soundOn, onToggleSound }: RaceResultModalProps) => {
+const RaceResultModal = ({ isOpen, victory, playerPosition, nitroPoints, xpGained, leveledUp, newLevel, onClose, soundOn, onToggleSound }: RaceResultModalProps) => {
   const navigate = useNavigate();
 
   return (
@@ -67,11 +76,25 @@ const RaceResultModal = ({ isOpen, victory, nitroPoints, xpGained, leveledUp, ne
               initial={{ scale: 0 }}
               animate={{ scale: 1 }}
               transition={{ delay: 0.3, type: "spring", stiffness: 300 }}
-              className={`mx-auto mb-6 flex h-24 w-24 items-center justify-center rounded-full ${
+              className={`relative mx-auto mb-6 flex h-24 w-24 items-center justify-center rounded-full ${
                 victory ? "bg-primary/20 glow-cyan" : "bg-destructive/20"
               }`}
             >
               {victory ? <Trophy className="h-12 w-12 text-primary" /> : <Skull className="h-12 w-12 text-destructive" />}
+
+              {/* Position badge */}
+              {playerPosition != null && (
+                <motion.div
+                  initial={{ opacity: 0, scale: 0 }}
+                  animate={{ opacity: 1, scale: 1 }}
+                  transition={{ delay: 0.45, type: "spring", stiffness: 300 }}
+                  className={`absolute -top-2 -right-2 flex h-10 w-10 items-center justify-center rounded-full border-2 ${POSITION_STYLES[playerPosition - 1]?.bg} ${POSITION_STYLES[playerPosition - 1]?.border} ${POSITION_STYLES[playerPosition - 1]?.glow}`}
+                >
+                  <span className={`font-display text-sm font-black ${POSITION_STYLES[playerPosition - 1]?.text}`}>
+                    {POSITION_LABELS[playerPosition - 1]}
+                  </span>
+                </motion.div>
+              )}
             </motion.div>
 
             <motion.h2
@@ -82,7 +105,7 @@ const RaceResultModal = ({ isOpen, victory, nitroPoints, xpGained, leveledUp, ne
                 victory ? "text-primary text-glow-cyan" : "text-destructive"
               }`}
             >
-              {victory ? "Victory!" : "Defeat"}
+              {victory ? "Victory!" : `${POSITION_LABELS[playerPosition ? playerPosition - 1 : 1]} Lugar`}
             </motion.h2>
 
             <motion.p
@@ -91,7 +114,13 @@ const RaceResultModal = ({ isOpen, victory, nitroPoints, xpGained, leveledUp, ne
               transition={{ delay: 0.5 }}
               className="mt-2 font-body text-muted-foreground"
             >
-              {victory ? "Você dominou a pista!" : "Mais sorte na próxima corrida."}
+              {victory
+                ? "Você dominou a pista!"
+                : playerPosition === 2
+                  ? "Quase lá! Faltou pouco para a vitória."
+                  : playerPosition === 3
+                    ? "Boa corrida, mas dá pra melhorar!"
+                    : "Mais sorte na próxima corrida."}
             </motion.p>
 
             {/* Rewards row */}

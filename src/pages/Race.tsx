@@ -96,6 +96,7 @@ const Race = () => {
   const [opponentProgress, setOpponentProgress] = useState(0);
   const [showResult, setShowResult] = useState(false);
   const [victory, setVictory] = useState(false);
+  const [playerPosition, setPlayerPosition] = useState(1);
   const [finaleVideoSrc, setFinaleVideoSrc] = useState<string | undefined>(undefined);
   const [xpResult, setXpResult] = useState({ leveledUp: false, newLevel: 0, freeNP: 0, lockedNP: 0 });
   const [rewardMultiplier, setRewardMultiplier] = useState(1.0);
@@ -199,6 +200,7 @@ const Race = () => {
       setPlayerProgress(FINISH_LINE);
       setOpponentProgress(preWin ? FINISH_LINE * 0.9 : FINISH_LINE);
       setVictory(preWin);
+      setPlayerPosition(preWin ? 1 : (Math.random() > 0.4 ? 2 : Math.random() > 0.5 ? 3 : 4));
       console.log("[THUNDER] Race ended at 10s, won:", preWin);
       const result = finishRaceRef.current(preWin, rewardMultiplier, raceNumber);
       setXpResult(result);
@@ -277,6 +279,7 @@ const Race = () => {
       // For Thunder Bolt, use pre-determined result; for others, use actual race result
       const won = isThunder ? preWin : playerProgress >= opponentProgress;
       setVictory(won);
+      setPlayerPosition(won ? 1 : (Math.random() > 0.4 ? 2 : Math.random() > 0.5 ? 3 : 4));
 
       const carName = selectedCar?.name ?? playerStats.name ?? "";
       const carKey = carKeyRef.current || carName.toLowerCase().split(" ")[0];
@@ -731,6 +734,7 @@ const Race = () => {
       <RaceResultModal
         isOpen={showResult && !noFuel}
         victory={victory}
+        playerPosition={playerPosition}
         nitroPoints={earnedNP}
         xpGained={victory ? 80 : 25}
         leveledUp={xpResult.leveledUp}
