@@ -548,9 +548,9 @@ const Race = () => {
         )}
       </AnimatePresence>
 
-      {/* Result modal */}
+      {/* Result modal — hide if no fuel (fuel overlay takes priority) */}
       <RaceResultModal
-        isOpen={showResult}
+        isOpen={showResult && !noFuel}
         victory={victory}
         nitroPoints={earnedNP}
         xpGained={victory ? 80 : 25}
