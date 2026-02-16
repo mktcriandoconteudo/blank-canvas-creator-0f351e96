@@ -102,9 +102,8 @@ const Store = () => {
       setPixCode(generatePixCode(pkg.price_brl));
       setCountdown(300); // 5 min simulated
 
-      // Create purchase record
-      const wc = getWalletClient(user.walletAddress);
-      const { data, error } = await wc
+      // Create purchase record (use authenticated client — RLS checks auth.uid())
+      const { data, error } = await supabase
         .from("np_purchases")
         .insert({
           wallet_address: user.walletAddress,
@@ -130,9 +129,8 @@ const Store = () => {
     if (!purchaseId || !user) return;
     setConfirming(true);
     try {
-      // Mark purchase as "awaiting_approval" — admin will approve later
-      const wc = getWalletClient(user.walletAddress);
-      const { error } = await wc
+      // Mark purchase as "awaiting_approval" (use authenticated client — RLS checks auth.uid())
+      const { error } = await supabase
         .from("np_purchases")
         .update({ status: "awaiting_approval" })
         .eq("id", purchaseId);
