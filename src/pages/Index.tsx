@@ -125,7 +125,49 @@ const Index = () => {
     });
   }, []);
 
-  if (loading || !selectedCar) return null;
+  if (loading) return null;
+
+  // No cars - redirect to marketplace
+  if (state.cars.length === 0) {
+    return (
+      <div className="flex min-h-screen flex-col items-center justify-center bg-background gap-6 px-4 text-center">
+        <motion.div
+          initial={{ opacity: 0, scale: 0.9 }}
+          animate={{ opacity: 1, scale: 1 }}
+          className="space-y-4"
+        >
+          <div className="text-6xl">🏎️</div>
+          <h1 className="font-display text-2xl font-black uppercase tracking-wider text-foreground">
+            Sua garagem está vazia!
+          </h1>
+          <p className="font-body text-sm text-muted-foreground max-w-md">
+            Você precisa comprar um carro no Marketplace antes de poder correr. 
+            Use seus Nitro Points para adquirir seu primeiro veículo.
+          </p>
+          <div className="flex items-center justify-center gap-2 text-neon-orange font-display text-sm font-bold">
+            <Coins className="h-4 w-4" />
+            {state.nitroPoints.toLocaleString()} NP disponíveis
+          </div>
+          <div className="flex gap-3 justify-center pt-2">
+            <button
+              onClick={() => navigate("/marketplace")}
+              className="rounded-xl bg-primary px-8 py-3 font-display text-sm font-bold uppercase tracking-wider text-primary-foreground hover:bg-primary/90 transition-colors"
+            >
+              Ir ao Marketplace
+            </button>
+            <button
+              onClick={() => navigate("/")}
+              className="rounded-xl border border-border/30 px-6 py-3 font-display text-sm font-bold uppercase tracking-wider text-muted-foreground hover:bg-muted/10 transition-colors"
+            >
+              Voltar
+            </button>
+          </div>
+        </motion.div>
+      </div>
+    );
+  }
+
+  if (!selectedCar) return null;
 
   const xpPercent = (selectedCar.xp / selectedCar.xpToNext) * 100;
   const needsRevision = selectedCar.racesSinceRevision >= 5;
