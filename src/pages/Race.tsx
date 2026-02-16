@@ -7,6 +7,7 @@ import RaceResultModal from "@/components/race/RaceResultModal";
 import RaceVideoPlayer from "@/components/race/RaceVideoPlayer";
 import SimpleVideoPlayer from "@/components/race/SimpleVideoPlayer";
 import { useGameState } from "@/hooks/useGameState";
+import { getCollisionConfig, rollCollision, logCollision, type CollisionResult } from "@/lib/collision";
 
 // Cinematic videos — starting grid + race clips + victory/defeat finales
 import raceBattleVideo1 from "@/assets/race-battle-video.mp4";
@@ -35,7 +36,7 @@ const TICK_MS = 50;
 
 const Race = () => {
   const navigate = useNavigate();
-  const { state, selectedCar, finishRace, loading } = useGameState();
+  const { state, selectedCar, finishRace, loading, updateState } = useGameState();
   const playerStats = selectedCar ?? { speed: 70, acceleration: 60, engineHealth: 100, name: "Unknown", level: 1 };
   
   // Debug: log which car is actually selected
@@ -89,6 +90,8 @@ const Race = () => {
   const [nitroActive, setNitroActive] = useState(false);
   const [nitroCharges, setNitroCharges] = useState(3);
   const [bgOffset, setBgOffset] = useState(0);
+  const [collisionResult, setCollisionResult] = useState<CollisionResult | null>(null);
+  const [showCollisionFlash, setShowCollisionFlash] = useState(false);
   // Capture car key — update when selectedCar loads
   const carKeyRef = useRef(selectedCar?.name.toLowerCase().split(" ")[0] ?? "");
   useEffect(() => {
@@ -229,7 +232,6 @@ const Race = () => {
       console.log("[RACE FINISH]", { carName, carKey, isThunder, won, preWin });
       
       if (!isThunder) {
-        // Non-Thunder cars use finale video swap
         const hasCustom = !!(CAR_VICTORY_VIDEOS[carKey]);
         if (hasCustom) {
           setFinaleVideoSrc(won ? CAR_VICTORY_VIDEOS[carKey] : CAR_DEFEAT_VIDEOS[carKey]);
@@ -237,10 +239,41 @@ const Race = () => {
           setFinaleVideoSrc(won ? raceDefeatVideo : raceVictoryVideo);
         }
       }
-      // Thunder Bolt doesn't need finaleVideoSrc — it already plays the right video from start
       
       const result = finishRaceRef.current(won);
       setXpResult(result);
+
+      // Collision check — async, runs after race ends
+      (async () => {
+        try {
+          const config = await getCollisionConfig();
+          const collision = rollCollision(config);
+          if (collision.occurred && selectedCar) {
+            setCollisionResult(collision);
+            setShowCollisionFlash(true);
+            setTimeout(() => setShowCollisionFlash(false), 2000);
+            console.log("[COLLISION]", collision);
+            // Apply collision damage to car via updateState
+            updateState((prev) => ({
+              ...prev,
+              cars: prev.cars.map((c) =>
+                c.id === prev.selectedCarId
+                  ? {
+                      ...c,
+                      engineHealth: Math.max(0, c.engineHealth - collision.engineDamage),
+                      durability: Math.max(0, c.durability - collision.durabilityDamage),
+                    }
+                  : c
+              ),
+            }));
+            // Log collision event
+            logCollision(selectedCar.id, state.walletAddress, collision.engineDamage, collision.durabilityDamage);
+          }
+        } catch (e) {
+          console.error("[COLLISION] Error:", e);
+        }
+      })();
+
       setTimeout(() => setShowResult(true), isThunder ? 10000 : 5500);
     }
   }, [playerProgress, opponentProgress, raceState]);
@@ -336,6 +369,41 @@ const Race = () => {
               background: "radial-gradient(ellipse at 50% 60%, hsl(210, 100%, 60% / 0.25), hsl(185, 80%, 50% / 0.1), transparent 70%)",
             }}
           />
+        )}
+      </AnimatePresence>
+
+      {/* ====== COLLISION FLASH ====== */}
+      <AnimatePresence>
+        {showCollisionFlash && collisionResult && (
+          <motion.div
+            initial={{ opacity: 0 }}
+            animate={{ opacity: [0, 0.6, 0.2, 0.5, 0] }}
+            exit={{ opacity: 0 }}
+            transition={{ duration: 1.5 }}
+            className="pointer-events-none absolute inset-0 z-[12]"
+            style={{ background: "radial-gradient(ellipse at 50% 50%, hsl(0, 80%, 50% / 0.4), transparent 70%)" }}
+          />
+        )}
+      </AnimatePresence>
+      <AnimatePresence>
+        {showCollisionFlash && collisionResult && (
+          <motion.div
+            initial={{ opacity: 0, scale: 2.5 }}
+            animate={{ opacity: [0, 1, 0], scale: [2.5, 1, 0.8] }}
+            exit={{ opacity: 0 }}
+            transition={{ duration: 1.2 }}
+            className="absolute inset-0 z-[13] flex flex-col items-center justify-center pointer-events-none"
+          >
+            <span
+              className="font-display text-3xl font-black uppercase text-destructive sm:text-5xl"
+              style={{ textShadow: "0 0 40px hsl(0, 80%, 50% / 0.8)" }}
+            >
+              💥 COLISÃO!
+            </span>
+            <span className="mt-2 font-display text-sm text-destructive/80 sm:text-lg">
+              Motor -{collisionResult.engineDamage}% · Durabilidade -{collisionResult.durabilityDamage}
+            </span>
+          </motion.div>
         )}
       </AnimatePresence>
 
