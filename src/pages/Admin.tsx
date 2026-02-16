@@ -8,6 +8,8 @@ import {
   ChevronDown, ChevronUp, ShoppingCart, Image, CreditCard, CheckCircle, XCircle, Check,
   Upload, Video, Trash2, Loader2, Bug, Play
 } from "lucide-react";
+import { Switch } from "@/components/ui/switch";
+import { useWalletEnabled } from "@/hooks/useFeatureFlags";
 import MainNav from "@/components/MainNav";
 import { useAdmin, type PlayerDetail } from "@/hooks/useAdmin";
 import { supabase } from "@/lib/supabase";
@@ -319,6 +321,7 @@ const Admin = () => {
     loadPlayerDetail, clearSelectedPlayer, onlineCount,
   } = useAdmin();
 
+  const { walletEnabled, setWalletEnabled } = useWalletEnabled();
   const [localConfig, setLocalConfig] = useState(collisionConfig);
   const [configDirty, setConfigDirty] = useState(false);
   const [tab, setTab] = useState<TabId>("dashboard");
@@ -649,6 +652,23 @@ const Admin = () => {
                     </div>
                   </div>
                 ))}
+              </div>
+            </div>
+
+            {/* Feature Toggles */}
+            <div className="rounded-xl border border-border/20 bg-card/30 p-3 sm:p-4 backdrop-blur-sm">
+              <h3 className="font-display text-xs font-bold uppercase tracking-wider text-muted-foreground mb-3">⚙️ Feature Toggles</h3>
+              <div className="flex items-center justify-between rounded-lg bg-muted/10 px-4 py-3">
+                <div className="flex items-center gap-3">
+                  <Wallet className="h-4 w-4 text-accent" />
+                  <div>
+                    <p className="font-display text-sm font-bold text-foreground">Sistema Wallet</p>
+                    <p className="font-body text-[10px] text-muted-foreground">
+                      {walletEnabled ? "Ativo — funcionalidades Web3/Wallet visíveis" : "Desativado — modo de teste sem Wallet"}
+                    </p>
+                  </div>
+                </div>
+                <Switch checked={walletEnabled} onCheckedChange={setWalletEnabled} />
               </div>
             </div>
           </motion.div>
