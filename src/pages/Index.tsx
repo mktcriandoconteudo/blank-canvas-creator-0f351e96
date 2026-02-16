@@ -47,14 +47,20 @@ import { INSURANCE_PLANS } from "@/lib/insurance";
 const Index = () => {
   const navigate = useNavigate();
   const { state, selectedCar, addPoint, repair, oilChange, updateState, selectCar, loading } = useGameState();
-  const { user, signOut } = useAuth();
+  const { user, signOut, session } = useAuth();
   const [garageSoundOn, setGarageSoundOn] = useState(true);
   const [refilling, setRefilling] = useState(false);
   const [menuOpen, setMenuOpen] = useState(false);
   const [showStats, setShowStats] = useState(window.innerWidth >= 768);
   const [showInsurance, setShowInsurance] = useState(false);
   const [purchasingPlan, setPurchasingPlan] = useState<string | null>(null);
+  const [isAdmin, setIsAdmin] = useState(false);
   const garageBgmRef = useRef<HTMLAudioElement | null>(null);
+
+  useEffect(() => {
+    if (!session) return;
+    supabase.rpc("check_is_admin").then(({ data }) => setIsAdmin(data === true));
+  }, [session]);
 
   const { policy, isInsured, daysLeft, claimsLeft, purchase } = useInsurance(
     selectedCar?.id ?? null,
@@ -176,6 +182,11 @@ const Index = () => {
               <button onClick={() => navigate("/marketplace")} className="font-display text-xs uppercase tracking-wider text-muted-foreground transition-colors hover:text-primary">
                 Marketplace
               </button>
+              {isAdmin && (
+                <button onClick={() => navigate("/admin")} className="font-display text-xs uppercase tracking-wider text-neon-orange transition-colors hover:text-neon-orange/80">
+                  🛡️ Admin
+                </button>
+              )}
             </div>
 
             <div className="flex items-center gap-2 sm:gap-3">
@@ -228,6 +239,7 @@ const Index = () => {
                   {[
                     { label: "Home", action: () => { navigate("/"); setMenuOpen(false); } },
                     { label: "Marketplace", action: () => { navigate("/marketplace"); setMenuOpen(false); } },
+                    ...(isAdmin ? [{ label: "🛡️ Admin", action: () => { navigate("/admin"); setMenuOpen(false); } }] : []),
                   ].map((item) => (
                     <button
                       key={item.label}

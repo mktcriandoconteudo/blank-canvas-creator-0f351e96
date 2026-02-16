@@ -1,7 +1,8 @@
 import { motion, useScroll, useTransform, AnimatePresence } from "framer-motion";
 import ShaderBackground from "@/components/ui/shader-background";
 import { useNavigate } from "react-router-dom";
-import { useRef, useState } from "react";
+import { useRef, useState, useEffect } from "react";
+import { supabase } from "@/lib/supabase";
 import { useAuth } from "@/hooks/useAuth";
 import {
   Zap, Trophy, Gauge, Shield, Coins, Fuel, Users, Star,
@@ -139,7 +140,13 @@ const Landing = () => {
   const navigate = useNavigate();
   const { user, session, signOut } = useAuth();
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
+  const [isAdmin, setIsAdmin] = useState(false);
   const heroRef = useRef<HTMLDivElement>(null);
+
+  useEffect(() => {
+    if (!session) { setIsAdmin(false); return; }
+    supabase.rpc("check_is_admin").then(({ data }) => setIsAdmin(data === true));
+  }, [session]);
   const { scrollYProgress } = useScroll({ target: heroRef, offset: ["start start", "end start"] });
   const heroY = useTransform(scrollYProgress, [0, 1], [0, 200]);
   const heroScale = useTransform(scrollYProgress, [0, 1], [1, 1.15]);
@@ -177,6 +184,14 @@ const Landing = () => {
                 >
                   Garagem
                 </button>
+                {isAdmin && (
+                  <button
+                    onClick={() => navigate("/admin")}
+                    className="rounded-xl border border-neon-orange/30 bg-neon-orange/10 px-3 py-2 font-display text-[10px] font-bold uppercase tracking-wider text-neon-orange transition-all hover:bg-neon-orange/20"
+                  >
+                    🛡️ Admin
+                  </button>
+                )}
                 <button
                   onClick={signOut}
                   className="hidden rounded-xl border border-destructive/30 bg-destructive/10 px-3 py-2 font-display text-[10px] font-bold uppercase tracking-wider text-destructive transition-all hover:bg-destructive/20 sm:block"
@@ -233,6 +248,7 @@ const Landing = () => {
                   ...(session
                     ? [
                         { label: "Garagem", action: () => { navigate("/garage"); setMobileMenuOpen(false); } },
+                        ...(isAdmin ? [{ label: "🛡️ Admin", action: () => { navigate("/admin"); setMobileMenuOpen(false); } }] : []),
                         { label: "Sair", action: () => { signOut(); setMobileMenuOpen(false); } },
                       ]
                     : [{ label: "Login", action: () => { navigate("/auth"); setMobileMenuOpen(false); } }]
