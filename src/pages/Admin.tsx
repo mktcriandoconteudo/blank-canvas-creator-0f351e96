@@ -1,16 +1,182 @@
 import { useState } from "react";
-import { motion } from "framer-motion";
+import { motion, AnimatePresence } from "framer-motion";
 import { useNavigate } from "react-router-dom";
-import { Shield, Users, Settings, RefreshCw, ArrowLeft, AlertTriangle, Save, Car, Coins, Trophy, Flame } from "lucide-react";
-import { useAdmin } from "@/hooks/useAdmin";
+import {
+  Shield, Users, Settings, RefreshCw, ArrowLeft, AlertTriangle, Save,
+  Coins, Trophy, Flame, Eye, X, TrendingDown, TrendingUp,
+  Wallet, BarChart3, Activity, Zap, Fuel, Clock, ShieldCheck,
+  AlertCircle, ChevronDown, ChevronUp
+} from "lucide-react";
+import { useAdmin, type PlayerDetail } from "@/hooks/useAdmin";
+import {
+  BURN_RATE_PERCENT, REWARD_POOL_RATE_PERCENT, TREASURY_RATE_PERCENT,
+  MAX_SUPPLY, DEFAULT_DAILY_EMISSION_LIMIT, DEFAULT_DECAY_RATE_PERCENT, MIN_DAILY_EMISSION,
+} from "@/lib/economy/constants";
+
+type TabId = "dashboard" | "players" | "economy" | "collision";
+
+/* ── Stat Card ── */
+const StatCard = ({ icon, label, value, sub, color = "text-primary" }: {
+  icon: React.ReactNode; label: string; value: string | number; sub?: string; color?: string;
+}) => (
+  <div className="rounded-xl border border-border/20 bg-card/30 p-4 backdrop-blur-sm">
+    <div className="flex items-center gap-2 mb-2">
+      <div className={`${color}`}>{icon}</div>
+      <span className="font-display text-[10px] uppercase tracking-wider text-muted-foreground">{label}</span>
+    </div>
+    <p className={`font-display text-2xl font-black ${color}`}>
+      {typeof value === "number" ? value.toLocaleString() : value}
+    </p>
+    {sub && <p className="mt-0.5 font-body text-[10px] text-muted-foreground">{sub}</p>}
+  </div>
+);
+
+/* ── Progress Bar ── */
+const ProgressBar = ({ value, max, color = "from-primary to-primary/60", label }: {
+  value: number; max: number; color?: string; label?: string;
+}) => {
+  const pct = max > 0 ? Math.min(100, (value / max) * 100) : 0;
+  return (
+    <div>
+      {label && (
+        <div className="flex justify-between mb-1">
+          <span className="font-display text-[10px] uppercase tracking-wider text-muted-foreground">{label}</span>
+          <span className="font-display text-[10px] text-foreground">{pct.toFixed(1)}%</span>
+        </div>
+      )}
+      <div className="relative h-2 w-full overflow-hidden rounded-full bg-muted/30">
+        <div className={`absolute inset-y-0 left-0 rounded-full bg-gradient-to-r ${color}`} style={{ width: `${pct}%` }} />
+      </div>
+    </div>
+  );
+};
+
+/* ── Player Detail Modal ── */
+const PlayerDetailModal = ({ player, onClose }: { player: PlayerDetail; onClose: () => void }) => (
+  <motion.div
+    initial={{ opacity: 0 }}
+    animate={{ opacity: 1 }}
+    exit={{ opacity: 0 }}
+    className="fixed inset-0 z-50 flex items-center justify-center bg-background/80 backdrop-blur-sm p-4"
+    onClick={onClose}
+  >
+    <motion.div
+      initial={{ scale: 0.9, opacity: 0 }}
+      animate={{ scale: 1, opacity: 1 }}
+      exit={{ scale: 0.9, opacity: 0 }}
+      onClick={(e) => e.stopPropagation()}
+      className="relative max-h-[85vh] w-full max-w-2xl overflow-y-auto rounded-2xl border border-border/30 bg-card/95 p-6 backdrop-blur-xl"
+    >
+      <button onClick={onClose} className="absolute right-4 top-4 rounded-lg p-1 hover:bg-muted/30">
+        <X className="h-5 w-5 text-muted-foreground" />
+      </button>
+
+      {/* Header */}
+      <div className="mb-6">
+        <h2 className="font-display text-xl font-black text-foreground">{player.username || "Sem nome"}</h2>
+        <p className="font-mono text-xs text-muted-foreground mt-1">Wallet: {player.walletAddress}</p>
+        {player.authId && <p className="font-mono text-[10px] text-muted-foreground">Auth ID: {player.authId}</p>}
+        <p className="font-body text-xs text-muted-foreground mt-1">
+          Cadastro: {new Date(player.createdAt).toLocaleString("pt-BR")} · Último acesso: {new Date(player.updatedAt).toLocaleString("pt-BR")}
+        </p>
+      </div>
+
+      {/* Stats */}
+      <div className="grid grid-cols-2 gap-3 sm:grid-cols-4 mb-6">
+        <StatCard icon={<Coins className="h-4 w-4" />} label="NP" value={player.nitroPoints} color="text-neon-orange" />
+        <StatCard icon={<Fuel className="h-4 w-4" />} label="Fuel" value={`${player.fuelTanks}/5`} color="text-primary" />
+        <StatCard icon={<Trophy className="h-4 w-4" />} label="Vitórias" value={player.totalWins} color="text-neon-green" />
+        <StatCard icon={<Flame className="h-4 w-4" />} label="Corridas" value={player.totalRaces} color="text-destructive" />
+      </div>
+
+      {/* Cars */}
+      <div className="mb-6">
+        <h3 className="font-display text-xs font-bold uppercase tracking-wider text-muted-foreground mb-3">
+          🏎️ Veículos ({player.cars.length})
+        </h3>
+        <div className="space-y-2">
+          {player.cars.map((c) => (
+            <div key={c.id} className="rounded-xl border border-border/20 bg-muted/10 p-3">
+              <div className="flex items-center justify-between mb-2">
+                <span className="font-display text-sm font-bold text-foreground">{c.name}</span>
+                <span className="font-display text-xs text-primary">Lv.{c.level}</span>
+              </div>
+              <div className="grid grid-cols-4 gap-2 text-[10px] font-body text-muted-foreground">
+                <div>SPD: <span className="text-foreground font-bold">{c.speed}</span></div>
+                <div>ACC: <span className="text-foreground font-bold">{c.acceleration}</span></div>
+                <div>HDL: <span className="text-foreground font-bold">{c.handling}</span></div>
+                <div>DUR: <span className="text-foreground font-bold">{c.durability}</span></div>
+              </div>
+              <div className="flex gap-4 mt-1 text-[10px] font-body text-muted-foreground">
+                <span>Motor: <span className={c.engineHealth < 30 ? "text-destructive" : "text-foreground"}>{c.engineHealth}%</span></span>
+                <span>KM: {c.totalKm.toLocaleString()}</span>
+                <span>{c.wins}W / {c.racesCount}R</span>
+              </div>
+            </div>
+          ))}
+        </div>
+      </div>
+
+      {/* Insurance */}
+      {player.insurances.length > 0 && (
+        <div className="mb-6">
+          <h3 className="font-display text-xs font-bold uppercase tracking-wider text-muted-foreground mb-3">
+            🛡️ Seguros ({player.insurances.length})
+          </h3>
+          <div className="space-y-2">
+            {player.insurances.map((ins) => (
+              <div key={ins.id} className={`rounded-xl border p-3 ${ins.isActive ? "border-neon-green/30 bg-neon-green/5" : "border-border/20 bg-muted/5 opacity-60"}`}>
+                <div className="flex items-center justify-between">
+                  <span className="font-display text-xs font-bold text-foreground capitalize">{ins.planType}</span>
+                  <span className={`rounded-full px-2 py-0.5 font-display text-[10px] font-bold ${ins.isActive ? "bg-neon-green/20 text-neon-green" : "bg-muted/30 text-muted-foreground"}`}>
+                    {ins.isActive ? "Ativo" : "Expirado"}
+                  </span>
+                </div>
+                <div className="flex gap-4 mt-1 text-[10px] font-body text-muted-foreground">
+                  <span>Cobertura: {ins.coveragePercent}%</span>
+                  <span>Sinistros: {ins.claimsUsed}/{ins.maxClaims}</span>
+                  <span>Corridas: {ins.racesRemaining}</span>
+                </div>
+              </div>
+            ))}
+          </div>
+        </div>
+      )}
+
+      {/* Recent Collisions */}
+      {player.recentCollisions.length > 0 && (
+        <div>
+          <h3 className="font-display text-xs font-bold uppercase tracking-wider text-muted-foreground mb-3">
+            💥 Colisões Recentes ({player.recentCollisions.length})
+          </h3>
+          <div className="space-y-1">
+            {player.recentCollisions.map((c) => (
+              <div key={c.id} className="flex items-center justify-between rounded-lg bg-destructive/5 px-3 py-2 text-xs">
+                <span className="font-body text-muted-foreground">{new Date(c.createdAt).toLocaleString("pt-BR")}</span>
+                <span className="font-display text-destructive">Motor -{c.damageEngine}% · Dur -{c.damageDurability}</span>
+              </div>
+            ))}
+          </div>
+        </div>
+      )}
+    </motion.div>
+  </motion.div>
+);
+
 
 const Admin = () => {
   const navigate = useNavigate();
-  const { isAdmin, loading, players, collisionConfig, saveCollisionConfig, saving, refreshPlayers } = useAdmin();
+  const {
+    isAdmin, loading, players, collisionConfig, saveCollisionConfig, saving,
+    refreshPlayers, economyReport, refreshEconomy, selectedPlayer,
+    loadPlayerDetail, clearSelectedPlayer,
+  } = useAdmin();
 
   const [localConfig, setLocalConfig] = useState(collisionConfig);
   const [configDirty, setConfigDirty] = useState(false);
-  const [tab, setTab] = useState<"players" | "collision">("players");
+  const [tab, setTab] = useState<TabId>("dashboard");
+  const [searchQuery, setSearchQuery] = useState("");
+  const [economyRulesOpen, setEconomyRulesOpen] = useState(false);
 
   // Sync local config when loaded
   const [synced, setSynced] = useState(false);
@@ -33,10 +199,7 @@ const Admin = () => {
         <AlertTriangle className="h-16 w-16 text-destructive" />
         <h1 className="font-display text-2xl font-bold text-foreground">Acesso Negado</h1>
         <p className="text-muted-foreground">Você não tem permissão para acessar esta página.</p>
-        <button
-          onClick={() => navigate("/garage")}
-          className="mt-4 rounded-xl bg-primary px-6 py-3 font-display text-sm font-bold uppercase tracking-wider text-primary-foreground hover:bg-primary/90"
-        >
+        <button onClick={() => navigate("/garage")} className="mt-4 rounded-xl bg-primary px-6 py-3 font-display text-sm font-bold uppercase tracking-wider text-primary-foreground hover:bg-primary/90">
           Voltar à Garagem
         </button>
       </div>
@@ -53,6 +216,25 @@ const Admin = () => {
     setConfigDirty(true);
   };
 
+  const filteredPlayers = searchQuery
+    ? players.filter((p) =>
+        (p.username ?? "").toLowerCase().includes(searchQuery.toLowerCase()) ||
+        p.walletAddress.toLowerCase().includes(searchQuery.toLowerCase())
+      )
+    : players;
+
+  const totalNP = players.reduce((s, p) => s + p.nitroPoints, 0);
+  const totalRaces = players.reduce((s, p) => s + p.totalRaces, 0);
+  const totalWins = players.reduce((s, p) => s + p.totalWins, 0);
+  const avgWinRate = totalRaces > 0 ? ((totalWins / totalRaces) * 100).toFixed(1) : "0";
+
+  const TABS: { id: TabId; label: string; icon: React.ReactNode }[] = [
+    { id: "dashboard", label: "Dashboard", icon: <BarChart3 className="h-4 w-4" /> },
+    { id: "players", label: "Pilotos", icon: <Users className="h-4 w-4" /> },
+    { id: "economy", label: "Economia", icon: <Coins className="h-4 w-4" /> },
+    { id: "collision", label: "Colisão", icon: <Settings className="h-4 w-4" /> },
+  ];
+
   return (
     <div className="min-h-screen bg-background">
       {/* Header */}
@@ -64,31 +246,22 @@ const Admin = () => {
             </button>
             <div className="flex items-center gap-2">
               <Shield className="h-5 w-5 text-primary" />
-              <h1 className="font-display text-lg font-black uppercase tracking-widest text-primary">
-                Admin Panel
-              </h1>
+              <h1 className="font-display text-lg font-black uppercase tracking-widest text-primary">Admin Panel</h1>
             </div>
           </div>
-          <span className="rounded-full bg-primary/20 px-3 py-1 font-display text-xs font-bold text-primary">
-            🔒 Administrador
-          </span>
+          <span className="rounded-full bg-primary/20 px-3 py-1 font-display text-xs font-bold text-primary">🔒 Administrador</span>
         </div>
       </header>
 
       {/* Tabs */}
-      <div className="border-b border-border/20 bg-card/20 px-4 sm:px-8">
-        <div className="flex gap-1">
-          {[
-            { id: "players" as const, label: "Pilotos", icon: <Users className="h-4 w-4" /> },
-            { id: "collision" as const, label: "Colisão", icon: <Settings className="h-4 w-4" /> },
-          ].map((t) => (
+      <div className="border-b border-border/20 bg-card/20 px-4 sm:px-8 overflow-x-auto">
+        <div className="flex gap-1 min-w-max">
+          {TABS.map((t) => (
             <button
               key={t.id}
               onClick={() => setTab(t.id)}
-              className={`flex items-center gap-2 px-4 py-3 font-display text-xs uppercase tracking-wider transition-colors border-b-2 ${
-                tab === t.id
-                  ? "border-primary text-primary"
-                  : "border-transparent text-muted-foreground hover:text-foreground"
+              className={`flex items-center gap-2 px-4 py-3 font-display text-xs uppercase tracking-wider transition-colors border-b-2 whitespace-nowrap ${
+                tab === t.id ? "border-primary text-primary" : "border-transparent text-muted-foreground hover:text-foreground"
               }`}
             >
               {t.icon}
@@ -98,20 +271,101 @@ const Admin = () => {
         </div>
       </div>
 
-      <main className="px-4 py-6 sm:px-8">
+      <main className="px-4 py-6 sm:px-8 max-w-7xl mx-auto">
+
+        {/* ═══ DASHBOARD ═══ */}
+        {tab === "dashboard" && (
+          <motion.div initial={{ opacity: 0, y: 10 }} animate={{ opacity: 1, y: 0 }} className="space-y-6">
+            {/* KPIs */}
+            <div className="grid grid-cols-2 gap-3 sm:grid-cols-4">
+              <StatCard icon={<Users className="h-4 w-4" />} label="Pilotos Cadastrados" value={players.length} color="text-primary" />
+              <StatCard icon={<Flame className="h-4 w-4" />} label="Total Corridas" value={totalRaces} color="text-neon-orange" />
+              <StatCard icon={<Trophy className="h-4 w-4" />} label="Win Rate Médio" value={`${avgWinRate}%`} color="text-neon-green" />
+              <StatCard icon={<Coins className="h-4 w-4" />} label="NP em Circulação" value={economyReport?.circulatingSupply ?? totalNP} sub={`de ${MAX_SUPPLY.toLocaleString()} max`} color="text-neon-orange" />
+            </div>
+
+            {/* Economy Quick Stats */}
+            {economyReport && (
+              <div className="grid grid-cols-2 gap-3 sm:grid-cols-4">
+                <StatCard icon={<TrendingDown className="h-4 w-4" />} label="Total Queimado" value={economyReport.totalBurned} sub={`${economyReport.burnRatePercent}% burn rate`} color="text-destructive" />
+                <StatCard icon={<Zap className="h-4 w-4" />} label="Total Emitido" value={economyReport.totalMinted} sub={`Hoje: ${economyReport.dailyEmittedToday.toLocaleString()}`} color="text-primary" />
+                <StatCard icon={<Wallet className="h-4 w-4" />} label="Treasury" value={economyReport.treasuryBalance} color="text-accent" />
+                <StatCard icon={<Activity className="h-4 w-4" />} label="Reward Pool" value={economyReport.rewardPoolBalance} color="text-neon-green" />
+              </div>
+            )}
+
+            {/* Supply Progress */}
+            {economyReport && (
+              <div className="rounded-xl border border-border/20 bg-card/30 p-4 backdrop-blur-sm">
+                <h3 className="font-display text-xs font-bold uppercase tracking-wider text-muted-foreground mb-3">Supply Overview</h3>
+                <div className="space-y-3">
+                  <ProgressBar value={economyReport.totalMinted} max={MAX_SUPPLY} label="Minted / Hard Cap" color="from-primary to-accent" />
+                  <ProgressBar value={economyReport.totalBurned} max={economyReport.totalMinted || 1} label="Burned / Minted" color="from-destructive to-neon-orange" />
+                  <ProgressBar value={economyReport.dailyEmittedToday} max={economyReport.dailyEmissionLimit || DEFAULT_DAILY_EMISSION_LIMIT} label="Emissão Diária Consumida" color="from-neon-green to-emerald-400" />
+                </div>
+                <div className="mt-3 flex items-center gap-2">
+                  <span className={`inline-flex items-center gap-1 rounded-full px-2.5 py-1 font-display text-[10px] font-bold ${
+                    economyReport.sustainabilityScore === "HIGH_DEFLATION" ? "bg-neon-green/20 text-neon-green" :
+                    economyReport.sustainabilityScore === "MODERATE_DEFLATION" ? "bg-neon-orange/20 text-neon-orange" :
+                    economyReport.sustainabilityScore === "LOW_DEFLATION" ? "bg-amber-400/20 text-amber-400" :
+                    "bg-muted/20 text-muted-foreground"
+                  }`}>
+                    {economyReport.sustainabilityScore === "HIGH_DEFLATION" ? "🟢 Alta Deflação" :
+                     economyReport.sustainabilityScore === "MODERATE_DEFLATION" ? "🟡 Deflação Moderada" :
+                     economyReport.sustainabilityScore === "LOW_DEFLATION" ? "🟠 Baixa Deflação" :
+                     "⚪ Sem Dados"}
+                  </span>
+                  {economyReport.projectedDaysToDepletion > 0 && (
+                    <span className="font-body text-[10px] text-muted-foreground">
+                      Projeção de esgotamento: ~{economyReport.projectedDaysToDepletion} dias
+                    </span>
+                  )}
+                </div>
+              </div>
+            )}
+
+            {/* Top Players */}
+            <div className="rounded-xl border border-border/20 bg-card/30 p-4 backdrop-blur-sm">
+              <h3 className="font-display text-xs font-bold uppercase tracking-wider text-muted-foreground mb-3">🏆 Top 5 Pilotos (NP)</h3>
+              <div className="space-y-2">
+                {[...players].sort((a, b) => b.nitroPoints - a.nitroPoints).slice(0, 5).map((p, i) => (
+                  <div key={p.id} className="flex items-center justify-between rounded-lg bg-muted/10 px-3 py-2">
+                    <div className="flex items-center gap-3">
+                      <span className={`font-display text-sm font-black ${i === 0 ? "text-neon-orange" : i === 1 ? "text-muted-foreground" : i === 2 ? "text-amber-600" : "text-muted-foreground/50"}`}>
+                        #{i + 1}
+                      </span>
+                      <span className="font-display text-sm text-foreground">{p.username || "Sem nome"}</span>
+                    </div>
+                    <div className="flex items-center gap-4 text-xs">
+                      <span className="font-display text-neon-orange font-bold">{p.nitroPoints.toLocaleString()} NP</span>
+                      <span className="text-muted-foreground">{p.totalWins}W/{p.totalRaces}R</span>
+                    </div>
+                  </div>
+                ))}
+              </div>
+            </div>
+          </motion.div>
+        )}
+
+        {/* ═══ PLAYERS ═══ */}
         {tab === "players" && (
           <motion.div initial={{ opacity: 0, y: 10 }} animate={{ opacity: 1, y: 0 }}>
-            <div className="flex items-center justify-between mb-4">
+            <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between mb-4">
               <h2 className="font-display text-sm font-bold uppercase tracking-wider text-foreground">
                 Pilotos Cadastrados ({players.length})
               </h2>
-              <button
-                onClick={refreshPlayers}
-                className="flex items-center gap-2 rounded-lg border border-primary/30 bg-primary/10 px-3 py-2 font-display text-xs text-primary hover:bg-primary/20 transition-colors"
-              >
-                <RefreshCw className="h-3.5 w-3.5" />
-                Atualizar
-              </button>
+              <div className="flex items-center gap-2">
+                <input
+                  type="text"
+                  placeholder="Buscar por nome ou wallet..."
+                  value={searchQuery}
+                  onChange={(e) => setSearchQuery(e.target.value)}
+                  className="rounded-lg border border-border/30 bg-card/30 px-3 py-2 font-body text-xs text-foreground placeholder:text-muted-foreground outline-none focus:border-primary/50 w-48 sm:w-64"
+                />
+                <button onClick={refreshPlayers} className="flex items-center gap-2 rounded-lg border border-primary/30 bg-primary/10 px-3 py-2 font-display text-xs text-primary hover:bg-primary/20 transition-colors">
+                  <RefreshCw className="h-3.5 w-3.5" />
+                </button>
+              </div>
             </div>
 
             <div className="overflow-x-auto rounded-xl border border-border/20 bg-card/30 backdrop-blur-sm">
@@ -120,53 +374,45 @@ const Admin = () => {
                   <tr className="border-b border-border/20">
                     <th className="px-4 py-3 text-left font-display text-xs uppercase tracking-wider text-muted-foreground">Piloto</th>
                     <th className="px-4 py-3 text-left font-display text-xs uppercase tracking-wider text-muted-foreground">Wallet</th>
-                    <th className="px-4 py-3 text-center font-display text-xs uppercase tracking-wider text-muted-foreground">
-                      <Coins className="h-3.5 w-3.5 inline mr-1" />NP
-                    </th>
-                    <th className="px-4 py-3 text-center font-display text-xs uppercase tracking-wider text-muted-foreground">
-                      <Car className="h-3.5 w-3.5 inline mr-1" />Carros
-                    </th>
-                    <th className="px-4 py-3 text-center font-display text-xs uppercase tracking-wider text-muted-foreground">
-                      <Trophy className="h-3.5 w-3.5 inline mr-1" />W/L
-                    </th>
-                    <th className="px-4 py-3 text-center font-display text-xs uppercase tracking-wider text-muted-foreground">
-                      <Flame className="h-3.5 w-3.5 inline mr-1" />Corridas
-                    </th>
+                    <th className="px-4 py-3 text-center font-display text-xs uppercase tracking-wider text-muted-foreground">NP</th>
+                    <th className="px-4 py-3 text-center font-display text-xs uppercase tracking-wider text-muted-foreground">Carros</th>
+                    <th className="px-4 py-3 text-center font-display text-xs uppercase tracking-wider text-muted-foreground">W/L</th>
+                    <th className="px-4 py-3 text-center font-display text-xs uppercase tracking-wider text-muted-foreground">Corridas</th>
+                    <th className="px-4 py-3 text-center font-display text-xs uppercase tracking-wider text-muted-foreground">Fuel</th>
                     <th className="px-4 py-3 text-left font-display text-xs uppercase tracking-wider text-muted-foreground">Desde</th>
+                    <th className="px-4 py-3 text-center font-display text-xs uppercase tracking-wider text-muted-foreground">Ações</th>
                   </tr>
                 </thead>
                 <tbody>
-                  {players.map((p) => (
+                  {filteredPlayers.map((p) => (
                     <tr key={p.id} className="border-b border-border/10 hover:bg-muted/10 transition-colors">
-                      <td className="px-4 py-3 font-display text-sm text-foreground">
-                        {p.username || "Sem nome"}
-                      </td>
-                      <td className="px-4 py-3 font-mono text-xs text-muted-foreground">
-                        {p.walletAddress.slice(0, 8)}...{p.walletAddress.slice(-4)}
-                      </td>
-                      <td className="px-4 py-3 text-center font-display text-sm text-neon-orange font-bold">
-                        {p.nitroPoints.toLocaleString()}
-                      </td>
-                      <td className="px-4 py-3 text-center font-display text-sm text-foreground">
-                        {p.carsCount}
-                      </td>
+                      <td className="px-4 py-3 font-display text-sm text-foreground">{p.username || "Sem nome"}</td>
+                      <td className="px-4 py-3 font-mono text-xs text-muted-foreground">{p.walletAddress.slice(0, 8)}...{p.walletAddress.slice(-4)}</td>
+                      <td className="px-4 py-3 text-center font-display text-sm text-neon-orange font-bold">{p.nitroPoints.toLocaleString()}</td>
+                      <td className="px-4 py-3 text-center font-display text-sm text-foreground">{p.carsCount}</td>
                       <td className="px-4 py-3 text-center font-display text-xs">
                         <span className="text-neon-green">{p.totalWins}W</span>
                         <span className="text-muted-foreground mx-1">/</span>
                         <span className="text-destructive">{p.totalLosses}L</span>
                       </td>
-                      <td className="px-4 py-3 text-center font-display text-sm text-foreground">
-                        {p.totalRaces}
-                      </td>
-                      <td className="px-4 py-3 font-body text-xs text-muted-foreground">
-                        {new Date(p.createdAt).toLocaleDateString("pt-BR")}
+                      <td className="px-4 py-3 text-center font-display text-sm text-foreground">{p.totalRaces}</td>
+                      <td className="px-4 py-3 text-center font-display text-xs text-primary">{p.fuelTanks}/5</td>
+                      <td className="px-4 py-3 font-body text-xs text-muted-foreground">{new Date(p.createdAt).toLocaleDateString("pt-BR")}</td>
+                      <td className="px-4 py-3 text-center">
+                        <button
+                          onClick={() => loadPlayerDetail(p)}
+                          className="rounded-lg border border-primary/30 bg-primary/10 p-1.5 text-primary hover:bg-primary/20 transition-colors"
+                          title="Ver detalhes"
+                        >
+                          <Eye className="h-3.5 w-3.5" />
+                        </button>
                       </td>
                     </tr>
                   ))}
-                  {players.length === 0 && (
+                  {filteredPlayers.length === 0 && (
                     <tr>
-                      <td colSpan={7} className="px-4 py-8 text-center text-muted-foreground">
-                        Nenhum piloto cadastrado.
+                      <td colSpan={9} className="px-4 py-8 text-center text-muted-foreground">
+                        {searchQuery ? "Nenhum piloto encontrado." : "Nenhum piloto cadastrado."}
                       </td>
                     </tr>
                   )}
@@ -176,114 +422,217 @@ const Admin = () => {
           </motion.div>
         )}
 
+        {/* ═══ ECONOMY ═══ */}
+        {tab === "economy" && (
+          <motion.div initial={{ opacity: 0, y: 10 }} animate={{ opacity: 1, y: 0 }} className="space-y-6">
+            <div className="flex items-center justify-between">
+              <h2 className="font-display text-sm font-bold uppercase tracking-wider text-foreground">Sistema Econômico Deflacionário</h2>
+              <button onClick={refreshEconomy} className="flex items-center gap-2 rounded-lg border border-primary/30 bg-primary/10 px-3 py-2 font-display text-xs text-primary hover:bg-primary/20">
+                <RefreshCw className="h-3.5 w-3.5" />
+                Atualizar
+              </button>
+            </div>
+
+            {economyReport ? (
+              <>
+                {/* Main Stats */}
+                <div className="grid grid-cols-2 gap-3 sm:grid-cols-3">
+                  <StatCard icon={<Coins className="h-4 w-4" />} label="Hard Cap" value={MAX_SUPPLY.toLocaleString()} sub="Supply máximo" color="text-foreground" />
+                  <StatCard icon={<TrendingUp className="h-4 w-4" />} label="Total Emitido (Minted)" value={economyReport.totalMinted} sub={`${((economyReport.totalMinted / MAX_SUPPLY) * 100).toFixed(2)}% do cap`} color="text-primary" />
+                  <StatCard icon={<TrendingDown className="h-4 w-4" />} label="Total Queimado (Burned)" value={economyReport.totalBurned} sub={`Burn rate: ${economyReport.burnRatePercent}%`} color="text-destructive" />
+                  <StatCard icon={<Activity className="h-4 w-4" />} label="Supply Circulante" value={economyReport.circulatingSupply} color="text-neon-orange" />
+                  <StatCard icon={<Wallet className="h-4 w-4" />} label="Treasury" value={economyReport.treasuryBalance} sub="Reserva estratégica (70%)" color="text-accent" />
+                  <StatCard icon={<Zap className="h-4 w-4" />} label="Reward Pool" value={economyReport.rewardPoolBalance} sub="Distribuição jogadores (20%)" color="text-neon-green" />
+                </div>
+
+                {/* Emission Stats */}
+                <div className="rounded-xl border border-border/20 bg-card/30 p-4 backdrop-blur-sm">
+                  <h3 className="font-display text-xs font-bold uppercase tracking-wider text-muted-foreground mb-3">Emissão Diária</h3>
+                  <div className="grid grid-cols-2 gap-4 sm:grid-cols-4 mb-4">
+                    <div>
+                      <span className="font-display text-[10px] uppercase tracking-wider text-muted-foreground">Limite Diário</span>
+                      <p className="font-display text-lg font-bold text-primary">{economyReport.dailyEmissionLimit.toLocaleString()}</p>
+                    </div>
+                    <div>
+                      <span className="font-display text-[10px] uppercase tracking-wider text-muted-foreground">Emitido Hoje</span>
+                      <p className="font-display text-lg font-bold text-neon-orange">{economyReport.dailyEmittedToday.toLocaleString()}</p>
+                    </div>
+                    <div>
+                      <span className="font-display text-[10px] uppercase tracking-wider text-muted-foreground">Burn Médio/Dia</span>
+                      <p className="font-display text-lg font-bold text-destructive">{economyReport.avgDailyBurn.toLocaleString()}</p>
+                    </div>
+                    <div>
+                      <span className="font-display text-[10px] uppercase tracking-wider text-muted-foreground">Dias Ativos</span>
+                      <p className="font-display text-lg font-bold text-foreground">{economyReport.daysActive}</p>
+                    </div>
+                  </div>
+                  <ProgressBar value={economyReport.dailyEmittedToday} max={economyReport.dailyEmissionLimit} label="Progresso Emissão Diária" color="from-neon-green to-primary" />
+                </div>
+
+                {/* Sustainability */}
+                <div className="rounded-xl border border-border/20 bg-card/30 p-4 backdrop-blur-sm">
+                  <h3 className="font-display text-xs font-bold uppercase tracking-wider text-muted-foreground mb-3">Sustentabilidade</h3>
+                  <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:gap-6">
+                    <span className={`inline-flex items-center gap-2 rounded-xl px-4 py-2 font-display text-sm font-bold ${
+                      economyReport.sustainabilityScore === "HIGH_DEFLATION" ? "bg-neon-green/20 text-neon-green" :
+                      economyReport.sustainabilityScore === "MODERATE_DEFLATION" ? "bg-neon-orange/20 text-neon-orange" :
+                      economyReport.sustainabilityScore === "LOW_DEFLATION" ? "bg-amber-400/20 text-amber-400" :
+                      "bg-muted/20 text-muted-foreground"
+                    }`}>
+                      <ShieldCheck className="h-5 w-5" />
+                      {economyReport.sustainabilityScore === "HIGH_DEFLATION" ? "Alta Deflação" :
+                       economyReport.sustainabilityScore === "MODERATE_DEFLATION" ? "Deflação Moderada" :
+                       economyReport.sustainabilityScore === "LOW_DEFLATION" ? "Baixa Deflação" : "Sem Dados"}
+                    </span>
+                    {economyReport.projectedDaysToDepletion > 0 && (
+                      <div className="flex items-center gap-2">
+                        <Clock className="h-4 w-4 text-muted-foreground" />
+                        <span className="font-body text-sm text-muted-foreground">
+                          Projeção de esgotamento: <span className="font-bold text-foreground">~{economyReport.projectedDaysToDepletion} dias</span>
+                        </span>
+                      </div>
+                    )}
+                  </div>
+                </div>
+              </>
+            ) : (
+              <div className="flex items-center justify-center py-12 text-muted-foreground">
+                <AlertCircle className="h-5 w-5 mr-2" />
+                Carregando dados econômicos...
+              </div>
+            )}
+
+            {/* Economy Rules */}
+            <div className="rounded-xl border border-border/20 bg-card/30 backdrop-blur-sm overflow-hidden">
+              <button
+                onClick={() => setEconomyRulesOpen(!economyRulesOpen)}
+                className="flex w-full items-center justify-between px-4 py-3 hover:bg-muted/10 transition-colors"
+              >
+                <span className="font-display text-xs font-bold uppercase tracking-wider text-muted-foreground">📜 Regras do Sistema Deflacionário</span>
+                {economyRulesOpen ? <ChevronUp className="h-4 w-4 text-muted-foreground" /> : <ChevronDown className="h-4 w-4 text-muted-foreground" />}
+              </button>
+              <AnimatePresence>
+                {economyRulesOpen && (
+                  <motion.div
+                    initial={{ height: 0, opacity: 0 }}
+                    animate={{ height: "auto", opacity: 1 }}
+                    exit={{ height: 0, opacity: 0 }}
+                    className="overflow-hidden"
+                  >
+                    <div className="px-4 pb-4 space-y-4 font-body text-xs text-muted-foreground leading-relaxed">
+                      <div>
+                        <h4 className="font-display text-sm font-bold text-foreground mb-1">Hard Cap</h4>
+                        <p>O supply máximo de Nitro Points é fixo em <span className="text-primary font-bold">{MAX_SUPPLY.toLocaleString()} NP</span>. Nenhum token pode ser criado além desse limite.</p>
+                      </div>
+                      <div>
+                        <h4 className="font-display text-sm font-bold text-foreground mb-1">Divisão de Transações</h4>
+                        <p>Toda transação econômica (reparos, seguros, troca de óleo) é automaticamente dividida:</p>
+                        <div className="mt-2 grid grid-cols-3 gap-2">
+                          <div className="rounded-lg bg-destructive/10 p-2 text-center">
+                            <span className="font-display text-lg font-black text-destructive">{BURN_RATE_PERCENT}%</span>
+                            <p className="text-[10px] text-destructive/70">Queima (Burn)</p>
+                          </div>
+                          <div className="rounded-lg bg-neon-green/10 p-2 text-center">
+                            <span className="font-display text-lg font-black text-neon-green">{REWARD_POOL_RATE_PERCENT}%</span>
+                            <p className="text-[10px] text-neon-green/70">Reward Pool</p>
+                          </div>
+                          <div className="rounded-lg bg-accent/10 p-2 text-center">
+                            <span className="font-display text-lg font-black text-accent">{TREASURY_RATE_PERCENT}%</span>
+                            <p className="text-[10px] text-accent/70">Treasury</p>
+                          </div>
+                        </div>
+                      </div>
+                      <div>
+                        <h4 className="font-display text-sm font-bold text-foreground mb-1">Controle de Emissão</h4>
+                        <p>Novos tokens são emitidos como recompensa de corrida, sujeitos a:</p>
+                        <ul className="mt-1 list-disc list-inside space-y-0.5">
+                          <li>Limite diário base: <span className="text-foreground font-bold">{DEFAULT_DAILY_EMISSION_LIMIT.toLocaleString()} NP/dia</span></li>
+                          <li>Decay semanal: <span className="text-foreground font-bold">{DEFAULT_DECAY_RATE_PERCENT}%</span> por semana (o limite diminui ao longo do tempo)</li>
+                          <li>Piso mínimo: <span className="text-foreground font-bold">{MIN_DAILY_EMISSION.toLocaleString()} NP/dia</span></li>
+                          <li>Bônus por jogadores ativos (últimas 24h)</li>
+                          <li>Respeita o Hard Cap global</li>
+                        </ul>
+                      </div>
+                      <div>
+                        <h4 className="font-display text-sm font-bold text-foreground mb-1">Fluxo Deflacionário</h4>
+                        <p>
+                          À medida que jogadores gastam NP (reparos, seguros, combustível), parte é permanentemente removida do supply.
+                          Combinado com o decay de emissão, o sistema naturalmente reduz o supply circulante ao longo do tempo,
+                          valorizando os tokens existentes.
+                        </p>
+                      </div>
+                    </div>
+                  </motion.div>
+                )}
+              </AnimatePresence>
+            </div>
+          </motion.div>
+        )}
+
+        {/* ═══ COLLISION ═══ */}
         {tab === "collision" && (
           <motion.div initial={{ opacity: 0, y: 10 }} animate={{ opacity: 1, y: 0 }} className="max-w-lg">
-            <h2 className="font-display text-sm font-bold uppercase tracking-wider text-foreground mb-4">
-              Configuração de Colisão
-            </h2>
+            <h2 className="font-display text-sm font-bold uppercase tracking-wider text-foreground mb-4">Configuração de Colisão</h2>
             <p className="font-body text-xs text-muted-foreground mb-6">
               Ajuste a chance e intensidade das colisões durante as corridas. Essas configurações afetam todos os jogadores em tempo real.
             </p>
 
             <div className="space-y-6 rounded-xl border border-border/20 bg-card/30 backdrop-blur-sm p-6">
-              {/* Chance % */}
               <div>
                 <label className="flex items-center justify-between mb-2">
                   <span className="font-display text-xs uppercase tracking-wider text-foreground">Chance de Colisão</span>
                   <span className="font-display text-lg font-bold text-primary">{localConfig.collisionChancePercent}%</span>
                 </label>
-                <input
-                  type="range"
-                  min={0}
-                  max={100}
-                  value={localConfig.collisionChancePercent}
-                  onChange={(e) => updateConfig("collisionChancePercent", Number(e.target.value))}
-                  className="w-full accent-primary"
-                />
-                <div className="flex justify-between text-[10px] text-muted-foreground mt-1">
-                  <span>0% (sem colisão)</span>
-                  <span>100% (sempre)</span>
-                </div>
+                <input type="range" min={0} max={100} value={localConfig.collisionChancePercent} onChange={(e) => updateConfig("collisionChancePercent", Number(e.target.value))} className="w-full accent-primary" />
+                <div className="flex justify-between text-[10px] text-muted-foreground mt-1"><span>0%</span><span>100%</span></div>
               </div>
-
-              {/* Min damage */}
               <div>
                 <label className="flex items-center justify-between mb-2">
                   <span className="font-display text-xs uppercase tracking-wider text-foreground">Dano Mínimo (Motor)</span>
                   <span className="font-display text-lg font-bold text-neon-orange">{localConfig.collisionMinDamage}%</span>
                 </label>
-                <input
-                  type="range"
-                  min={1}
-                  max={50}
-                  value={localConfig.collisionMinDamage}
-                  onChange={(e) => updateConfig("collisionMinDamage", Number(e.target.value))}
-                  className="w-full accent-neon-orange"
-                />
+                <input type="range" min={1} max={50} value={localConfig.collisionMinDamage} onChange={(e) => updateConfig("collisionMinDamage", Number(e.target.value))} className="w-full accent-neon-orange" />
               </div>
-
-              {/* Max damage */}
               <div>
                 <label className="flex items-center justify-between mb-2">
                   <span className="font-display text-xs uppercase tracking-wider text-foreground">Dano Máximo (Motor)</span>
                   <span className="font-display text-lg font-bold text-destructive">{localConfig.collisionMaxDamage}%</span>
                 </label>
-                <input
-                  type="range"
-                  min={1}
-                  max={80}
-                  value={localConfig.collisionMaxDamage}
-                  onChange={(e) => updateConfig("collisionMaxDamage", Number(e.target.value))}
-                  className="w-full accent-destructive"
-                />
+                <input type="range" min={1} max={80} value={localConfig.collisionMaxDamage} onChange={(e) => updateConfig("collisionMaxDamage", Number(e.target.value))} className="w-full accent-destructive" />
               </div>
-
-              {/* Durability loss */}
               <div>
                 <label className="flex items-center justify-between mb-2">
                   <span className="font-display text-xs uppercase tracking-wider text-foreground">Perda de Durabilidade</span>
                   <span className="font-display text-lg font-bold text-amber-400">{localConfig.collisionDurabilityLoss}</span>
                 </label>
-                <input
-                  type="range"
-                  min={0}
-                  max={20}
-                  value={localConfig.collisionDurabilityLoss}
-                  onChange={(e) => updateConfig("collisionDurabilityLoss", Number(e.target.value))}
-                  className="w-full accent-amber-400"
-                />
+                <input type="range" min={0} max={20} value={localConfig.collisionDurabilityLoss} onChange={(e) => updateConfig("collisionDurabilityLoss", Number(e.target.value))} className="w-full accent-amber-400" />
               </div>
-
-              {/* Save */}
-              <button
-                onClick={handleSaveConfig}
-                disabled={!configDirty || saving}
-                className="w-full flex items-center justify-center gap-2 rounded-xl bg-primary px-6 py-3 font-display text-sm font-bold uppercase tracking-wider text-primary-foreground transition-all hover:bg-primary/90 disabled:opacity-50 disabled:cursor-not-allowed"
-              >
+              <button onClick={handleSaveConfig} disabled={!configDirty || saving} className="w-full flex items-center justify-center gap-2 rounded-xl bg-primary px-6 py-3 font-display text-sm font-bold uppercase tracking-wider text-primary-foreground transition-all hover:bg-primary/90 disabled:opacity-50 disabled:cursor-not-allowed">
                 <Save className="h-4 w-4" />
                 {saving ? "Salvando..." : "Salvar Configurações"}
               </button>
             </div>
 
-            {/* Preview */}
             <div className="mt-6 rounded-xl border border-border/20 bg-card/20 p-4">
-              <h3 className="font-display text-xs font-bold uppercase tracking-wider text-muted-foreground mb-3">
-                Simulação
-              </h3>
+              <h3 className="font-display text-xs font-bold uppercase tracking-wider text-muted-foreground mb-3">Simulação</h3>
               <p className="font-body text-xs text-muted-foreground">
                 Com {localConfig.collisionChancePercent}% de chance, em 10 corridas um piloto sofrerá em média{" "}
-                <span className="text-foreground font-bold">
-                  {(localConfig.collisionChancePercent / 10).toFixed(1)} colisões
-                </span>
-                , com dano de motor entre{" "}
-                <span className="text-neon-orange font-bold">{localConfig.collisionMinDamage}%</span> e{" "}
-                <span className="text-destructive font-bold">{localConfig.collisionMaxDamage}%</span>
-                {" "}e perda de <span className="text-amber-400 font-bold">{localConfig.collisionDurabilityLoss}</span> de durabilidade por colisão.
+                <span className="text-foreground font-bold">{(localConfig.collisionChancePercent / 10).toFixed(1)} colisões</span>,
+                com dano de motor entre <span className="text-neon-orange font-bold">{localConfig.collisionMinDamage}%</span> e{" "}
+                <span className="text-destructive font-bold">{localConfig.collisionMaxDamage}%</span> e perda de{" "}
+                <span className="text-amber-400 font-bold">{localConfig.collisionDurabilityLoss}</span> de durabilidade por colisão.
               </p>
             </div>
           </motion.div>
         )}
       </main>
+
+      {/* Player Detail Modal */}
+      <AnimatePresence>
+        {selectedPlayer && (
+          <PlayerDetailModal player={selectedPlayer} onClose={clearSelectedPlayer} />
+        )}
+      </AnimatePresence>
     </div>
   );
 };

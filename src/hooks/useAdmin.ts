@@ -1,9 +1,13 @@
 import { useState, useEffect, useCallback } from "react";
 import { supabase } from "@/lib/supabase";
 import { useAuth } from "@/hooks/useAuth";
+import { generateEconomyReport } from "@/lib/economy/reportGenerator";
+import { fetchEconomyState } from "@/lib/economy";
+import type { EconomyReport, EconomyState } from "@/lib/economy/types";
 
-interface Player {
+export interface Player {
   id: string;
+  authId: string | null;
   username: string | null;
   walletAddress: string;
   nitroPoints: number;
@@ -12,7 +16,48 @@ interface Player {
   totalWins: number;
   totalLosses: number;
   createdAt: string;
+  updatedAt: string;
   carsCount: number;
+  avatarUrl: string | null;
+}
+
+export interface PlayerDetail extends Player {
+  cars: PlayerCar[];
+  insurances: PlayerInsurance[];
+  recentCollisions: PlayerCollision[];
+}
+
+export interface PlayerCar {
+  id: string;
+  name: string;
+  model: string;
+  level: number;
+  speed: number;
+  acceleration: number;
+  handling: number;
+  durability: number;
+  engineHealth: number;
+  totalKm: number;
+  wins: number;
+  racesCount: number;
+}
+
+export interface PlayerInsurance {
+  id: string;
+  planType: string;
+  coveragePercent: number;
+  isActive: boolean;
+  claimsUsed: number;
+  maxClaims: number;
+  racesRemaining: number;
+  expiresAt: string;
+}
+
+export interface PlayerCollision {
+  id: string;
+  damageEngine: number;
+  damageDurability: number;
+  createdAt: string;
 }
 
 interface CollisionConfig {
@@ -34,6 +79,9 @@ export const useAdmin = () => {
     collisionDurabilityLoss: 3,
   });
   const [saving, setSaving] = useState(false);
+  const [economyReport, setEconomyReport] = useState<EconomyReport | null>(null);
+  const [economyState, setEconomyState] = useState<EconomyState | null>(null);
+  const [selectedPlayer, setSelectedPlayer] = useState<PlayerDetail | null>(null);
 
   // Check admin status
   useEffect(() => {
@@ -57,7 +105,6 @@ export const useAdmin = () => {
 
     if (!users) return;
 
-    // Get car counts per wallet
     const { data: cars } = await supabase.from("cars").select("owner_wallet");
     const carCounts: Record<string, number> = {};
     (cars ?? []).forEach((c: any) => {
@@ -67,6 +114,7 @@ export const useAdmin = () => {
     setPlayers(
       users.map((u: any) => ({
         id: u.id,
+        authId: u.auth_id,
         username: u.username,
         walletAddress: u.wallet_address,
         nitroPoints: u.nitro_points,
@@ -75,9 +123,56 @@ export const useAdmin = () => {
         totalWins: u.total_wins,
         totalLosses: u.total_losses,
         createdAt: u.created_at,
+        updatedAt: u.updated_at,
         carsCount: carCounts[u.wallet_address] || 0,
+        avatarUrl: u.avatar_url,
       }))
     );
+  }, []);
+
+  // Load player detail
+  const loadPlayerDetail = useCallback(async (player: Player) => {
+    const [carsRes, insRes, collRes] = await Promise.all([
+      supabase.from("cars").select("*").eq("owner_wallet", player.walletAddress),
+      supabase.from("car_insurance").select("*").eq("owner_wallet", player.walletAddress).order("created_at", { ascending: false }),
+      supabase.from("collision_events").select("*").eq("owner_wallet", player.walletAddress).order("created_at", { ascending: false }).limit(10),
+    ]);
+
+    const detail: PlayerDetail = {
+      ...player,
+      cars: (carsRes.data ?? []).map((c: any) => ({
+        id: c.id,
+        name: c.name,
+        model: c.model,
+        level: c.level,
+        speed: c.speed_base,
+        acceleration: c.acceleration_base,
+        handling: c.handling_base,
+        durability: c.durability,
+        engineHealth: c.engine_health,
+        totalKm: Number(c.total_km),
+        wins: c.wins,
+        racesCount: c.races_count,
+      })),
+      insurances: (insRes.data ?? []).map((i: any) => ({
+        id: i.id,
+        planType: i.plan_type,
+        coveragePercent: i.coverage_percent,
+        isActive: i.is_active,
+        claimsUsed: i.claims_used,
+        maxClaims: i.max_claims,
+        racesRemaining: i.races_remaining,
+        expiresAt: i.expires_at,
+      })),
+      recentCollisions: (collRes.data ?? []).map((c: any) => ({
+        id: c.id,
+        damageEngine: c.damage_engine,
+        damageDurability: c.damage_durability,
+        createdAt: c.created_at,
+      })),
+    };
+
+    setSelectedPlayer(detail);
   }, []);
 
   // Load collision config
@@ -98,12 +193,23 @@ export const useAdmin = () => {
     }
   }, []);
 
+  // Load economy
+  const loadEconomy = useCallback(async () => {
+    const [report, state] = await Promise.all([
+      generateEconomyReport(),
+      fetchEconomyState(),
+    ]);
+    setEconomyReport(report);
+    setEconomyState(state);
+  }, []);
+
   useEffect(() => {
     if (isAdmin) {
       loadPlayers();
       loadConfig();
+      loadEconomy();
     }
-  }, [isAdmin, loadPlayers, loadConfig]);
+  }, [isAdmin, loadPlayers, loadConfig, loadEconomy]);
 
   const saveCollisionConfig = useCallback(
     async (config: CollisionConfig) => {
@@ -139,5 +245,11 @@ export const useAdmin = () => {
     saveCollisionConfig,
     saving,
     refreshPlayers: loadPlayers,
+    economyReport,
+    economyState,
+    refreshEconomy: loadEconomy,
+    selectedPlayer,
+    loadPlayerDetail,
+    clearSelectedPlayer: () => setSelectedPlayer(null),
   };
 };
