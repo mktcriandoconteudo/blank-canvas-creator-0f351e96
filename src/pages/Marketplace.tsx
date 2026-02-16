@@ -667,7 +667,7 @@ const Marketplace = () => {
 
                 <div className="flex-1">
                   <h3 className="font-display text-sm font-black uppercase tracking-wider text-foreground flex items-center gap-2">
-                    🎁 Caixa Surpresa
+                    Caixa Surpresa
                     <span className="rounded-md bg-accent/20 px-2 py-0.5 text-[9px] text-accent">NOVO</span>
                   </h3>
                   <p className="mt-1 font-body text-xs text-muted-foreground">
