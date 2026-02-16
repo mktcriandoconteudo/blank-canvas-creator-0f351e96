@@ -7,8 +7,10 @@ import { useAuth } from "@/hooks/useAuth";
 import {
   Zap, Trophy, Gauge, Shield, Coins, Fuel, Users, Star,
   ChevronRight, ArrowRight, Sparkles, Car, Wrench, Flag,
-  Twitter, MessageCircle, Globe, Github, Menu, X, ShoppingCart
+  Twitter, MessageCircle, Globe, Github, Menu, X, ShoppingCart,
+  TrendingUp, DollarSign
 } from "lucide-react";
+import turboNitroLogo from "@/assets/turbonitro-logo.png";
 import landingHero from "@/assets/landing-hero-v2.jpg";
 import nftCard from "@/assets/nft-card-preview.jpg";
 import featureGarage from "@/assets/feature-garage.jpg";
@@ -101,6 +103,93 @@ const RarityCard = ({
   </motion.div>
 );
 
+/* ─── Token Price Ticker (fictício) ─── */
+const TokenTicker = () => {
+  const [price, setPrice] = useState(0.0847);
+  const [change, setChange] = useState(12.4);
+  const [brlPrice, setBrlPrice] = useState(0.48);
+
+  // Simula micro-variação no preço a cada 3s
+  useEffect(() => {
+    const interval = setInterval(() => {
+      setPrice((p) => {
+        const variation = (Math.random() - 0.4) * 0.003;
+        const newPrice = Math.max(0.01, p + variation);
+        setBrlPrice(newPrice * 5.65);
+        setChange((prev) => {
+          const delta = (Math.random() - 0.35) * 0.8;
+          return Math.round((prev + delta) * 10) / 10;
+        });
+        return Math.round(newPrice * 10000) / 10000;
+      });
+    }, 3000);
+    return () => clearInterval(interval);
+  }, []);
+
+  return (
+    <motion.div
+      initial={{ opacity: 0, y: 20 }}
+      animate={{ opacity: 1, y: 0 }}
+      transition={{ delay: 0.9, duration: 0.6 }}
+      className="mt-8 inline-flex flex-col gap-2 sm:flex-row sm:items-center sm:gap-3"
+    >
+      {/* Price Card */}
+      <div className="flex items-center gap-3 rounded-2xl border border-neon-orange/30 bg-card/50 px-5 py-3 backdrop-blur-xl shadow-[0_0_30px_hsl(30_90%_55%/0.1)]">
+        <div className="flex h-10 w-10 items-center justify-center rounded-full bg-neon-orange/20">
+          <Coins className="h-5 w-5 text-neon-orange" />
+        </div>
+        <div>
+          <div className="flex items-center gap-2">
+            <span className="font-display text-xs uppercase tracking-wider text-muted-foreground">NP/USDT</span>
+            <span className={`flex items-center gap-0.5 rounded-md px-1.5 py-0.5 font-display text-[10px] font-bold ${change >= 0 ? "bg-neon-green/20 text-neon-green" : "bg-destructive/20 text-destructive"}`}>
+              <TrendingUp className={`h-3 w-3 ${change < 0 ? "rotate-180" : ""}`} />
+              {change >= 0 ? "+" : ""}{change}%
+            </span>
+          </div>
+          <div className="flex items-baseline gap-2">
+            <motion.span
+              key={price}
+              initial={{ opacity: 0.7 }}
+              animate={{ opacity: 1 }}
+              className="font-display text-xl font-black text-neon-orange"
+            >
+              ${price.toFixed(4)}
+            </motion.span>
+            <span className="font-display text-[10px] text-muted-foreground">USDT</span>
+          </div>
+        </div>
+      </div>
+
+      {/* BRL Price */}
+      <div className="flex items-center gap-2 rounded-2xl border border-primary/20 bg-card/40 px-4 py-3 backdrop-blur-xl">
+        <DollarSign className="h-4 w-4 text-primary" />
+        <div>
+          <span className="font-display text-[10px] uppercase tracking-wider text-muted-foreground">NP/BRL</span>
+          <div className="flex items-baseline gap-1">
+            <motion.span
+              key={brlPrice}
+              initial={{ opacity: 0.7 }}
+              animate={{ opacity: 1 }}
+              className="font-display text-base font-black text-primary"
+            >
+              R$ {brlPrice.toFixed(2)}
+            </motion.span>
+          </div>
+        </div>
+      </div>
+
+      {/* Market Cap mini */}
+      <div className="hidden items-center gap-2 rounded-2xl border border-accent/20 bg-card/40 px-4 py-3 backdrop-blur-xl sm:flex">
+        <TrendingUp className="h-4 w-4 text-accent" />
+        <div>
+          <span className="font-display text-[10px] uppercase tracking-wider text-muted-foreground">Market Cap</span>
+          <div className="font-display text-base font-black text-accent">$847K</div>
+        </div>
+      </div>
+    </motion.div>
+  );
+};
+
 /* ─── Roadmap step ─── */
 const RoadmapStep = ({
   phase, title, items, active, delay = 0
@@ -163,9 +252,7 @@ const Landing = () => {
         className="fixed top-0 z-50 w-full border-b border-border/10 bg-background/60 backdrop-blur-2xl"
       >
         <div className="mx-auto flex max-w-7xl items-center justify-between px-4 py-3 sm:px-8">
-          <h1 className="font-display text-lg font-black uppercase tracking-widest text-primary text-glow-cyan">
-            TurboNitro
-          </h1>
+          <img src={turboNitroLogo} alt="TurboNitro" className="h-8 w-auto sm:h-10" />
           <div className="hidden items-center gap-8 sm:flex">
             <a href="#features" className="font-display text-xs uppercase tracking-wider text-muted-foreground transition-colors hover:text-primary">Features</a>
             <a href="#nft" className="font-display text-xs uppercase tracking-wider text-muted-foreground transition-colors hover:text-primary">NFTs</a>
@@ -343,6 +430,29 @@ const Landing = () => {
                   <span className="font-display text-[10px] uppercase tracking-wider text-muted-foreground">{badge.label}</span>
                 </div>
               ))}
+            </motion.div>
+
+            {/* Token Price Ticker */}
+            <TokenTicker />
+
+            {/* CTA Below Stats */}
+            <motion.div
+              initial={{ opacity: 0, y: 15 }}
+              animate={{ opacity: 1, y: 0 }}
+              transition={{ delay: 1.2, duration: 0.6 }}
+              className="mt-6"
+            >
+              <button
+                onClick={() => navigate("/auth")}
+                className="group flex items-center gap-2 rounded-2xl bg-gradient-to-r from-neon-orange to-neon-orange/80 px-8 py-4 font-display text-sm font-bold uppercase tracking-widest text-background transition-all hover:brightness-110 shadow-[0_0_30px_hsl(30_90%_55%/0.3)] hover:shadow-[0_0_50px_hsl(30_90%_55%/0.5)]"
+              >
+                <Zap className="h-5 w-5" />
+                Começar Agora e Ganhar NP
+                <ArrowRight className="h-4 w-4 transition-transform group-hover:translate-x-1" />
+              </button>
+              <p className="mt-2 font-body text-[11px] text-muted-foreground/70">
+                🔥 Token NP valorizando · Comece a acumular antes que suba mais
+              </p>
             </motion.div>
           </div>
         </motion.div>
@@ -786,9 +896,7 @@ const Landing = () => {
           <div className="grid gap-8 sm:grid-cols-2 lg:grid-cols-4">
             {/* Brand */}
             <div>
-              <h3 className="font-display text-lg font-black uppercase tracking-widest text-primary text-glow-cyan">
-                TurboNitro
-              </h3>
+              <img src={turboNitroLogo} alt="TurboNitro" className="h-8 w-auto" />
               <p className="mt-3 font-body text-sm leading-relaxed text-muted-foreground">
                 O jogo de corrida NFT mais eletrizante da blockchain. Colecione, evolua e domine.
               </p>
