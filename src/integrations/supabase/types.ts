@@ -303,6 +303,39 @@ export type Database = {
         }
         Relationships: []
       }
+      daily_race_log: {
+        Row: {
+          car_id: string
+          id: string
+          np_earned: number
+          race_duration_ms: number
+          race_number: number
+          raced_at: string
+          wallet_address: string
+          xp_earned: number
+        }
+        Insert: {
+          car_id: string
+          id?: string
+          np_earned?: number
+          race_duration_ms?: number
+          race_number?: number
+          raced_at?: string
+          wallet_address: string
+          xp_earned?: number
+        }
+        Update: {
+          car_id?: string
+          id?: string
+          np_earned?: number
+          race_duration_ms?: number
+          race_number?: number
+          raced_at?: string
+          wallet_address?: string
+          xp_earned?: number
+        }
+        Relationships: []
+      }
       economy_events: {
         Row: {
           amount: number
@@ -660,6 +693,39 @@ export type Database = {
           },
         ]
       }
+      np_vesting: {
+        Row: {
+          amount: number
+          available_at: string
+          created_at: string
+          earned_at: string
+          id: string
+          source: string
+          wallet_address: string
+          withdrawn: boolean
+        }
+        Insert: {
+          amount?: number
+          available_at?: string
+          created_at?: string
+          earned_at?: string
+          id?: string
+          source?: string
+          wallet_address: string
+          withdrawn?: boolean
+        }
+        Update: {
+          amount?: number
+          available_at?: string
+          created_at?: string
+          earned_at?: string
+          id?: string
+          source?: string
+          wallet_address?: string
+          withdrawn?: boolean
+        }
+        Relationships: []
+      }
       onchain_events: {
         Row: {
           block_number: number
@@ -944,6 +1010,7 @@ export type Database = {
           id: string
           last_fuel_refill: string
           last_seen_at: string | null
+          locked_np: number
           nitro_points: number
           token_balance: number
           total_losses: number
@@ -961,6 +1028,7 @@ export type Database = {
           id?: string
           last_fuel_refill?: string
           last_seen_at?: string | null
+          locked_np?: number
           nitro_points?: number
           token_balance?: number
           total_losses?: number
@@ -978,6 +1046,7 @@ export type Database = {
           id?: string
           last_fuel_refill?: string
           last_seen_at?: string | null
+          locked_np?: number
           nitro_points?: number
           token_balance?: number
           total_losses?: number
@@ -1066,7 +1135,15 @@ export type Database = {
         Args: { _listing_id: string; _wallet: string }
         Returns: Json
       }
+      calculate_withdrawal_fee: {
+        Args: { _earned_at: string }
+        Returns: number
+      }
       check_is_admin: { Args: never; Returns: boolean }
+      check_race_eligibility: {
+        Args: { _car_id: string; _wallet: string }
+        Returns: Json
+      }
       claim_insurance: {
         Args: {
           _car_id: string
@@ -1089,6 +1166,10 @@ export type Database = {
         Returns: Json
       }
       generate_license_plate: { Args: never; Returns: string }
+      get_diminishing_reward_multiplier: {
+        Args: { _race_number: number }
+        Returns: number
+      }
       get_dynamic_burn_rate: { Args: never; Returns: number }
       get_economy_report: { Args: never; Returns: Json }
       has_role: {
@@ -1127,6 +1208,19 @@ export type Database = {
           }
       rent_car: {
         Args: { _rental_car_id: string; _wallet: string }
+        Returns: Json
+      }
+      spend_locked_np: {
+        Args: { _amount: number; _reason?: string; _wallet: string }
+        Returns: Json
+      }
+      split_reward: {
+        Args: {
+          _source?: string
+          _total_np: number
+          _wallet: string
+          _xp: number
+        }
         Returns: Json
       }
     }

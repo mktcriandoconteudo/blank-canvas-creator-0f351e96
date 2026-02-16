@@ -8,6 +8,7 @@ import RaceVideoPlayer from "@/components/race/RaceVideoPlayer";
 import SimpleVideoPlayer from "@/components/race/SimpleVideoPlayer";
 import { useGameState } from "@/hooks/useGameState";
 import { RENTAL_STAT_PENALTY, getMaxFuel } from "@/lib/gameState";
+import { supabase } from "@/integrations/supabase/client";
 import { useCarVideos } from "@/hooks/useCarVideos";
 import { getCollisionConfig, rollCollision, logCollision, type CollisionResult } from "@/lib/collision";
 
@@ -95,7 +96,9 @@ const Race = () => {
   const [showResult, setShowResult] = useState(false);
   const [victory, setVictory] = useState(false);
   const [finaleVideoSrc, setFinaleVideoSrc] = useState<string | undefined>(undefined);
-  const [xpResult, setXpResult] = useState({ leveledUp: false, newLevel: 0 });
+  const [xpResult, setXpResult] = useState({ leveledUp: false, newLevel: 0, freeNP: 0, lockedNP: 0 });
+  const [rewardMultiplier, setRewardMultiplier] = useState(1.0);
+  const [raceNumber, setRaceNumber] = useState(1);
   const [cameraShake, setCameraShake] = useState(false);
   const [nitroActive, setNitroActive] = useState(false);
   const [nitroCharges, setNitroCharges] = useState(3);
@@ -106,6 +109,20 @@ const Race = () => {
   useEffect(() => {
     if (noCars) navigate("/garage");
   }, [noCars, navigate]);
+
+  // Check race eligibility (anti-bot: cooldown + diminishing rewards)
+  useEffect(() => {
+    if (!selectedCar?.id || !state.walletAddress) return;
+    supabase.rpc("check_race_eligibility" as any, {
+      _wallet: state.walletAddress,
+      _car_id: selectedCar.id,
+    }).then(({ data }: any) => {
+      if (data) {
+        setRewardMultiplier(data.reward_multiplier ?? 1.0);
+        setRaceNumber(data.race_number ?? 1);
+      }
+    });
+  }, [selectedCar?.id, state.walletAddress]);
 
   // Capture car key — update when selectedCar loads
   const carKeyRef = useRef(selectedCar?.name.toLowerCase().split(" ")[0] ?? "");
@@ -161,7 +178,7 @@ const Race = () => {
       setOpponentProgress(preWin ? FINISH_LINE * 0.9 : FINISH_LINE);
       setVictory(preWin);
       console.log("[THUNDER] Race ended at 10s, won:", preWin);
-      const result = finishRaceRef.current(preWin);
+      const result = finishRaceRef.current(preWin, rewardMultiplier, raceNumber);
       setXpResult(result);
       setTimeout(() => setShowResult(true), 500);
     }, 10000);
@@ -261,14 +278,14 @@ const Race = () => {
         }
       }
       
-      const result = finishRaceRef.current(won);
+      const result = finishRaceRef.current(won, rewardMultiplier, raceNumber);
       setXpResult(result);
 
       // Save last race result to localStorage for garage display
       const isRented = selectedCar?.isRented ?? false;
       const baseNPCalc = isRented ? (won ? 40 : 10) : (won ? 150 : 20);
       const health = selectedCar?.engineHealth ?? 100;
-      const earnedNPCalc = Math.round((baseNPCalc * health) / 100);
+      const earnedNPCalc = Math.round((baseNPCalc * health * rewardMultiplier) / 100);
       const xpEarnedCalc = won ? 80 : 25;
       const raceResult = {
         victory: won,
@@ -357,7 +374,7 @@ const Race = () => {
     }
   }, []);
   const baseNP = isRentedCar ? (victory ? 40 : 10) : (victory ? 150 : 20);
-  const earnedNP = Math.round((baseNP * playerStats.engineHealth) / 100);
+  const earnedNP = Math.round((baseNP * playerStats.engineHealth * rewardMultiplier) / 100);
   const speedKmh = raceState === "countdown" ? 0 : Math.round((playerProgress / 100) * 320 + (nitroActive ? 80 : 0));
   const isRacing = raceState === "racing";
 

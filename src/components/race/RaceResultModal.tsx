@@ -1,5 +1,5 @@
 import { motion, AnimatePresence } from "framer-motion";
-import { Trophy, Skull, Coins, Star, ArrowUp, Volume2, VolumeX } from "lucide-react";
+import { Trophy, Skull, Coins, Star, ArrowUp, Volume2, VolumeX, Lock } from "lucide-react";
 import GlowButton from "@/components/garage/GlowButton";
 import { useNavigate } from "react-router-dom";
 import { formatNP } from "@/lib/utils";
@@ -99,16 +99,23 @@ const RaceResultModal = ({ isOpen, victory, nitroPoints, xpGained, leveledUp, ne
               initial={{ opacity: 0, scale: 0.8 }}
               animate={{ opacity: 1, scale: 1 }}
               transition={{ delay: 0.6 }}
-              className="mx-auto mt-6 flex items-center justify-center gap-6"
+              className="mx-auto mt-6 flex items-center justify-center gap-4"
             >
-              <div className="flex flex-col items-center gap-1 rounded-xl bg-muted/50 px-5 py-3">
+              <div className="flex flex-col items-center gap-1 rounded-xl bg-muted/50 px-4 py-3">
                 <Coins className="h-5 w-5 text-neon-orange" />
                 <span className="font-display text-xl font-bold text-foreground">
-                  {victory ? "+" : ""}{formatNP(nitroPoints)}
+                  {victory ? "+" : ""}{formatNP(Math.round(nitroPoints * 0.6))}
                 </span>
-                <span className="font-display text-[10px] uppercase tracking-wider text-muted-foreground">NP</span>
+                <span className="font-display text-[10px] uppercase tracking-wider text-muted-foreground">NP Livre</span>
               </div>
-              <div className="flex flex-col items-center gap-1 rounded-xl bg-muted/50 px-5 py-3">
+              <div className="flex flex-col items-center gap-1 rounded-xl bg-muted/50 px-4 py-3">
+                <Lock className="h-5 w-5 text-neon-purple" />
+                <span className="font-display text-xl font-bold text-foreground">
+                  {victory ? "+" : ""}{formatNP(nitroPoints - Math.round(nitroPoints * 0.6))}
+                </span>
+                <span className="font-display text-[10px] uppercase tracking-wider text-muted-foreground">NP Upgrade</span>
+              </div>
+              <div className="flex flex-col items-center gap-1 rounded-xl bg-muted/50 px-4 py-3">
                 <Star className="h-5 w-5 text-neon-green" />
                 <span className="font-display text-xl font-bold text-foreground">+{xpGained}</span>
                 <span className="font-display text-[10px] uppercase tracking-wider text-muted-foreground">XP</span>
@@ -136,7 +143,7 @@ const RaceResultModal = ({ isOpen, victory, nitroPoints, xpGained, leveledUp, ne
               transition={{ delay: 0.9 }}
               className="mt-4 font-body text-xs text-muted-foreground"
             >
-              Desgaste do motor aplicado · Durabilidade reduz o dano
+              60% NP livre · 40% bloqueado para upgrades · Desgaste aplicado
             </motion.p>
 
             <motion.div
