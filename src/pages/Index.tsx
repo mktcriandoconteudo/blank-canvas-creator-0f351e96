@@ -387,7 +387,7 @@ const Index = () => {
             </AnimatePresence>
 
             {/* Mechanic Warnings — dismissible per session */}
-            {(isEngineBlown(selectedCar) || selectedCar.engineHealth < 50 || oilNeeded || selectedCar.durability < 30) && !mechanicDismissed && (
+            {(isEngineBlown(selectedCar) || selectedCar.engineHealth <= 10 || selectedCar.engineHealth < 50 || oilNeeded || selectedCar.durability < 30) && !mechanicDismissed && (
               <motion.div
                 initial={{ opacity: 0, x: -20 }}
                 animate={{ opacity: 1, x: 0 }}
@@ -417,7 +417,12 @@ const Index = () => {
                           🔥 "MOTOR FUNDIU! Carro bloqueado! Vai custar 3x o reparo normal. Corre pra oficina, chefe!"
                         </p>
                       )}
-                      {!isEngineBlown(selectedCar) && selectedCar.engineHealth < 50 && (
+                      {!isEngineBlown(selectedCar) && selectedCar.engineHealth <= 10 && (
+                        <p className="font-body text-[11px] text-destructive font-bold">
+                          🚨 "ESTADO CRÍTICO! Motor em {selectedCar.engineHealth}%! Risco altíssimo de fundir na próxima corrida! Não arrisca, chefe!"
+                        </p>
+                      )}
+                      {!isEngineBlown(selectedCar) && selectedCar.engineHealth > 10 && selectedCar.engineHealth < 50 && (
                         <p className="font-body text-[11px] text-destructive">
                           ⚠️ "Motor em {selectedCar.engineHealth}%! Tá quase fundindo, chefe. Faz uma revisão urgente!"
                         </p>
@@ -506,6 +511,28 @@ const Index = () => {
                             <span className="font-display text-[10px] font-bold text-destructive">ÓLEO</span>
                           </motion.div>
                         )}
+                        {selectedCar.engineHealth <= 10 && selectedCar.engineHealth > 0 && (
+                          <motion.div
+                            animate={{ opacity: [1, 0.2, 1] }}
+                            transition={{ duration: 0.5, repeat: Infinity }}
+                            className="flex items-center gap-1"
+                            title="Motor em estado crítico! Alto risco de fundir!"
+                          >
+                            <Shield className="h-3.5 w-3.5 text-destructive" />
+                            <span className="font-display text-[10px] font-bold text-destructive">MOTOR {selectedCar.engineHealth}%</span>
+                          </motion.div>
+                        )}
+                        {isEngineBlown(selectedCar) && (
+                          <motion.div
+                            animate={{ opacity: [1, 0.1, 1] }}
+                            transition={{ duration: 0.4, repeat: Infinity }}
+                            className="flex items-center gap-1"
+                            title="Motor fundido!"
+                          >
+                            <Shield className="h-3.5 w-3.5 text-destructive" />
+                            <span className="font-display text-[10px] font-bold text-destructive">🔥 FUNDIU</span>
+                          </motion.div>
+                        )}
                         <div className="flex items-center gap-1">
                           <Gauge className="h-3 w-3 text-muted-foreground" />
                           <span className="font-body text-muted-foreground">
@@ -516,7 +543,7 @@ const Index = () => {
                         <div className="flex items-center gap-1">
                           <Shield className="h-3 w-3 text-muted-foreground" />
                           <span className="font-body text-muted-foreground">
-                            Motor: <span className={selectedCar.engineHealth < 30 ? "text-destructive" : "text-foreground"}>{selectedCar.engineHealth}%</span>
+                            Motor: <span className={selectedCar.engineHealth <= 10 ? "text-destructive font-bold" : selectedCar.engineHealth < 30 ? "text-destructive" : "text-foreground"}>{selectedCar.engineHealth}%</span>
                           </span>
                         </div>
                       </div>
