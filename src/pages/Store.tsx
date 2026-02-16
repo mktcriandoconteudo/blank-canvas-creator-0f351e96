@@ -61,7 +61,7 @@ const generatePixCode = (amount: number) => {
 const Store = () => {
   const navigate = useNavigate();
   const { user, session } = useAuth();
-  const { state, loading } = useGameState();
+  const { state } = useGameState();
   const [packages, setPackages] = useState<NpPackage[]>([]);
   const [loadingPackages, setLoadingPackages] = useState(true);
   const [selectedPkg, setSelectedPkg] = useState<NpPackage | null>(null);
@@ -166,11 +166,9 @@ const Store = () => {
   const formatTime = (s: number) =>
     `${Math.floor(s / 60).toString().padStart(2, "0")}:${(s % 60).toString().padStart(2, "0")}`;
 
-  if (loading) return null;
-
   return (
     <div className="min-h-screen bg-background text-foreground">
-      <MainNav nitroPoints={state.nitroPoints} />
+      <MainNav nitroPoints={session && state ? state.nitroPoints : undefined} />
 
       <main className="mx-auto max-w-5xl px-4 py-8 sm:px-8">
         {/* Header */}
