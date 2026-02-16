@@ -6,6 +6,7 @@ import SpeedLinesCanvas from "@/components/race/SpeedLinesCanvas";
 import RaceResultModal from "@/components/race/RaceResultModal";
 import RaceVideoPlayer from "@/components/race/RaceVideoPlayer";
 import SimpleVideoPlayer from "@/components/race/SimpleVideoPlayer";
+import RaceLeaderboard from "@/components/race/RaceLeaderboard";
 import { useGameState } from "@/hooks/useGameState";
 import { RENTAL_STAT_PENALTY, getMaxFuel } from "@/lib/gameState";
 import { supabase } from "@/integrations/supabase/client";
@@ -570,6 +571,7 @@ const Race = () => {
         )}
       </motion.button>
 
+      {/* Top-right: Race progress bars */}
       <motion.div
         initial={{ opacity: 0, x: 30 }}
         animate={{ opacity: 1, x: 0 }}
@@ -607,6 +609,28 @@ const Race = () => {
           </div>
         </div>
       </motion.div>
+
+      {/* Race Leaderboard — position tracker with 4 cars */}
+      <RaceLeaderboard
+        player={{
+          name: playerStats.name,
+          speed: playerStats.speed,
+          power: selectedCar?.acceleration ?? 60,
+          handling: playerStats.handling,
+          isPlayer: true,
+          progress: playerProgress,
+        }}
+        opponent={{
+          name: opponent.name,
+          speed: opponent.speed,
+          power: opponent.acceleration,
+          handling: opponent.handling,
+          isPlayer: false,
+          progress: opponentProgress,
+        }}
+        raceState={raceState}
+        victory={victory}
+      />
 
       {/* Bottom-left: Speedometer */}
       <motion.div
