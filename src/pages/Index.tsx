@@ -4,6 +4,7 @@ import MainNav from "@/components/MainNav";
 import { useNavigate } from "react-router-dom";
 import { useRef, useState, useEffect, useCallback } from "react";
 import { formatNP } from "@/lib/utils";
+import { getMaxFuel } from "@/lib/gameState";
 // HD garage background images
 import bgPhantom from "@/assets/garage-bg/car-phantom-bg.jpg";
 import bgBlaze from "@/assets/garage-bg/car-blaze-bg.jpg";
@@ -718,12 +719,12 @@ const Index = () => {
                           </span>
                         </div>
                         <span className={`font-display text-xs font-bold ${selectedCar.fuelTanks > 0 ? "text-neon-green" : "text-destructive"}`}>
-                          {selectedCar.fuelTanks}/5
+                          {selectedCar.fuelTanks}/{getMaxFuel(selectedCar.model)}
                         </span>
                       </div>
                       {/* Fuel bar */}
                       <div className="flex gap-1 mb-2">
-                        {[...Array(5)].map((_, i) => (
+                        {[...Array(getMaxFuel(selectedCar.model))].map((_, i) => (
                           <div
                             key={i}
                             className={`h-2 flex-1 rounded-full transition-colors ${
@@ -735,12 +736,12 @@ const Index = () => {
                         ))}
                       </div>
                       {/* Timer countdown */}
-                      {selectedCar.fuelTanks < 5 && (
+                      {selectedCar.fuelTanks < getMaxFuel(selectedCar.model) && (
                         <CarFuelTimer lastRefill={selectedCar.lastFuelRefill} />
                       )}
-                      {selectedCar.fuelTanks === 5 && (
+                      {selectedCar.fuelTanks >= getMaxFuel(selectedCar.model) && (
                         <p className="font-body text-[10px] text-neon-green/70">
-                          ✅ Tanque cheio · 5 corridas disponíveis
+                          ✅ Tanque cheio · {getMaxFuel(selectedCar.model)} corridas disponíveis
                         </p>
                       )}
                     </div>
