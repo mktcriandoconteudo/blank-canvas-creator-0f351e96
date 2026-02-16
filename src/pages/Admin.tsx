@@ -2,11 +2,12 @@ import { useState, useEffect, useCallback } from "react";
 import { motion, AnimatePresence } from "framer-motion";
 import { useNavigate } from "react-router-dom";
 import {
-  Shield, Users, Settings, RefreshCw, ArrowLeft, AlertTriangle, Save,
+  Shield, Users, Settings, RefreshCw, AlertTriangle, Save,
   Coins, Trophy, Flame, Eye, X, TrendingDown, TrendingUp,
   Wallet, BarChart3, Activity, Zap, Fuel, Clock, ShieldCheck,
   AlertCircle, ChevronDown, ChevronUp, ShoppingCart, Image
 } from "lucide-react";
+import MainNav from "@/components/MainNav";
 import { useAdmin, type PlayerDetail } from "@/hooks/useAdmin";
 import { supabase } from "@/lib/supabase";
 import { toast } from "@/hooks/use-toast";
@@ -408,23 +409,15 @@ const Admin = () => {
   return (
     <div className="min-h-screen bg-background">
       {/* Header */}
-      <header className="border-b border-border/20 bg-card/30 backdrop-blur-xl px-4 py-4 sm:px-8">
-        <div className="flex items-center justify-between">
-          <div className="flex items-center gap-3">
-            <button onClick={() => navigate("/garage")} className="rounded-lg p-2 hover:bg-muted/30 transition-colors">
-              <ArrowLeft className="h-5 w-5 text-muted-foreground" />
-            </button>
-            <div className="flex items-center gap-2">
-              <Shield className="h-5 w-5 text-primary" />
-              <h1 className="font-display text-lg font-black uppercase tracking-widest text-primary">Admin Panel</h1>
-            </div>
-          </div>
-          <span className="rounded-full bg-primary/20 px-3 py-1 font-display text-xs font-bold text-primary">🔒 Administrador</span>
-        </div>
-      </header>
+      <MainNav />
 
-      {/* Tabs */}
+      {/* Admin Title + Tabs */}
       <div className="border-b border-border/20 bg-card/20 px-4 sm:px-8 overflow-x-auto">
+        <div className="flex items-center gap-3 pt-3 pb-1">
+          <Shield className="h-5 w-5 text-primary" />
+          <h1 className="font-display text-lg font-black uppercase tracking-widest text-primary">Admin Panel</h1>
+          <span className="rounded-full bg-primary/20 px-3 py-1 font-display text-[10px] font-bold text-primary">🔒 Administrador</span>
+        </div>
         <div className="flex gap-1 min-w-max">
           {TABS.map((t) => (
             <button
