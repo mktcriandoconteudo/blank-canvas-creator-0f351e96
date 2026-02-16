@@ -13,6 +13,8 @@ import {
 import { Button } from "@/components/ui/button";
 import MainNav from "@/components/MainNav";
 
+import mysteryBoxImg from "@/assets/mystery-box.png";
+
 // Car images map
 import carPhantom from "@/assets/marketplace/car-phantom.jpg";
 import carInferno from "@/assets/marketplace/car-inferno.jpg";
@@ -274,9 +276,7 @@ const MysteryBoxReveal = ({ result, onClose }: { result: MysteryBoxResult; onClo
           >
             {/* Glow behind box */}
             <div className="absolute inset-0 animate-pulse rounded-3xl bg-gradient-to-br from-primary/30 via-accent/20 to-neon-orange/30 blur-2xl" />
-            <div className="relative flex h-40 w-40 items-center justify-center rounded-3xl border-2 border-primary/40 bg-card/80 backdrop-blur-xl shadow-2xl">
-              <Gift className="h-16 w-16 text-primary animate-bounce" />
-            </div>
+            <img src={mysteryBoxImg} alt="Mystery Box" className="relative h-40 w-40 object-contain drop-shadow-[0_0_25px_hsl(270_60%_60%/0.5)] animate-bounce" />
             <motion.div
               className="absolute -inset-4"
               animate={{ rotate: 360 }}
@@ -661,8 +661,8 @@ const Marketplace = () => {
               </div>
 
               <div className="relative flex flex-col sm:flex-row items-start sm:items-center gap-4">
-                <div className="flex h-16 w-16 shrink-0 items-center justify-center rounded-2xl bg-accent/20 border border-accent/30">
-                  <Gift className="h-8 w-8 text-accent" />
+                <div className="flex h-20 w-20 shrink-0 items-center justify-center">
+                  <img src={mysteryBoxImg} alt="Mystery Box" className="h-20 w-20 object-contain drop-shadow-[0_0_15px_hsl(270_60%_60%/0.4)]" />
                 </div>
 
                 <div className="flex-1">
