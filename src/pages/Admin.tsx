@@ -169,7 +169,7 @@ const Admin = () => {
   const {
     isAdmin, loading, players, collisionConfig, saveCollisionConfig, saving,
     refreshPlayers, economyReport, refreshEconomy, selectedPlayer,
-    loadPlayerDetail, clearSelectedPlayer,
+    loadPlayerDetail, clearSelectedPlayer, onlineCount,
   } = useAdmin();
 
   const [localConfig, setLocalConfig] = useState(collisionConfig);
@@ -277,7 +277,8 @@ const Admin = () => {
         {tab === "dashboard" && (
           <motion.div initial={{ opacity: 0, y: 10 }} animate={{ opacity: 1, y: 0 }} className="space-y-6">
             {/* KPIs */}
-            <div className="grid grid-cols-2 gap-3 sm:grid-cols-4">
+            <div className="grid grid-cols-2 gap-3 sm:grid-cols-5">
+              <StatCard icon={<Activity className="h-4 w-4" />} label="Pilotos Online" value={onlineCount} sub="Últimos 15 min" color="text-neon-green" />
               <StatCard icon={<Users className="h-4 w-4" />} label="Pilotos Cadastrados" value={players.length} color="text-primary" />
               <StatCard icon={<Flame className="h-4 w-4" />} label="Total Corridas" value={totalRaces} color="text-neon-orange" />
               <StatCard icon={<Trophy className="h-4 w-4" />} label="Win Rate Médio" value={`${avgWinRate}%`} color="text-neon-green" />

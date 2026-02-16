@@ -96,6 +96,8 @@ export const useAdmin = () => {
     });
   }, [session?.user?.id]);
 
+  const [onlineCount, setOnlineCount] = useState(0);
+
   // Load players
   const loadPlayers = useCallback(async () => {
     const { data: users } = await supabase
@@ -104,6 +106,11 @@ export const useAdmin = () => {
       .order("created_at", { ascending: false });
 
     if (!users) return;
+
+    // Count online users (active in last 15 minutes)
+    const fifteenMinAgo = new Date(Date.now() - 15 * 60 * 1000).toISOString();
+    const online = users.filter((u: any) => u.updated_at >= fifteenMinAgo).length;
+    setOnlineCount(online);
 
     const { data: cars } = await supabase.from("cars").select("owner_wallet");
     const carCounts: Record<string, number> = {};
@@ -245,6 +252,7 @@ export const useAdmin = () => {
     saveCollisionConfig,
     saving,
     refreshPlayers: loadPlayers,
+    onlineCount,
     economyReport,
     economyState,
     refreshEconomy: loadEconomy,
