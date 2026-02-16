@@ -21,6 +21,7 @@ const NAV_LINKS = [
   { path: "/", label: "Home", icon: <Home className="h-4 w-4" /> },
   { path: "/garage", label: "Garagem", icon: <Car className="h-4 w-4" />, protected: true },
   { path: "/marketplace", label: "Marketplace", icon: <ShoppingCart className="h-4 w-4" /> },
+  { path: "/loja", label: "Loja NP", icon: <Coins className="h-4 w-4" />, protected: true },
   { path: "/perfil", label: "Perfil", icon: <UserCircle className="h-4 w-4" />, protected: true },
 ];
 
