@@ -512,17 +512,17 @@ const Landing = () => {
           </motion.div>
 
           {/* Horizontal scroll on mobile, grid on desktop */}
-          <div className="flex gap-4 overflow-x-auto pb-4 no-scrollbar sm:grid sm:grid-cols-2 lg:grid-cols-3 sm:gap-6 sm:overflow-visible sm:pb-0">
+          <div className="-mx-4 flex gap-4 overflow-x-auto px-4 pb-4 no-scrollbar sm:mx-0 sm:grid sm:grid-cols-2 sm:px-0 lg:grid-cols-3 sm:gap-6 sm:overflow-visible sm:pb-0">
             {FEATURED_CARS.map((car, i) => {
               const style = RARITY_STYLES[car.rarity];
               return (
                 <motion.div
                   key={car.name}
-                  initial={{ opacity: 0, y: 30 }}
+                  initial={{ opacity: 0, y: 20 }}
                   whileInView={{ opacity: 1, y: 0 }}
-                  viewport={{ once: true }}
-                  transition={{ duration: 0.5, delay: i * 0.08 }}
-                  className={`group relative min-w-[260px] shrink-0 overflow-hidden rounded-2xl border ${style.border} bg-card/50 backdrop-blur-xl transition-all duration-500 hover:scale-[1.02] sm:min-w-0`}
+                  viewport={{ once: true, margin: "100px" }}
+                  transition={{ duration: 0.4, delay: i * 0.05 }}
+                  className={`group relative w-[240px] shrink-0 overflow-hidden rounded-2xl border ${style.border} bg-card/50 backdrop-blur-xl transition-all duration-500 hover:scale-[1.02] sm:w-auto`}
                 >
                   {/* Image */}
                   <div className="relative aspect-[4/3] overflow-hidden">
