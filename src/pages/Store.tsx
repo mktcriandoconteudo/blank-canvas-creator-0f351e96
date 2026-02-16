@@ -130,24 +130,20 @@ const Store = () => {
     if (!purchaseId || !user) return;
     setConfirming(true);
     try {
-      const { data, error } = await supabase.rpc("confirm_np_purchase", {
-        _purchase_id: purchaseId,
-        _wallet: user.walletAddress,
-      });
+      // Mark purchase as "awaiting_approval" — admin will approve later
+      const wc = getWalletClient(user.walletAddress);
+      const { error } = await wc
+        .from("np_purchases")
+        .update({ status: "awaiting_approval" })
+        .eq("id", purchaseId);
 
       if (error) throw error;
-      const result = data as any;
-      if (result?.success) {
-        setConfirmed(true);
-        toast({
-          title: "✅ Compra confirmada!",
-          description: `+${result.np_credited.toLocaleString()} NP creditados na sua conta.`,
-        });
-        // Reload page after a moment to refresh balances
-        setTimeout(() => window.location.reload(), 2000);
-      } else {
-        toast({ title: "Erro", description: result?.error || "Falha na confirmação", variant: "destructive" });
-      }
+
+      setConfirmed(true);
+      toast({
+        title: "📩 Comprovante enviado!",
+        description: "Aguarde a aprovação do administrador para receber seus NP.",
+      });
     } catch (err: any) {
       toast({ title: "Erro", description: err.message, variant: "destructive" });
     } finally {
@@ -289,7 +285,7 @@ const Store = () => {
             {[
               { step: "1", title: "Escolha o pacote", desc: "Selecione a quantidade de NP que deseja" },
               { step: "2", title: "Pague via PIX", desc: "Copie o código PIX e faça a transferência" },
-              { step: "3", title: "Receba os NP", desc: "Seus Nitro Points são creditados na hora" },
+              { step: "3", title: "Aguarde aprovação", desc: "O admin confirma e seus NP são creditados" },
             ].map((item) => (
               <div key={item.step} className="flex items-start gap-3">
                 <div className="flex h-8 w-8 shrink-0 items-center justify-center rounded-full bg-primary/10 border border-primary/20">
@@ -404,7 +400,7 @@ const Store = () => {
                   </div>
                 </div>
 
-                {/* Simulate payment button */}
+                {/* Send receipt button */}
                 <Button
                   onClick={handleConfirmPayment}
                   disabled={confirming}
@@ -415,7 +411,7 @@ const Store = () => {
                   ) : (
                     <Check className="mr-2 h-4 w-4" />
                   )}
-                  Simular Pagamento Recebido
+                  Já paguei — Enviar comprovante
                 </Button>
 
                 <p className="text-center font-body text-[9px] text-muted-foreground/60">
@@ -451,10 +447,10 @@ const Store = () => {
                 <Check className="h-8 w-8 text-neon-green" />
               </motion.div>
               <h3 className="font-display text-xl font-black text-foreground mb-2">
-                Compra Confirmada!
+                Comprovante Enviado!
               </h3>
               <p className="font-body text-sm text-muted-foreground mb-4">
-                +{totalNp(selectedPkg).toLocaleString()} NP foram creditados na sua conta
+                Aguarde a aprovação do administrador. Seus {totalNp(selectedPkg).toLocaleString()} NP serão creditados após a confirmação.
               </p>
               <Button
                 onClick={() => { setSelectedPkg(null); setConfirmed(false); }}
