@@ -377,7 +377,7 @@ const Landing = () => {
               animate={{ opacity: 1, y: 0 }}
               transition={{ delay: 0.2, duration: 0.8 }}
             >
-              <img src={turboNitroLogo} alt="TurboNitro" className="mb-6 h-20 w-auto sm:h-28 lg:h-32 mix-blend-screen drop-shadow-[0_0_30px_hsl(185_80%_55%/0.4)]" />
+              <img src={turboNitroLogo} alt="TurboNitro" className="mb-6 h-20 w-auto sm:h-28 lg:h-32 drop-shadow-[0_0_30px_hsl(185_80%_55%/0.4)]" />
               <div className="mb-5 inline-flex items-center gap-2 rounded-full border border-primary/20 bg-primary/5 px-4 py-1.5 backdrop-blur-xl">
                 <div className="h-1.5 w-1.5 animate-pulse rounded-full bg-primary" />
                 <span className="font-display text-[10px] uppercase tracking-[0.3em] text-primary">Play to Earn · Live</span>
