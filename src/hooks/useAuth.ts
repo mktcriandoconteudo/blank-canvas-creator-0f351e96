@@ -1,5 +1,5 @@
 import { useState, useEffect, useCallback } from "react";
-import { supabase } from "@/lib/supabase";
+import { supabase, getWalletClient } from "@/lib/supabase";
 import type { User, Session } from "@supabase/supabase-js";
 
 interface AuthUser {
@@ -29,11 +29,12 @@ export const useAuth = () => {
         walletAddress: data.wallet_address,
       });
 
-      // Update last_seen_at for online tracking
-      supabase
+      // Update last_seen_at for online tracking (needs wallet header for RLS)
+      const walletClient = getWalletClient(data.wallet_address);
+      walletClient
         .from("users")
         .update({ last_seen_at: new Date().toISOString() })
-        .eq("auth_id", authUser.id)
+        .eq("wallet_address", data.wallet_address)
         .then(() => {});
     }
   }, []);
