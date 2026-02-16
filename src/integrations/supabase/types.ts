@@ -655,6 +655,54 @@ export type Database = {
         }
         Relationships: []
       }
+      race_rewards: {
+        Row: {
+          car_id: string
+          car_name: string
+          collisions: number
+          created_at: string
+          id: string
+          np_earned: number
+          position: number
+          race_duration_seconds: number
+          race_id: string | null
+          tokens_earned: number
+          victory: boolean
+          wallet_address: string
+          xp_earned: number
+        }
+        Insert: {
+          car_id: string
+          car_name?: string
+          collisions?: number
+          created_at?: string
+          id?: string
+          np_earned?: number
+          position?: number
+          race_duration_seconds?: number
+          race_id?: string | null
+          tokens_earned?: number
+          victory?: boolean
+          wallet_address: string
+          xp_earned?: number
+        }
+        Update: {
+          car_id?: string
+          car_name?: string
+          collisions?: number
+          created_at?: string
+          id?: string
+          np_earned?: number
+          position?: number
+          race_duration_seconds?: number
+          race_id?: string | null
+          tokens_earned?: number
+          victory?: boolean
+          wallet_address?: string
+          xp_earned?: number
+        }
+        Relationships: []
+      }
       races: {
         Row: {
           climate: string
@@ -853,6 +901,7 @@ export type Database = {
           last_fuel_refill: string
           last_seen_at: string | null
           nitro_points: number
+          token_balance: number
           total_losses: number
           total_races: number
           total_wins: number
@@ -869,6 +918,7 @@ export type Database = {
           last_fuel_refill?: string
           last_seen_at?: string | null
           nitro_points?: number
+          token_balance?: number
           total_losses?: number
           total_races?: number
           total_wins?: number
@@ -885,11 +935,75 @@ export type Database = {
           last_fuel_refill?: string
           last_seen_at?: string | null
           nitro_points?: number
+          token_balance?: number
           total_losses?: number
           total_races?: number
           total_wins?: number
           updated_at?: string
           username?: string | null
+          wallet_address?: string
+        }
+        Relationships: []
+      }
+      withdrawal_config: {
+        Row: {
+          id: string
+          min_withdrawal: number
+          token_name: string
+          unlock_date: string | null
+          updated_at: string
+          updated_by: string | null
+          withdrawals_enabled: boolean
+        }
+        Insert: {
+          id?: string
+          min_withdrawal?: number
+          token_name?: string
+          unlock_date?: string | null
+          updated_at?: string
+          updated_by?: string | null
+          withdrawals_enabled?: boolean
+        }
+        Update: {
+          id?: string
+          min_withdrawal?: number
+          token_name?: string
+          unlock_date?: string | null
+          updated_at?: string
+          updated_by?: string | null
+          withdrawals_enabled?: boolean
+        }
+        Relationships: []
+      }
+      withdrawal_requests: {
+        Row: {
+          amount: number
+          created_at: string
+          id: string
+          processed_at: string | null
+          processed_by: string | null
+          status: string
+          token_name: string
+          wallet_address: string
+        }
+        Insert: {
+          amount: number
+          created_at?: string
+          id?: string
+          processed_at?: string | null
+          processed_by?: string | null
+          status?: string
+          token_name?: string
+          wallet_address: string
+        }
+        Update: {
+          amount?: number
+          created_at?: string
+          id?: string
+          processed_at?: string | null
+          processed_by?: string | null
+          status?: string
+          token_name?: string
           wallet_address?: string
         }
         Relationships: []

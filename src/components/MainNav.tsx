@@ -3,7 +3,7 @@ import { useNavigate, useLocation } from "react-router-dom";
 import { motion, AnimatePresence } from "framer-motion";
 import {
   Menu, X, Coins, User, LogOut, ShoppingCart, Home,
-  Car, Shield, UserCircle
+  Car, Shield, UserCircle, Trophy
 } from "lucide-react";
 import { useAuth } from "@/hooks/useAuth";
 import { supabase } from "@/lib/supabase";
@@ -21,6 +21,7 @@ const NAV_LINKS = [
   { path: "/", label: "Home", icon: <Home className="h-4 w-4" /> },
   { path: "/garage", label: "Garagem", icon: <Car className="h-4 w-4" />, protected: true },
   { path: "/marketplace", label: "Marketplace", icon: <ShoppingCart className="h-4 w-4" /> },
+  { path: "/rewards", label: "Rewards", icon: <Trophy className="h-4 w-4" />, protected: true },
   { path: "/loja", label: "Loja NP", icon: <Coins className="h-4 w-4" />, protected: true },
   { path: "/perfil", label: "Perfil", icon: <UserCircle className="h-4 w-4" />, protected: true },
 ];
