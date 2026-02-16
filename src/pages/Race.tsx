@@ -38,9 +38,7 @@ const Race = () => {
   const navigate = useNavigate();
   const { state, selectedCar, finishRace, loading, updateState } = useGameState();
   const playerStats = selectedCar ?? { speed: 70, acceleration: 60, engineHealth: 100, name: "Unknown", level: 1 };
-  
-  // Debug: log which car is actually selected
-  console.log("[RACE MOUNT]", { selectedCarId: state.selectedCarId, selectedCarName: selectedCar?.name, allCars: state.cars.map(c => c.id + "=" + c.name) });
+  const noCars = !loading && state.cars.length === 0;
 
   const noFuel = !loading && state.fuelTanks <= 0;
 
@@ -92,13 +90,17 @@ const Race = () => {
   const [bgOffset, setBgOffset] = useState(0);
   const [collisionResult, setCollisionResult] = useState<CollisionResult | null>(null);
   const [showCollisionFlash, setShowCollisionFlash] = useState(false);
+  // Redirect if no cars
+  useEffect(() => {
+    if (noCars) navigate("/garage");
+  }, [noCars, navigate]);
+
   // Capture car key — update when selectedCar loads
   const carKeyRef = useRef(selectedCar?.name.toLowerCase().split(" ")[0] ?? "");
   useEffect(() => {
     if (selectedCar?.name) {
       const key = selectedCar.name.toLowerCase().split(" ")[0];
       carKeyRef.current = key;
-      console.log("[RACE] carKey locked:", key);
     }
   }, [selectedCar?.name]);
   

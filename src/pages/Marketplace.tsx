@@ -257,7 +257,7 @@ const Marketplace = () => {
       if (result?.success) {
         toast({
           title: "🎉 Carro Comprado!",
-          description: `${result.car_name} adicionado à sua garagem! Saldo: ${result.remaining_balance} NP`,
+          description: `${result.car_name} adicionado à garagem! 🔥 ${result.burned} NP queimados · Saldo: ${result.remaining_balance} NP`,
         });
         setUserBalance(result.remaining_balance);
       } else {
