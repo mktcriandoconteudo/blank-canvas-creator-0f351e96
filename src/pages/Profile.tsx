@@ -1,5 +1,6 @@
 import { useState, useRef, useCallback, useEffect } from "react";
 import { motion, AnimatePresence } from "framer-motion";
+import AvatarCropper from "@/components/AvatarCropper";
 import { useNavigate } from "react-router-dom";
 import {
   User, Coins, Camera, Pencil, Lock, Wrench,
@@ -249,6 +250,10 @@ const Profile = () => {
   const [repairingCar, setRepairingCar] = useState<string | null>(null);
   const [oilChangingCar, setOilChangingCar] = useState<string | null>(null);
 
+  // Crop state
+  const [cropImageSrc, setCropImageSrc] = useState<string | null>(null);
+  const [pendingFile, setPendingFile] = useState<File | null>(null);
+
   // Load avatar
   useEffect(() => {
     if (!user) return;
@@ -264,29 +269,39 @@ const Profile = () => {
       });
   }, [user]);
 
-  const handleUploadAvatar = useCallback(
-    async (file: File) => {
+  // When user picks a file, open cropper instead of uploading directly
+  const handlePickFile = useCallback((file: File) => {
+    const reader = new FileReader();
+    reader.onload = () => {
+      setCropImageSrc(reader.result as string);
+      setPendingFile(file);
+    };
+    reader.readAsDataURL(file);
+  }, []);
+
+  const handleCropComplete = useCallback(
+    async (blob: Blob) => {
+      setCropImageSrc(null);
+      setPendingFile(null);
       if (!user || !session) return;
       setUploadingAvatar(true);
       try {
-        const ext = file.name.split(".").pop()?.toLowerCase() || "jpg";
-        const filePath = `${user.walletAddress}/avatar.${ext}`;
+        const filePath = `${user.walletAddress}/avatar.jpg`;
 
-        // Upload to Supabase Storage
+        const file = new File([blob], "avatar.jpg", { type: "image/jpeg" });
+
         const { error: uploadError } = await supabase.storage
           .from("avatars")
-          .upload(filePath, file, { upsert: true, contentType: file.type });
+          .upload(filePath, file, { upsert: true, contentType: "image/jpeg" });
 
         if (uploadError) throw uploadError;
 
-        // Get public URL
         const { data: urlData } = supabase.storage
           .from("avatars")
           .getPublicUrl(filePath);
 
         const publicUrl = urlData.publicUrl + "?t=" + Date.now();
 
-        // Save URL to user profile
         const wc = getWalletClient(user.walletAddress);
         await wc
           .from("users")
@@ -303,6 +318,11 @@ const Profile = () => {
     },
     [user, session]
   );
+
+  const handleCropCancel = useCallback(() => {
+    setCropImageSrc(null);
+    setPendingFile(null);
+  }, []);
 
   const handleSaveName = useCallback(async () => {
     if (!user || !newName.trim()) return;
@@ -399,7 +419,7 @@ const Profile = () => {
             <PilotAvatar
               avatarUrl={avatarUrl}
               username={user.username}
-              onUpload={handleUploadAvatar}
+              onUpload={handlePickFile}
               uploading={uploadingAvatar}
             />
             <div className="flex-1 text-center sm:text-left space-y-3">
@@ -605,6 +625,17 @@ const Profile = () => {
           </AnimatePresence>
         </motion.section>
       </main>
+
+      {/* Avatar Cropper Modal */}
+      <AnimatePresence>
+        {cropImageSrc && (
+          <AvatarCropper
+            imageSrc={cropImageSrc}
+            onCropComplete={handleCropComplete}
+            onCancel={handleCropCancel}
+          />
+        )}
+      </AnimatePresence>
     </div>
   );
 };

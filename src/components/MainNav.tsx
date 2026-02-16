@@ -113,7 +113,11 @@ const MainNav = ({ nitroPoints, transparent = false }: MainNavProps) => {
                 onClick={() => navigate("/perfil")}
                 className="hidden items-center gap-1.5 rounded-lg bg-card/30 px-2.5 py-1.5 backdrop-blur-sm transition-colors hover:bg-card/50 border border-border/10 sm:flex"
               >
-                <User className="h-4 w-4 text-primary" />
+                {user.avatarUrl ? (
+                  <img src={user.avatarUrl} alt={user.username} className="h-6 w-6 rounded-full object-cover border border-primary/30" />
+                ) : (
+                  <User className="h-4 w-4 text-primary" />
+                )}
                 <span className="font-display text-[10px] text-foreground sm:text-xs">
                   {user.username ?? "Piloto"}
                 </span>
@@ -160,7 +164,11 @@ const MainNav = ({ nitroPoints, transparent = false }: MainNavProps) => {
             <div className="flex flex-col gap-1 px-4 py-3">
               {session && user && (
                 <div className="mb-2 flex items-center gap-3 rounded-lg bg-primary/5 px-3 py-2">
-                  <User className="h-4 w-4 text-primary" />
+                  {user.avatarUrl ? (
+                    <img src={user.avatarUrl} alt={user.username} className="h-7 w-7 rounded-full object-cover border border-primary/30" />
+                  ) : (
+                    <User className="h-4 w-4 text-primary" />
+                  )}
                   <span className="font-display text-xs uppercase tracking-wider text-primary">
                     {user.username ?? "Piloto"}
                   </span>
