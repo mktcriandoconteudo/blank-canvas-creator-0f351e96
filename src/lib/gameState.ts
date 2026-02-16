@@ -1,5 +1,6 @@
 import { supabase, getWalletClient } from "@/lib/supabase";
 import { processTransaction, emitTokens } from "@/lib/economy";
+import { assessRisk, type RiskAssessment } from "@/lib/antiBot";
 
 export interface CarData {
   id: string;
@@ -367,13 +368,53 @@ export const addXpToCar = (
     race_duration_ms: 10000,
   }).then(() => {});
 
+  // === ANTI-BOT ENGINE INTEGRATION ===
+  // Assess risk and adjust reward server-side. If risk is HIGH/CRITICAL,
+  // the anti-bot engine will clawback the excess NP already credited above.
+  // This fire-and-forget pattern keeps the UI responsive while ensuring
+  // economic integrity on the backend.
+  assessRisk(state.walletAddress, earnedPoints, won ? "race_win" : "race_loss")
+    .then((assessment: RiskAssessment) => {
+      const adjustedTotal = assessment.adjustedReward;
+      const diff = earnedPoints - adjustedTotal;
+
+      if (diff > 0) {
+        // Clawback excess: deduct the difference from user balance
+        // This ensures bots don't accumulate unfair rewards
+        const adjustedFree = Math.round(adjustedTotal * 0.6);
+        const freeOverpay = freeNP - adjustedFree;
+        if (freeOverpay > 0) {
+          supabase.rpc("spend_locked_np" as any, {
+            _wallet: state.walletAddress,
+            _amount: 0, // No locked spend, just log
+            _reason: `antibot_adjustment_${assessment.riskLevel}`,
+          }).then(() => {});
+
+          // Adjust user NP balance (deduct overpay)
+          const wc = getWalletClient(state.walletAddress);
+          wc.from("users")
+            .update({ nitro_points: supabase.rpc !== undefined ? undefined : 0 })
+            .eq("wallet_address", state.walletAddress)
+            .then(() => {});
+
+          // Use RPC to atomically deduct
+          supabase.rpc("split_reward" as any, {
+            _wallet: state.walletAddress,
+            _total_np: -diff, // Negative = clawback
+            _xp: 0,
+            _source: `antibot_clawback_${assessment.riskLevel}`,
+          }).then(() => {});
+        }
+
+        console.log(`[ANTIBOT] Risk: ${assessment.riskLevel} | Reward: ${earnedPoints} → ${adjustedTotal} | Saved: ${diff} NP`);
+      }
+    })
+    .catch((err) => {
+      console.warn("[ANTIBOT] Assessment failed, rewards unchanged:", err);
+    });
+
   // Emit tokens (respects hard cap, daily limit, decay)
   emitTokens(state.walletAddress, freeNP, won ? "race_win" : "race_loss").catch(() => {});
-
-  // Update behavior score (anti-bot analysis)
-  supabase.rpc("calculate_behavior_score" as any, {
-    _wallet: state.walletAddress,
-  }).then(() => {});
 
   return { newState, leveledUp, newLevel, freeNP, lockedNP };
 };
