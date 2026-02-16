@@ -19,6 +19,7 @@ export interface CarData {
   wins: number;
   racesCount: number;
   racesSinceRevision: number;
+  lastOilChangeKm: number;
 }
 
 export interface GameState {
@@ -35,9 +36,18 @@ const DEFAULT_WALLET = "0x7f3a...e1b2";
 const XP_PER_WIN = 80;
 const XP_PER_LOSS = 25;
 const XP_MULTIPLIER = 1.5;
+const OIL_CHANGE_INTERVAL_KM = 100; // needs oil change every 100 km
 
 export const calculateXpToNext = (level: number): number => {
   return Math.round(100 * Math.pow(XP_MULTIPLIER, level - 1));
+};
+
+export const needsOilChange = (car: CarData): boolean => {
+  return (car.totalKm - car.lastOilChangeKm) >= OIL_CHANGE_INTERVAL_KM;
+};
+
+export const kmSinceOilChange = (car: CarData): number => {
+  return Math.round(car.totalKm - car.lastOilChangeKm);
 };
 
 const defaultCar: CarData = {
@@ -59,6 +69,7 @@ const defaultCar: CarData = {
   wins: 0,
   racesCount: 0,
   racesSinceRevision: 0,
+  lastOilChangeKm: 0,
 };
 
 
@@ -84,6 +95,7 @@ function mapCarRow(row: any): CarData {
     wins: row.wins,
     racesCount: row.races_count,
     racesSinceRevision: row.races_since_revision,
+    lastOilChangeKm: Number(row.last_oil_change_km ?? 0),
   };
 }
 
@@ -125,6 +137,7 @@ export async function ensureCarExists(wallet: string): Promise<void> {
       wins: defaultCar.wins,
       races_count: defaultCar.racesCount,
       races_since_revision: defaultCar.racesSinceRevision,
+      last_oil_change_km: defaultCar.lastOilChangeKm,
     });
   }
 }
@@ -191,6 +204,7 @@ export async function saveCarToSupabase(car: CarData): Promise<void> {
       wins: car.wins,
       races_count: car.racesCount,
       races_since_revision: car.racesSinceRevision,
+      last_oil_change_km: car.lastOilChangeKm,
     })
     .eq("id", car.id);
 }
@@ -233,7 +247,10 @@ export const addXpToCar = (
     // Durability reduces engine wear: high durability = less damage per race
     const durabilityReduction = 1 - (updatedCar.durability / 100) * 0.6; // 100 dur → 0.4x, 0 dur → 1x
     const baseEngineDmg = won ? 5 : 8;
-    updatedCar.engineHealth = Math.max(0, updatedCar.engineHealth - Math.round(baseEngineDmg * durabilityReduction));
+    // Oil overdue multiplier: 1.5x damage when oil change is needed
+    const oilOverdue = needsOilChange(updatedCar);
+    const oilMultiplier = oilOverdue ? 1.5 : 1;
+    updatedCar.engineHealth = Math.max(0, updatedCar.engineHealth - Math.round(baseEngineDmg * durabilityReduction * oilMultiplier));
     // Durability itself degrades slowly
     updatedCar.durability = Math.max(0, updatedCar.durability - (won ? 1 : 2));
 
@@ -305,6 +322,34 @@ export const repairCar = (
       engineHealth: 100,
       durability: 100,
       racesSinceRevision: 0,
+    };
+  });
+
+  const newState = {
+    ...state,
+    cars: newCars,
+    nitroPoints: state.nitroPoints - cost,
+  };
+
+  const updatedCar = newCars.find((c) => c.id === carId);
+  if (updatedCar) saveCarToSupabase(updatedCar);
+  saveUserToSupabase(state.walletAddress, newState.nitroPoints, newState.fuelTanks);
+
+  return newState;
+};
+
+export const changeOil = (
+  state: GameState,
+  carId: string,
+  cost: number
+): GameState | null => {
+  if (state.nitroPoints < cost) return null;
+
+  const newCars = state.cars.map((car) => {
+    if (car.id !== carId) return car;
+    return {
+      ...car,
+      lastOilChangeKm: car.totalKm,
     };
   });
 

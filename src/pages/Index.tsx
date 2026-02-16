@@ -1,5 +1,5 @@
 import { motion, AnimatePresence } from "framer-motion";
-import { Zap, Gauge, Wind, Shield, Wrench, Flag, Star, Plus, Coins, Volume2, VolumeX, LogOut, User, Menu, X, ChevronLeft, ChevronRight, ChevronUp, ChevronDown } from "lucide-react";
+import { Zap, Gauge, Wind, Shield, Wrench, Flag, Star, Plus, Coins, Volume2, VolumeX, LogOut, User, Menu, X, ChevronLeft, ChevronRight, ChevronUp, ChevronDown, Droplets } from "lucide-react";
 import { useNavigate } from "react-router-dom";
 import { useRef, useState, useEffect, useCallback } from "react";
 // HD garage background images
@@ -37,13 +37,14 @@ import garageBgm from "@/assets/garagem-bgm.mp3";
 import StatBar from "@/components/garage/StatBar";
 import GlowButton from "@/components/garage/GlowButton";
 import { useGameState } from "@/hooks/useGameState";
+import { needsOilChange, kmSinceOilChange } from "@/lib/gameState";
 import { useAuth } from "@/hooks/useAuth";
 import { supabase } from "@/lib/supabase";
 
 
 const Index = () => {
   const navigate = useNavigate();
-  const { state, selectedCar, addPoint, repair, updateState, selectCar, loading } = useGameState();
+  const { state, selectedCar, addPoint, repair, oilChange, updateState, selectCar, loading } = useGameState();
   const { user, signOut } = useAuth();
   const [garageSoundOn, setGarageSoundOn] = useState(true);
   const [refilling, setRefilling] = useState(false);
@@ -114,6 +115,9 @@ const Index = () => {
   const xpPercent = (selectedCar.xp / selectedCar.xpToNext) * 100;
   const needsRevision = selectedCar.racesSinceRevision >= 5;
   const repairCost = 50 + selectedCar.level * 10;
+  const oilNeeded = needsOilChange(selectedCar);
+  const kmSinceOil = kmSinceOilChange(selectedCar);
+  const oilCost = 30 + selectedCar.level * 5;
 
   const carIndex = state.cars.findIndex((c) => c.id === state.selectedCarId);
   const hasPrev = carIndex > 0;
@@ -336,6 +340,18 @@ const Index = () => {
                         Atributos
                       </h3>
                       <div className="flex items-center gap-2 text-xs">
+                        {/* Oil warning light */}
+                        {oilNeeded && (
+                          <motion.div
+                            animate={{ opacity: [1, 0.3, 1] }}
+                            transition={{ duration: 0.8, repeat: Infinity }}
+                            className="flex items-center gap-1"
+                            title="Troca de óleo necessária!"
+                          >
+                            <Droplets className="h-3.5 w-3.5 text-destructive" />
+                            <span className="font-display text-[10px] font-bold text-destructive">ÓLEO</span>
+                          </motion.div>
+                        )}
                         <div className="flex items-center gap-1">
                           <Gauge className="h-3 w-3 text-muted-foreground" />
                           <span className="font-body text-muted-foreground">
@@ -392,6 +408,37 @@ const Index = () => {
                             className="w-full rounded-lg border border-primary/40 bg-primary/10 px-3 py-2 font-display text-xs font-bold text-primary transition-colors hover:bg-primary/20 sm:w-auto"
                           >
                             🔧 Reparar ({repairCost} NP)
+                          </button>
+                        </div>
+                      </motion.div>
+                    )}
+
+                    {oilNeeded && (
+                      <motion.div
+                        initial={{ opacity: 0 }}
+                        animate={{ opacity: 1 }}
+                        className="mt-3 rounded-xl border border-destructive/30 bg-destructive/10 p-3"
+                      >
+                        <div className="flex flex-col gap-2 sm:flex-row sm:items-center sm:justify-between">
+                          <div className="flex items-center gap-2">
+                            <motion.div
+                              animate={{ opacity: [1, 0.2, 1] }}
+                              transition={{ duration: 0.6, repeat: Infinity }}
+                            >
+                              <Droplets className="h-4 w-4 text-destructive" />
+                            </motion.div>
+                            <div>
+                              <span className="font-display text-xs font-bold text-destructive">🛢 Trocar óleo!</span>
+                              <p className="font-body text-[10px] text-destructive/70">
+                                {kmSinceOil} km sem troca · Motor desgastando 1.5x mais rápido
+                              </p>
+                            </div>
+                          </div>
+                          <button
+                            onClick={() => oilChange(oilCost)}
+                            className="w-full rounded-lg border border-neon-orange/40 bg-neon-orange/10 px-3 py-2 font-display text-xs font-bold text-neon-orange transition-colors hover:bg-neon-orange/20 sm:w-auto"
+                          >
+                            🛢 Trocar Óleo ({oilCost} NP)
                           </button>
                         </div>
                       </motion.div>
@@ -454,7 +501,7 @@ const Index = () => {
                     )}
 
                     <p className="mt-2 text-center font-body text-[10px] text-muted-foreground">
-                      ⛽ {state.fuelTanks}/5 tanques · 🔧 Rev. em {Math.max(0, 5 - selectedCar.racesSinceRevision)} corridas
+                      ⛽ {state.fuelTanks}/5 tanques · 🔧 Rev. em {Math.max(0, 5 - selectedCar.racesSinceRevision)} corridas · 🛢 Óleo: {Math.max(0, 100 - kmSinceOil)} km restante
                     </p>
                   </div>
                 </motion.div>

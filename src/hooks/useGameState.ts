@@ -6,6 +6,7 @@ import {
   addXpToCar,
   distributePoint,
   repairCar,
+  changeOil,
   saveUserToSupabase,
   saveCarToSupabase,
 } from "@/lib/gameState";
@@ -57,6 +58,17 @@ export const useGameState = () => {
     [state]
   );
 
+  const oilChange = useCallback(
+    (cost: number) => {
+      if (!state?.selectedCarId) return false;
+      const newState = changeOil(state, state.selectedCarId, cost);
+      if (!newState) return false;
+      setState(newState);
+      return true;
+    },
+    [state]
+  );
+
   const updateState = useCallback((updater: (prev: GameState) => GameState) => {
     setState((prev) => {
       if (!prev) return prev;
@@ -94,6 +106,7 @@ export const useGameState = () => {
     finishRace,
     addPoint,
     repair,
+    oilChange,
     updateState,
     selectCar,
     loading,

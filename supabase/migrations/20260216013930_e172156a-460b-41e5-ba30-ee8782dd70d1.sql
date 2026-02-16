@@ -1,0 +1,1 @@
+ALTER TABLE public.cars ADD COLUMN last_oil_change_km numeric NOT NULL DEFAULT 0;
