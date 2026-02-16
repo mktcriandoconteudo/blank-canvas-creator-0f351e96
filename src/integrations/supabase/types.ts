@@ -14,6 +14,54 @@ export type Database = {
   }
   public: {
     Tables: {
+      active_rentals: {
+        Row: {
+          car_id: string
+          expires_at: string
+          id: string
+          is_active: boolean
+          owner_wallet: string
+          races_remaining: number
+          rental_car_id: string
+          rented_at: string
+        }
+        Insert: {
+          car_id: string
+          expires_at?: string
+          id?: string
+          is_active?: boolean
+          owner_wallet: string
+          races_remaining?: number
+          rental_car_id: string
+          rented_at?: string
+        }
+        Update: {
+          car_id?: string
+          expires_at?: string
+          id?: string
+          is_active?: boolean
+          owner_wallet?: string
+          races_remaining?: number
+          rental_car_id?: string
+          rented_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "active_rentals_car_id_fkey"
+            columns: ["car_id"]
+            isOneToOne: false
+            referencedRelation: "cars"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "active_rentals_rental_car_id_fkey"
+            columns: ["rental_car_id"]
+            isOneToOne: false
+            referencedRelation: "rental_cars"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       car_insurance: {
         Row: {
           car_id: string
@@ -113,6 +161,7 @@ export type Database = {
           created_at: string
           durability: number
           engine_health: number
+          fuel_tanks: number
           handling_base: number
           id: string
           last_oil_change_km: number
@@ -136,6 +185,7 @@ export type Database = {
           created_at?: string
           durability?: number
           engine_health?: number
+          fuel_tanks?: number
           handling_base?: number
           id?: string
           last_oil_change_km?: number
@@ -159,6 +209,7 @@ export type Database = {
           created_at?: string
           durability?: number
           engine_health?: number
+          fuel_tanks?: number
           handling_base?: number
           id?: string
           last_oil_change_km?: number
@@ -530,6 +581,57 @@ export type Database = {
         }
         Relationships: []
       }
+      rental_cars: {
+        Row: {
+          acceleration_base: number
+          available: boolean
+          created_at: string
+          durability: number
+          handling_base: number
+          id: string
+          image_key: string
+          model: string
+          name: string
+          races_limit: number
+          rarity: string
+          rental_price: number
+          speed_base: number
+          updated_at: string
+        }
+        Insert: {
+          acceleration_base?: number
+          available?: boolean
+          created_at?: string
+          durability?: number
+          handling_base?: number
+          id?: string
+          image_key?: string
+          model?: string
+          name: string
+          races_limit?: number
+          rarity?: string
+          rental_price?: number
+          speed_base?: number
+          updated_at?: string
+        }
+        Update: {
+          acceleration_base?: number
+          available?: boolean
+          created_at?: string
+          durability?: number
+          handling_base?: number
+          id?: string
+          image_key?: string
+          model?: string
+          name?: string
+          races_limit?: number
+          rarity?: string
+          rental_price?: number
+          speed_base?: number
+          updated_at?: string
+        }
+        Relationships: []
+      }
       transactions: {
         Row: {
           amount: number
@@ -693,6 +795,10 @@ export type Database = {
             Args: { _car_id: string; _wallet_address: string }
             Returns: boolean
           }
+      rent_car: {
+        Args: { _rental_car_id: string; _wallet: string }
+        Returns: Json
+      }
     }
     Enums: {
       app_role: "admin" | "moderator" | "user"
