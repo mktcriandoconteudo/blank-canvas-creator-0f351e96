@@ -288,7 +288,7 @@ const Index = () => {
             </h2>
             <p className="mt-1 font-body text-xs text-muted-foreground sm:text-sm">
               <span className="inline-flex items-center gap-1 rounded bg-card/50 px-1.5 py-0.5 font-display text-[10px] font-bold text-primary border border-primary/20">
-                🏷️ {selectedCar.licensePlate}
+                PLACA {selectedCar.licensePlate}
               </span>
               {" · "}Token {selectedCar.tokenId} · Piloto: {user?.username ?? "—"}
               <span className="ml-2 text-primary/60">
