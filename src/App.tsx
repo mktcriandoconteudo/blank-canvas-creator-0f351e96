@@ -37,7 +37,7 @@ const App = () => (
           <Route path="/marketplace" element={<Marketplace />} />
           <Route path="/perfil" element={<ProtectedRoute><Profile /></ProtectedRoute>} />
           <Route path="/admin" element={<ProtectedRoute><Admin /></ProtectedRoute>} />
-          <Route path="/loja" element={<ProtectedRoute><Store /></ProtectedRoute>} />
+          <Route path="/loja" element={<Store />} />
           <Route path="*" element={<NotFound />} />
         </Routes>
       </BrowserRouter>
