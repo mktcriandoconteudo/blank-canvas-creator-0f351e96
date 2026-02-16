@@ -401,6 +401,54 @@ export type Database = {
           },
         ]
       }
+      marketplace_cars: {
+        Row: {
+          acceleration_base: number
+          created_at: string
+          durability: number
+          handling_base: number
+          id: string
+          image_key: string
+          model: string
+          name: string
+          price: number
+          rarity: string
+          sale_active: boolean
+          speed_base: number
+          updated_at: string
+        }
+        Insert: {
+          acceleration_base?: number
+          created_at?: string
+          durability?: number
+          handling_base?: number
+          id?: string
+          image_key?: string
+          model?: string
+          name: string
+          price?: number
+          rarity?: string
+          sale_active?: boolean
+          speed_base?: number
+          updated_at?: string
+        }
+        Update: {
+          acceleration_base?: number
+          created_at?: string
+          durability?: number
+          handling_base?: number
+          id?: string
+          image_key?: string
+          model?: string
+          name?: string
+          price?: number
+          rarity?: string
+          sale_active?: boolean
+          speed_base?: number
+          updated_at?: string
+        }
+        Relationships: []
+      }
       onchain_events: {
         Row: {
           block_number: number
@@ -589,6 +637,10 @@ export type Database = {
       [_ in never]: never
     }
     Functions: {
+      buy_marketplace_car: {
+        Args: { _car_id: string; _wallet: string }
+        Returns: Json
+      }
       check_is_admin: { Args: never; Returns: boolean }
       claim_insurance: {
         Args: {
