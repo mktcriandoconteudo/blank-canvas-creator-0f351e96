@@ -224,6 +224,9 @@ const Index = () => {
               <button onClick={() => navigate("/marketplace")} className="font-display text-xs uppercase tracking-wider text-muted-foreground transition-colors hover:text-primary">
                 Marketplace
               </button>
+              <button onClick={() => navigate("/perfil")} className="font-display text-xs uppercase tracking-wider text-muted-foreground transition-colors hover:text-primary">
+                Perfil
+              </button>
               {isAdmin && (
                 <button onClick={() => navigate("/admin")} className="font-display text-xs uppercase tracking-wider text-neon-orange transition-colors hover:text-neon-orange/80">
                   🛡️ Admin
@@ -242,10 +245,10 @@ const Index = () => {
                 <Coins className="h-4 w-4 text-neon-orange" />
                 <span className="font-display text-[10px] text-foreground sm:text-xs">{state.nitroPoints} NP</span>
               </div>
-              <div className="hidden items-center gap-1.5 rounded-lg bg-muted/30 px-2 py-1 backdrop-blur-sm sm:flex">
+              <button onClick={() => navigate("/perfil")} className="hidden items-center gap-1.5 rounded-lg bg-muted/30 px-2 py-1 backdrop-blur-sm transition-colors hover:bg-muted/50 sm:flex">
                 <User className="h-4 w-4 text-primary" />
                 <span className="font-display text-[10px] text-foreground sm:text-xs">{user?.username ?? "Piloto"}</span>
-              </div>
+              </button>
               <button
                 onClick={signOut}
                 className="hidden items-center gap-1 rounded-lg bg-muted/30 px-2 py-1 backdrop-blur-sm transition-colors hover:bg-destructive/20 sm:flex"
@@ -281,6 +284,7 @@ const Index = () => {
                   {[
                     { label: "Home", action: () => { navigate("/"); setMenuOpen(false); } },
                     { label: "Marketplace", action: () => { navigate("/marketplace"); setMenuOpen(false); } },
+                    { label: "👤 Perfil", action: () => { navigate("/perfil"); setMenuOpen(false); } },
                     ...(isAdmin ? [{ label: "🛡️ Admin", action: () => { navigate("/admin"); setMenuOpen(false); } }] : []),
                   ].map((item) => (
                     <button

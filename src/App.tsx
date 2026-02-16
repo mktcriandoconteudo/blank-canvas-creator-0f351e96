@@ -11,6 +11,7 @@ import Marketplace from "./pages/Marketplace";
 import Auth from "./pages/Auth";
 import NotFound from "./pages/NotFound";
 import Admin from "./pages/Admin";
+import Profile from "./pages/Profile";
 
 const queryClient = new QueryClient();
 
@@ -33,6 +34,7 @@ const App = () => (
           <Route path="/garage" element={<ProtectedRoute><Index /></ProtectedRoute>} />
           <Route path="/race" element={<ProtectedRoute><Race /></ProtectedRoute>} />
           <Route path="/marketplace" element={<Marketplace />} />
+          <Route path="/perfil" element={<ProtectedRoute><Profile /></ProtectedRoute>} />
           <Route path="/admin" element={<ProtectedRoute><Admin /></ProtectedRoute>} />
           <Route path="*" element={<NotFound />} />
         </Routes>
