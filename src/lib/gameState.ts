@@ -280,8 +280,10 @@ export const getSelectedCar = (state: GameState): CarData | undefined => {
 export const addXpToCar = (
   state: GameState,
   carId: string,
-  won: boolean
-): { newState: GameState; leveledUp: boolean; newLevel: number } => {
+  won: boolean,
+  rewardMultiplier: number = 1.0,
+  raceNumber: number = 1
+): { newState: GameState; leveledUp: boolean; newLevel: number; freeNP: number; lockedNP: number } => {
   const xpGain = won ? XP_PER_WIN : XP_PER_LOSS;
   let leveledUp = false;
   let newLevel = 0;
@@ -294,17 +296,13 @@ export const addXpToCar = (
     updatedCar.racesCount += 1;
     updatedCar.racesSinceRevision += 1;
     if (won) updatedCar.wins += 1;
-    // Each race adds 8-15 km based on speed
     updatedCar.totalKm += Math.round(8 + (updatedCar.speed / 100) * 7);
 
-    // Durability reduces engine wear: high durability = less damage per race
-    const durabilityReduction = 1 - (updatedCar.durability / 100) * 0.6; // 100 dur → 0.4x, 0 dur → 1x
+    const durabilityReduction = 1 - (updatedCar.durability / 100) * 0.6;
     const baseEngineDmg = won ? 5 : 8;
-    // Oil overdue multiplier: 1.5x damage when oil change is needed
     const oilOverdue = needsOilChange(updatedCar);
     const oilMultiplier = oilOverdue ? 1.5 : 1;
     updatedCar.engineHealth = Math.max(0, updatedCar.engineHealth - Math.round(baseEngineDmg * durabilityReduction * oilMultiplier));
-    // Durability itself degrades slowly
     updatedCar.durability = Math.max(0, updatedCar.durability - (won ? 1 : 2));
 
     while (updatedCar.xp >= updatedCar.xpToNext) {
@@ -325,7 +323,13 @@ export const addXpToCar = (
   const basePoints = isRented
     ? (won ? RENTAL_NP_WIN : RENTAL_NP_LOSS)
     : (won ? OWNED_NP_WIN : OWNED_NP_LOSS);
-  const earnedPoints = Math.round((basePoints * health) / 100);
+
+  // Apply diminishing reward multiplier (anti-bot)
+  const earnedPoints = Math.round((basePoints * health * rewardMultiplier) / 100);
+
+  // 60/40 split: 60% free, 40% locked for upgrades
+  const freeNP = Math.round(earnedPoints * 0.6);
+  const lockedNP = earnedPoints - freeNP;
 
   // Decrement fuel on the car that raced
   const newCarsWithFuel = newCars.map((c) => {
@@ -336,7 +340,7 @@ export const addXpToCar = (
   const newState: GameState = {
     ...state,
     cars: newCarsWithFuel,
-    nitroPoints: state.nitroPoints + earnedPoints,
+    nitroPoints: state.nitroPoints + freeNP, // Only free NP goes to balance
     fuelTanks: 0, // deprecated
   };
 
@@ -345,11 +349,28 @@ export const addXpToCar = (
   if (updatedCar) saveCarToSupabase(updatedCar);
   saveUserToSupabase(state.walletAddress, newState.nitroPoints, 0);
 
-  // Sistema deflacionário: emitir tokens controlados ao invés de criar do nada
-  // A emissão respeita hard cap, limite diário e decay progressivo
-  emitTokens(state.walletAddress, earnedPoints, won ? "race_win" : "race_loss").catch(() => {});
+  // Use split_reward RPC for proper 60/40 + vesting tracking
+  supabase.rpc("split_reward" as any, {
+    _wallet: state.walletAddress,
+    _total_np: earnedPoints,
+    _xp: xpGain,
+    _source: won ? "race_win" : "race_loss",
+  }).then(() => {});
 
-  return { newState, leveledUp, newLevel };
+  // Log race for anti-bot tracking
+  (supabase.from("daily_race_log" as any) as any).insert({
+    wallet_address: state.walletAddress,
+    car_id: carId,
+    race_number: raceNumber,
+    np_earned: earnedPoints,
+    xp_earned: xpGain,
+    race_duration_ms: 10000,
+  }).then(() => {});
+
+  // Emit tokens (respects hard cap, daily limit, decay)
+  emitTokens(state.walletAddress, freeNP, won ? "race_win" : "race_loss").catch(() => {});
+
+  return { newState, leveledUp, newLevel, freeNP, lockedNP };
 };
 
 export const distributePoint = (
@@ -401,7 +422,13 @@ export const repairCar = (
   if (updatedCar) saveCarToSupabase(updatedCar);
   saveUserToSupabase(state.walletAddress, newState.nitroPoints, newState.fuelTanks);
 
-  // Transação deflacionária: 10% burn, 20% reward pool, 70% treasury
+  // Try to spend locked NP first (for upgrades), then deflation
+  supabase.rpc("spend_locked_np" as any, {
+    _wallet: state.walletAddress,
+    _amount: Math.min(cost, Math.round(cost * 0.4)), // use up to 40% from locked
+    _reason: "car_repair",
+  }).then(() => {});
+
   processTransaction(cost, state.walletAddress, "car_repair").catch(() => {});
 
   return newState;

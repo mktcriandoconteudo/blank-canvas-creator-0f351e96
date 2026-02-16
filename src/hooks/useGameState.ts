@@ -29,11 +29,11 @@ export const useGameState = () => {
   const selectedCar = state ? getSelectedCar(state) : undefined;
 
   const finishRace = useCallback(
-    (won: boolean) => {
-      if (!state?.selectedCarId) return { leveledUp: false, newLevel: 0 };
-      const { newState, leveledUp, newLevel } = addXpToCar(state, state.selectedCarId, won);
+    (won: boolean, rewardMultiplier: number = 1.0, raceNumber: number = 1) => {
+      if (!state?.selectedCarId) return { leveledUp: false, newLevel: 0, freeNP: 0, lockedNP: 0 };
+      const { newState, leveledUp, newLevel, freeNP, lockedNP } = addXpToCar(state, state.selectedCarId, won, rewardMultiplier, raceNumber);
       setState(newState);
-      return { leveledUp, newLevel };
+      return { leveledUp, newLevel, freeNP, lockedNP };
     },
     [state]
   );
