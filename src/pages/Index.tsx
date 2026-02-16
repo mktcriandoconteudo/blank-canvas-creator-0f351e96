@@ -391,7 +391,7 @@ const Index = () => {
                 initial={{ opacity: 0, x: -20 }}
                 animate={{ opacity: 1, x: 0 }}
                 transition={{ delay: 0.6 }}
-                className="mt-3 w-full max-w-xs rounded-xl border border-neon-orange/30 bg-card/40 p-3 backdrop-blur-sm"
+                className="mt-3 w-full max-w-xs rounded-xl border border-neon-orange/30 bg-background/90 p-3 backdrop-blur-xl shadow-lg"
               >
                 <div className="flex items-start gap-3">
                   <div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-full bg-neon-orange/20 text-lg">
