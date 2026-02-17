@@ -53,30 +53,43 @@ function pickTwo(): [string, string] {
 const RaceLeaderboard = ({ player, opponent, raceState, victory }: Props) => {
   const [extraNames] = useState(() => pickTwo());
   
-  // Simulate progress for extra racers
+  // Simulate progress for extra racers with competitive bursts
   const [extra1Progress, setExtra1Progress] = useState(0);
   const [extra2Progress, setExtra2Progress] = useState(0);
   const tickRef = useRef<ReturnType<typeof setInterval> | null>(null);
+  const burstRef = useRef({ extra1: 1, extra2: 1 });
 
-  // Generate random stats for extras (stable)
+  // Generate random stats for extras — closer to player/opponent for competitive feel
   const [extraStats] = useState(() => ({
-    extra1: { speed: 40 + Math.round(Math.random() * 30), power: 40 + Math.round(Math.random() * 30), handling: 40 + Math.round(Math.random() * 30) },
-    extra2: { speed: 35 + Math.round(Math.random() * 25), power: 35 + Math.round(Math.random() * 25), handling: 35 + Math.round(Math.random() * 25) },
+    extra1: { speed: 50 + Math.round(Math.random() * 35), power: 50 + Math.round(Math.random() * 35), handling: 45 + Math.round(Math.random() * 30) },
+    extra2: { speed: 45 + Math.round(Math.random() * 30), power: 45 + Math.round(Math.random() * 30), handling: 40 + Math.round(Math.random() * 30) },
   }));
 
-  // Simulate extra racers progress
+  // Periodic speed bursts to force position swaps
+  useEffect(() => {
+    if (raceState !== "racing") return;
+    const burstInterval = setInterval(() => {
+      burstRef.current = {
+        extra1: 0.7 + Math.random() * 1.2, // 0.7x to 1.9x multiplier
+        extra2: 0.6 + Math.random() * 1.3,
+      };
+    }, 800 + Math.random() * 600);
+    return () => clearInterval(burstInterval);
+  }, [raceState]);
+
+  // Simulate extra racers progress — competitive with player/opponent
   useEffect(() => {
     if (raceState !== "racing") return;
     tickRef.current = setInterval(() => {
       setExtra1Progress(prev => {
         const r = 0.7 + Math.random() * 0.6;
         const s = (extraStats.extra1.speed / 100) * 0.6 + (extraStats.extra1.power / 100) * 0.4;
-        return Math.min(prev + s * r * 0.3, 100);
+        return Math.min(prev + s * r * 0.35 * burstRef.current.extra1, 100);
       });
       setExtra2Progress(prev => {
         const r = 0.6 + Math.random() * 0.7;
         const s = (extraStats.extra2.speed / 100) * 0.6 + (extraStats.extra2.power / 100) * 0.4;
-        return Math.min(prev + s * r * 0.28, 100);
+        return Math.min(prev + s * r * 0.33 * burstRef.current.extra2, 100);
       });
     }, 50);
     return () => { if (tickRef.current) clearInterval(tickRef.current); };
