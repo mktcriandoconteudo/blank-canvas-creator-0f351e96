@@ -10,6 +10,7 @@ import { motion, AnimatePresence } from "framer-motion";
 
 export interface RacerInfo {
   name: string;
+  pilotName?: string;
   speed: number;
   power: number;       // acceleration
   handling: number;
@@ -83,7 +84,7 @@ const RaceLeaderboard = ({ player, opponent, raceState, victory }: Props) => {
 
   // Build racers array with current progress
   const racers = [
-    { name: player.name, progress: player.progress, isPlayer: true, speed: player.speed, power: player.power, handling: player.handling },
+    { name: player.name, pilotName: player.pilotName, progress: player.progress, isPlayer: true, speed: player.speed, power: player.power, handling: player.handling },
     { name: opponent.name, progress: opponent.progress, isPlayer: false, speed: opponent.speed, power: opponent.power, handling: opponent.handling },
     { name: extraNames[0], progress: extra1Progress, isPlayer: false, ...extraStats.extra1 },
     { name: extraNames[1], progress: extra2Progress, isPlayer: false, ...extraStats.extra2 },
@@ -143,7 +144,7 @@ const RaceLeaderboard = ({ player, opponent, raceState, victory }: Props) => {
                   transition={{ type: "spring", stiffness: 300, damping: 30 }}
                   className={`flex items-center gap-1.5 sm:gap-2 rounded-lg border px-2 py-1.5 sm:py-2 transition-colors ${
                     racer.isPlayer 
-                      ? POSITION_BG_COLORS[idx] + " ring-1 ring-primary/20" 
+                      ? "border-neon-green/40 bg-neon-green/10 ring-1 ring-neon-green/30 shadow-[0_0_12px_-3px_hsl(var(--neon-green)/0.3)]" 
                       : POSITION_BG_COLORS[idx]
                   }`}
                 >
@@ -158,14 +159,20 @@ const RaceLeaderboard = ({ player, opponent, raceState, victory }: Props) => {
                   <div className="flex-1 min-w-0">
                     <div className="flex items-center gap-1">
                       <span className={`font-display text-[9px] sm:text-[10px] font-bold truncate ${
-                        racer.isPlayer ? "text-primary" : "text-foreground/80"
+                        racer.isPlayer ? "text-neon-green" : "text-foreground/80"
                       }`}>
                         {racer.name}
                       </span>
                       {racer.isPlayer && (
-                        <span className="text-[7px] text-primary">★</span>
+                        <span className="text-[7px] text-neon-green">★</span>
                       )}
                     </div>
+                    {/* Pilot name for player */}
+                    {racer.isPlayer && racer.pilotName && (
+                      <span className="block font-body text-[7px] sm:text-[8px] text-neon-green/70 truncate -mt-0.5">
+                        {racer.pilotName}
+                      </span>
+                    )}
                     {/* Mini stats */}
                     <div className="flex gap-2 mt-0.5">
                       <span className="font-mono text-[7px] sm:text-[8px] text-muted-foreground/60">

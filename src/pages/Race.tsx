@@ -8,6 +8,7 @@ import RaceVideoPlayer from "@/components/race/RaceVideoPlayer";
 import SimpleVideoPlayer from "@/components/race/SimpleVideoPlayer";
 import RaceLeaderboard from "@/components/race/RaceLeaderboard";
 import { useGameState } from "@/hooks/useGameState";
+import { useAuth } from "@/hooks/useAuth";
 import { RENTAL_STAT_PENALTY, getMaxFuel, isEngineBlown, getRepairCost } from "@/lib/gameState";
 import { supabase } from "@/integrations/supabase/client";
 import { useCarVideos } from "@/hooks/useCarVideos";
@@ -39,6 +40,7 @@ const FINISH_LINE = 100;
 const TICK_MS = 50;
 
 const Race = () => {
+  const { user } = useAuth();
   const navigate = useNavigate();
   const { state, selectedCar, finishRace, loading, updateState } = useGameState();
   const isRentedCar = selectedCar?.isRented ?? false;
@@ -626,6 +628,7 @@ const Race = () => {
       <RaceLeaderboard
         player={{
           name: playerStats.name,
+          pilotName: user?.username ?? undefined,
           speed: playerStats.speed,
           power: selectedCar?.acceleration ?? 60,
           handling: playerStats.handling,
