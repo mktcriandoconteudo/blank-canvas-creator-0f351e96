@@ -288,15 +288,18 @@ const Index = () => {
               {selectedCar.name.split(" ")[0]}{" "}
               <span className="text-primary text-glow-cyan">{selectedCar.name.split(" ").slice(1).join(" ")}</span>
             </h2>
-            <p className="mt-1 font-body text-xs text-muted-foreground sm:text-sm">
+            <div className="mt-2 flex flex-wrap items-center gap-2">
               <span className="inline-flex items-center gap-1 rounded bg-card/50 px-1.5 py-0.5 font-display text-[10px] font-bold text-primary border border-primary/20">
                 PLACA {selectedCar.licensePlate}
               </span>
-              {" · "}Token {selectedCar.tokenId} · Piloto: {user?.username ?? "—"}
-              <span className="ml-2 text-primary/60">
-                ({carIndex + 1}/{state.cars.length})
+              <span className="inline-flex items-center gap-1 rounded bg-card/50 px-1.5 py-0.5 font-display text-[10px] font-bold text-foreground border border-border/20">
+                Token {selectedCar.tokenId}
               </span>
-            </p>
+              <span className="inline-flex items-center gap-1 rounded bg-card/50 px-1.5 py-0.5 font-display text-[10px] font-bold text-foreground border border-border/20">
+                Piloto: <span className="text-primary">{user?.username ?? "—"}</span>
+                <span className="text-primary/60">({carIndex + 1}/{state.cars.length})</span>
+              </span>
+            </div>
 
             {/* XP / Level badge */}
             <motion.div
