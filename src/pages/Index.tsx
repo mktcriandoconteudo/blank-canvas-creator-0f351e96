@@ -100,7 +100,11 @@ const Index = () => {
   const [showInsurance, setShowInsurance] = useState(false);
   const [purchasingPlan, setPurchasingPlan] = useState<string | null>(null);
   const [lastRace, setLastRace] = useState<LastRaceResult | null>(null);
-  const [mechanicDismissed, setMechanicDismissed] = useState(false);
+  
+  const [raulVisible, setRaulVisible] = useState(false);
+  const [raulDismissed, setRaulDismissed] = useState(false);
+  const [raulMessageIndex, setRaulMessageIndex] = useState(0);
+  const [mechanicQueue, setMechanicQueue] = useState<number | null>(null); // seconds remaining
   const [biaVisible, setBiaVisible] = useState(false);
   const [biaDismissed, setBiaDismissed] = useState(false);
   const [biaMessageIndex, setBiaMessageIndex] = useState(0);
@@ -184,7 +188,51 @@ const Index = () => {
     setBiaDismissed(false);
     setBiaVisible(false);
     setShowInsurance(false);
+    setRaulDismissed(false);
+    setRaulVisible(false);
+    setMechanicQueue(null);
   }, [selectedCar?.id]);
+
+  // Raul pop-up timer (appears randomly like Bia)
+  useEffect(() => {
+    if (raulDismissed) return;
+    const initialDelay = setTimeout(() => {
+      setRaulVisible(true);
+      setRaulMessageIndex(Math.floor(Math.random() * 10));
+    }, 3000 + Math.random() * 8000);
+    return () => clearTimeout(initialDelay);
+  }, [raulDismissed, selectedCar?.id]);
+
+  // Auto-cycle Raul: disappear after 15s, reappear after 20-50s
+  useEffect(() => {
+    if (!raulVisible) return;
+    const hideTimer = setTimeout(() => {
+      setRaulVisible(false);
+      const reappearTimer = setTimeout(() => {
+        if (!raulDismissed) {
+          setRaulMessageIndex(Math.floor(Math.random() * 10));
+          setRaulVisible(true);
+        }
+      }, 20000 + Math.random() * 30000);
+      return () => clearTimeout(reappearTimer);
+    }, 15000);
+    return () => clearTimeout(hideTimer);
+  }, [raulVisible, raulDismissed]);
+
+  // Mechanic queue countdown
+  useEffect(() => {
+    if (mechanicQueue === null || mechanicQueue <= 0) return;
+    const interval = setInterval(() => {
+      setMechanicQueue(prev => {
+        if (prev === null || prev <= 1) {
+          clearInterval(interval);
+          return 0;
+        }
+        return prev - 1;
+      });
+    }, 1000);
+    return () => clearInterval(interval);
+  }, [mechanicQueue]);
 
   const audioStartedRef = useRef(false);
 
@@ -454,76 +502,167 @@ const Index = () => {
               )}
             </AnimatePresence>
 
-            {/* Mechanic Warnings — dismissible per session */}
-            {(isEngineBlown(selectedCar) || selectedCar.engineHealth <= 10 || selectedCar.engineHealth < 50 || oilNeeded || selectedCar.durability < 30) && !mechanicDismissed && (
-              <motion.div
-                initial={{ opacity: 0, x: -20 }}
-                animate={{ opacity: 1, x: 0 }}
-                exit={{ opacity: 0, x: -20 }}
-                transition={{ delay: 0.6 }}
-                className={`mt-3 w-full max-w-xs rounded-xl border p-3 backdrop-blur-xl shadow-lg relative ${
-                  isEngineBlown(selectedCar) ? "border-destructive/40 bg-background/95" : "border-neon-orange/30 bg-background/90"
-                }`}
-              >
-                <button
-                  onClick={() => setMechanicDismissed(true)}
-                  className="absolute top-2 right-2 flex h-6 w-6 items-center justify-center rounded-full bg-muted/50 text-muted-foreground transition-colors hover:bg-muted hover:text-foreground"
+            {/* Mecânico Raul — pop-up aleatório com fila de espera */}
+            <AnimatePresence>
+              {raulVisible && !raulDismissed && (
+                <motion.div
+                  initial={{ opacity: 0, x: -30, scale: 0.9 }}
+                  animate={{ opacity: 1, x: 0, scale: 1 }}
+                  exit={{ opacity: 0, x: 30, scale: 0.9 }}
+                  transition={{ type: "spring", stiffness: 300, damping: 25 }}
+                  className={`mt-3 w-full max-w-xs rounded-xl border p-3 backdrop-blur-xl shadow-lg relative ${
+                    isEngineBlown(selectedCar) ? "border-destructive/40 bg-background/95" : 
+                    (selectedCar.engineHealth < 50 || oilNeeded || selectedCar.durability < 30) ? "border-neon-orange/30 bg-background/90" :
+                    "border-primary/20 bg-card/30"
+                  }`}
                 >
-                  <X className="h-3.5 w-3.5" />
-                </button>
-                <div className="flex items-start gap-3">
-                  <img src={raulAvatar} alt="Mecânico Raul" className="h-10 w-10 shrink-0 rounded-full border-2 border-neon-orange/40 object-cover" />
-                  <div className="flex-1 space-y-1.5 pr-4">
-                    <span className="font-display text-xs font-bold text-neon-orange">
-                      Mecânico diz:
-                    </span>
-                    <div className="space-y-1">
-                      {isEngineBlown(selectedCar) && (
-                        <p className="font-body text-[11px] text-destructive font-bold">
-                          🔥 "MOTOR FUNDIU! Carro bloqueado! Vai custar 3x o reparo normal. Corre pra oficina, chefe!"
-                        </p>
-                      )}
-                      {!isEngineBlown(selectedCar) && selectedCar.engineHealth <= 10 && (
-                        <p className="font-body text-[11px] text-destructive font-bold">
-                          🚨 "ESTADO CRÍTICO! Motor em {selectedCar.engineHealth}%! Risco altíssimo de fundir na próxima corrida! Não arrisca, chefe!"
-                        </p>
-                      )}
-                      {!isEngineBlown(selectedCar) && selectedCar.engineHealth > 10 && selectedCar.engineHealth < 50 && (
-                        <p className="font-body text-[11px] text-destructive">
-                          ⚠️ "Motor em {selectedCar.engineHealth}%! Tá quase fundindo, chefe. Faz uma revisão urgente!"
-                        </p>
-                      )}
-                      {selectedCar.engineHealth >= 50 && selectedCar.engineHealth < 80 && (
-                        <p className="font-body text-[11px] text-neon-orange">
-                          🔶 "Motor em {selectedCar.engineHealth}%. Tá aguentando, mas não força muito não."
-                        </p>
-                      )}
-                      {oilNeeded && (
-                        <p className="font-body text-[11px] text-destructive">
-                          🛢️ "Óleo vencido há {kmSinceOil - 100}km! O motor tá desgastando 1.5x mais rápido!"
-                        </p>
-                      )}
-                      {selectedCar.durability < 30 && (
-                        <p className="font-body text-[11px] text-destructive">
-                          🛞 "Durabilidade em {selectedCar.durability}%! Os pneus tão carecas, vai perder aderência!"
-                        </p>
+                  <button
+                    onClick={() => { setRaulDismissed(true); setRaulVisible(false); }}
+                    className="absolute top-2 right-2 flex h-5 w-5 items-center justify-center rounded-full bg-muted/50 text-muted-foreground transition-colors hover:bg-muted hover:text-foreground"
+                  >
+                    <X className="h-3 w-3" />
+                  </button>
+                  <div className="flex items-start gap-3">
+                    <img src={raulAvatar} alt="Mecânico Raul" className="h-10 w-10 shrink-0 rounded-full border-2 border-neon-orange/40 object-cover" />
+                    <div className="flex-1 space-y-2 pr-4">
+                      <span className="font-display text-xs font-bold text-neon-orange">
+                        Raul, Mecânico:
+                      </span>
+
+                      {/* Contextual message */}
+                      <p className="font-body text-[11px] text-foreground/80">
+                        {(() => {
+                          const healthyMsgs = [
+                            "🧰 \"Fala, chefe! Tô aqui embaixo do capô conferindo tudo. Por enquanto tá suave!\"",
+                            "😎 \"E aí, piloto! Passei pra dar um oi. Tá cuidando bem do carro, hein? Gosto assim!\"",
+                            "🔧 \"Opa! Só dando uma olhada rápida... Motor tá redondinho, pode acelerar tranquilo!\"",
+                            "☕ \"Tô tomando meu cafezinho aqui na oficina. Se precisar, é só chamar!\"",
+                            "🏎️ \"Esse carro tá uma beleza! Quem cuida, tem. Bora pra pista?\"",
+                            "👨‍🔧 \"Mecânico que não aparece é mecânico que confia no dono. E eu confio em você!\"",
+                          ];
+                          if (isEngineBlown(selectedCar)) {
+                            const msgs = [
+                              "🔥 \"PARA TUDO, CHEFE! Motor fundiu! Vai custar caro... mas o Raul resolve. Confia!\"",
+                              "💀 \"Ihhhh... esse motor deu o último suspiro. Fica frio que eu ressuscito ele!\"",
+                            ];
+                            return msgs[raulMessageIndex % msgs.length];
+                          }
+                          if (selectedCar.engineHealth <= 10) {
+                            const msgs = [
+                              `🚨 "Chefe, pelo amor! Motor em ${selectedCar.engineHealth}%! Se correr mais uma, pode fundir! Me deixa dar um trato!"`,
+                              `😰 "Tô suando frio aqui! ${selectedCar.engineHealth}% de motor... isso tá um milagre andando!"`,
+                            ];
+                            return msgs[raulMessageIndex % msgs.length];
+                          }
+                          if (selectedCar.engineHealth < 50) {
+                            const msgs = [
+                              `⚠️ "Ô meu bom, motor em ${selectedCar.engineHealth}% não é brincadeira não. Traz pra cá que eu dou um jeito!"`,
+                              `🤔 "Motor tá reclamando, chefe... ${selectedCar.engineHealth}% e caindo. Bora fazer uma revisão?"`,
+                            ];
+                            return msgs[raulMessageIndex % msgs.length];
+                          }
+                          if (oilNeeded) {
+                            const kmOver = kmSinceOil - 100;
+                            const msgs = [
+                              `🛢️ "Esse óleo tá mais velho que receita da vovó! ${kmOver}km sem trocar... Motor sofrendo 1.5x mais!"`,
+                              `😤 "Chefe, tá querendo matar o motor? Óleo vencido há ${kmOver}km! Troca isso logo!"`,
+                              `🫠 "Olha, eu já vi muito motor fundir por óleo vencido... e o seu tá com ${kmOver}km sem troca!"`,
+                            ];
+                            return msgs[raulMessageIndex % msgs.length];
+                          }
+                          if (selectedCar.durability < 30) {
+                            const msgs = [
+                              `🛞 "Esses pneus tão implorando por piedade! ${selectedCar.durability}% de durabilidade? Vai derrapar até na reta!"`,
+                              `😬 "Durabilidade em ${selectedCar.durability}%... Tá mais liso que pista de sabão! Bora arrumar?"`,
+                            ];
+                            return msgs[raulMessageIndex % msgs.length];
+                          }
+                          return healthyMsgs[raulMessageIndex % healthyMsgs.length];
+                        })()}
+                      </p>
+
+                      {/* Queue timer or repair buttons */}
+                      {mechanicQueue !== null && mechanicQueue > 0 ? (
+                        <div className="rounded-lg border border-neon-orange/30 bg-neon-orange/10 p-2.5 space-y-1.5">
+                          <div className="flex items-center gap-2">
+                            <motion.div
+                              animate={{ rotate: 360 }}
+                              transition={{ duration: 2, repeat: Infinity, ease: "linear" }}
+                            >
+                              <Wrench className="h-4 w-4 text-neon-orange" />
+                            </motion.div>
+                            <span className="font-display text-xs font-bold text-neon-orange">
+                              🔧 Raul tá trabalhando...
+                            </span>
+                          </div>
+                          <p className="font-body text-[10px] text-muted-foreground italic">
+                            "Calma aí, chefe! Tem mais gente na fila... Já já é sua vez!"
+                          </p>
+                          <div className="flex items-center gap-2">
+                            <Timer className="h-3 w-3 text-neon-orange" />
+                            <span className="font-display text-sm font-bold text-neon-orange tabular-nums">
+                              {Math.floor(mechanicQueue / 60).toString().padStart(2, "0")}:{(mechanicQueue % 60).toString().padStart(2, "0")}
+                            </span>
+                          </div>
+                          <div className="relative h-1.5 w-full overflow-hidden rounded-full bg-muted/50">
+                            <motion.div
+                              className="absolute inset-y-0 left-0 rounded-full bg-gradient-to-r from-neon-orange to-yellow-400"
+                              initial={{ width: "0%" }}
+                              animate={{ width: "100%" }}
+                              transition={{ duration: mechanicQueue, ease: "linear" }}
+                            />
+                          </div>
+                        </div>
+                      ) : mechanicQueue === 0 ? (
+                        <div className="rounded-lg border border-neon-green/30 bg-neon-green/10 p-2.5">
+                          <p className="font-body text-[11px] text-neon-green font-bold">
+                            ✅ "Prontinho, chefe! Tá novo em folha. Pode ir pra pista!"
+                          </p>
+                        </div>
+                      ) : (
+                        <div className="space-y-1.5">
+                          {(needsRevision || isEngineBlown(selectedCar) || selectedCar.engineHealth < 50) && (
+                            <button
+                              onClick={() => {
+                                const queueTime = 30 + Math.floor(Math.random() * 60);
+                                setMechanicQueue(queueTime);
+                                setTimeout(() => {
+                                  repair(repairCost);
+                                  setMechanicQueue(0);
+                                }, queueTime * 1000);
+                              }}
+                              className="w-full rounded-lg border border-neon-orange/30 bg-neon-orange/10 px-3 py-2 font-display text-xs font-bold text-neon-orange transition-colors hover:bg-neon-orange/20"
+                            >
+                              🔧 Reparar Motor ({repairCost} NP) — entrar na fila
+                            </button>
+                          )}
+                          {oilNeeded && (
+                            <button
+                              onClick={() => {
+                                const queueTime = 20 + Math.floor(Math.random() * 40);
+                                setMechanicQueue(queueTime);
+                                setTimeout(() => {
+                                  oilChange(oilCost);
+                                  setMechanicQueue(0);
+                                }, queueTime * 1000);
+                              }}
+                              className="w-full rounded-lg border border-neon-orange/30 bg-neon-orange/10 px-3 py-2 font-display text-xs font-bold text-neon-orange transition-colors hover:bg-neon-orange/20"
+                            >
+                              🛢️ Trocar Óleo ({oilCost} NP) — entrar na fila
+                            </button>
+                          )}
+                          {!(needsRevision || isEngineBlown(selectedCar) || selectedCar.engineHealth < 50 || oilNeeded || selectedCar.durability < 30) && (
+                            <p className="font-body text-[10px] text-muted-foreground italic">
+                              Tudo em ordem! O Raul só veio dar um oi. 👋
+                            </p>
+                          )}
+                        </div>
                       )}
                     </div>
-                    <button
-                      onClick={() => navigate("/perfil")}
-                      className={`mt-1 flex items-center gap-1.5 rounded-lg border px-3 py-1.5 font-display text-[10px] font-bold uppercase tracking-wider transition-colors ${
-                        isEngineBlown(selectedCar)
-                          ? "border-destructive/30 bg-destructive/10 text-destructive hover:bg-destructive/20"
-                          : "border-neon-orange/30 bg-neon-orange/10 text-neon-orange hover:bg-neon-orange/20"
-                      }`}
-                    >
-                      <Wrench className="h-3 w-3" />
-                      {isEngineBlown(selectedCar) ? "Reparo Urgente" : "Ir para Oficina"}
-                    </button>
                   </div>
-                </div>
-              </motion.div>
-            )}
+                </motion.div>
+              )}
+            </AnimatePresence>
 
           </motion.div>
 
