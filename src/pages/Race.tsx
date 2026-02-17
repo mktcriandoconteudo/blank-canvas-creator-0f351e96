@@ -758,7 +758,7 @@ const Race = () => {
 
       {/* No fuel overlay */}
       <AnimatePresence>
-        {noFuel && (
+        {noFuel && raceState !== "finished" && (
           <motion.div
             initial={{ opacity: 0 }}
             animate={{ opacity: 1 }}
