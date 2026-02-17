@@ -784,11 +784,11 @@ const Index = () => {
                           />
                         ))}
                       </div>
-                      {/* Timer countdown */}
-                      {selectedCar.fuelTanks < getMaxFuel(selectedCar.model) && (
+                      {/* Timer countdown — only when tank is EMPTY */}
+                      {selectedCar.fuelTanks <= 0 && (
                         <CarFuelTimer lastRefill={selectedCar.lastFuelRefill} />
                       )}
-                      {selectedCar.fuelTanks >= getMaxFuel(selectedCar.model) && (
+                      {selectedCar.fuelTanks > 0 && selectedCar.fuelTanks >= getMaxFuel(selectedCar.model) && (
                         <p className="font-body text-[10px] text-neon-green/70">
                           ✅ Tanque cheio · {getMaxFuel(selectedCar.model)} corridas disponíveis
                         </p>
