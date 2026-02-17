@@ -195,16 +195,33 @@ const Index = () => {
     setPendingMechanicAction(null);
   }, [selectedCar?.id]);
 
-  // Raul pop-up timer — appears randomly, stays once appeared
+  // Raul appears randomly ONLY when car has issues
+  const carHasIssues = selectedCar
+    ? (needsOilChange(selectedCar) || selectedCar.racesSinceRevision >= 5 || isEngineBlown(selectedCar) || selectedCar.engineHealth < 50 || selectedCar.durability < 30)
+    : false;
+
   useEffect(() => {
-    if (raulHasAppeared) return; // already showed up, stays permanently
-    const initialDelay = setTimeout(() => {
+    if (!carHasIssues || raulVisible) return;
+    // Reset appeared flag so he can reappear for new issues
+    setRaulHasAppeared(false);
+    const delay = setTimeout(() => {
       setRaulVisible(true);
       setRaulHasAppeared(true);
       setRaulMessageIndex(Math.floor(Math.random() * 10));
     }, 3000 + Math.random() * 8000);
-    return () => clearTimeout(initialDelay);
-  }, [raulHasAppeared, selectedCar?.id]);
+    return () => clearTimeout(delay);
+  }, [carHasIssues, raulVisible, selectedCar?.id]);
+
+  // Raul disappears when car has no more issues (after repair completes)
+  useEffect(() => {
+    if (!raulVisible || carHasIssues || mechanicQueue !== null) return;
+    // Brief delay so user sees "done" message, then Raul leaves
+    const hideTimer = setTimeout(() => {
+      setRaulVisible(false);
+      setRaulHasAppeared(false);
+    }, 4000);
+    return () => clearTimeout(hideTimer);
+  }, [raulVisible, carHasIssues, mechanicQueue]);
 
   // Mechanic queue countdown — execute action when it reaches 0
   useEffect(() => {
@@ -636,7 +653,7 @@ const Index = () => {
                       ) : mechanicQueue === 0 ? (
                         <div className="rounded-lg border border-neon-green/30 bg-neon-green/10 p-2.5">
                           <p className="font-body text-[11px] text-neon-green font-bold">
-                            ✅ "Prontinho, chefe! Tá novo em folha. Pode ir pra pista!"
+                            ✅ "Prontinho, chefe! Tá novo em folha. Pode ir pra pista! Tô saindo, qualquer coisa me chama! 👋"
                           </p>
                         </div>
                       ) : (
