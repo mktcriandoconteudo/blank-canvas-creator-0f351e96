@@ -6,3 +6,6 @@ enable_signup = true
 
 [auth.email]
 enable_confirmations = false
+
+[functions.admin-reset-password]
+verify_jwt = false

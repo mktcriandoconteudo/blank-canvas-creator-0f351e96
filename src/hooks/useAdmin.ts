@@ -20,6 +20,7 @@ export interface Player {
   lastSeenAt: string | null;
   carsCount: number;
   avatarUrl: string | null;
+  email: string | null;
 }
 
 export interface PlayerDetail extends Player {
@@ -150,17 +151,19 @@ export const useAdmin = () => {
         lastSeenAt: u.last_seen_at,
         carsCount: carCounts[u.wallet_address] || 0,
         avatarUrl: u.avatar_url,
+        email: null,
       }))
     );
   }, []);
 
   // Load player detail
   const loadPlayerDetail = useCallback(async (player: Player) => {
-    const [carsRes, insRes, collRes, rentalsRes] = await Promise.all([
+    const [carsRes, insRes, collRes, rentalsRes, emailRes] = await Promise.all([
       supabase.from("cars").select("*").eq("owner_wallet", player.walletAddress),
       supabase.from("car_insurance").select("*").eq("owner_wallet", player.walletAddress).order("created_at", { ascending: false }),
       supabase.from("collision_events").select("*").eq("owner_wallet", player.walletAddress).order("created_at", { ascending: false }).limit(10),
       supabase.from("active_rentals").select("*").eq("owner_wallet", player.walletAddress),
+      player.authId ? supabase.rpc("admin_get_user_email", { _auth_id: player.authId }) : Promise.resolve({ data: null }),
     ]);
 
     // Build rental lookup by car_id
@@ -171,6 +174,7 @@ export const useAdmin = () => {
 
     const detail: PlayerDetail = {
       ...player,
+      email: emailRes.data as string | null,
       cars: (carsRes.data ?? []).map((c: any) => {
         const rental = rentalMap[c.id];
         const isRental = c.token_id?.startsWith("#R") || !!rental;

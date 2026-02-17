@@ -6,7 +6,7 @@ import {
   Coins, Trophy, Flame, Eye, X, TrendingDown,
   Wallet, BarChart3, Activity, Zap, Fuel,
   ChevronDown, ChevronUp, ShoppingCart, Image, CreditCard, CheckCircle, XCircle, Check,
-  Upload, Video, Trash2, Loader2, Bug, Play
+  Upload, Video, Trash2, Loader2, Bug, Play, Mail, KeyRound
 } from "lucide-react";
 import { Switch } from "@/components/ui/switch";
 import { useWalletEnabled } from "@/hooks/useFeatureFlags";
@@ -128,7 +128,41 @@ const PlayerCard = ({ player, onView }: { player: any; onView: () => void }) => 
 };
 
 /* ── Player Detail Modal ── */
-const PlayerDetailModal = ({ player, onClose }: { player: PlayerDetail; onClose: () => void }) => (
+const PlayerDetailModal = ({ player, onClose }: { player: PlayerDetail; onClose: () => void }) => {
+  const [newPassword, setNewPassword] = useState("");
+  const [resettingPw, setResettingPw] = useState(false);
+  const [showPwForm, setShowPwForm] = useState(false);
+
+  const handleResetPassword = async () => {
+    if (!player.authId || newPassword.length < 6) return;
+    setResettingPw(true);
+    try {
+      const { data: sessionData } = await supabase.auth.getSession();
+      const token = sessionData.session?.access_token;
+      const res = await fetch(
+        `https://cktbtbpyiqvgadseulpt.supabase.co/functions/v1/admin-reset-password`,
+        {
+          method: "POST",
+          headers: {
+            "Content-Type": "application/json",
+            Authorization: `Bearer ${token}`,
+          },
+          body: JSON.stringify({ auth_id: player.authId, new_password: newPassword }),
+        }
+      );
+      const json = await res.json();
+      if (!res.ok) throw new Error(json.error || "Erro ao resetar senha");
+      toast({ title: "✅ Senha alterada com sucesso!" });
+      setNewPassword("");
+      setShowPwForm(false);
+    } catch (err: any) {
+      toast({ title: "Erro", description: err.message, variant: "destructive" });
+    } finally {
+      setResettingPw(false);
+    }
+  };
+
+  return (
   <motion.div
     initial={{ opacity: 0 }}
     animate={{ opacity: 1 }}
@@ -164,11 +198,62 @@ const PlayerDetailModal = ({ player, onClose }: { player: PlayerDetail; onClose:
             );
           })()}
         </div>
+
+        {/* Email */}
+        {player.email && (
+          <div className="flex items-center gap-1.5 mt-1">
+            <Mail className="h-3.5 w-3.5 text-primary" />
+            <span className="font-body text-xs text-foreground">{player.email}</span>
+          </div>
+        )}
+
         <p className="font-mono text-[10px] sm:text-xs text-muted-foreground mt-1 break-all">Wallet: {player.walletAddress}</p>
         {player.authId && <p className="font-mono text-[10px] text-muted-foreground break-all">Auth ID: {player.authId}</p>}
         <p className="font-body text-[10px] sm:text-xs text-muted-foreground mt-1">
           Cadastro: {new Date(player.createdAt).toLocaleString("pt-BR")}
         </p>
+
+        {/* Password reset */}
+        {player.authId && (
+          <div className="mt-3">
+            {!showPwForm ? (
+              <button
+                onClick={() => setShowPwForm(true)}
+                className="inline-flex items-center gap-1.5 rounded-lg border border-neon-orange/30 bg-neon-orange/10 px-3 py-1.5 font-display text-[10px] uppercase tracking-wider text-neon-orange hover:bg-neon-orange/20 transition-colors"
+              >
+                <KeyRound className="h-3.5 w-3.5" />
+                Alterar Senha
+              </button>
+            ) : (
+              <div className="rounded-xl border border-neon-orange/20 bg-neon-orange/5 p-3 space-y-2">
+                <p className="font-display text-[10px] uppercase tracking-wider text-neon-orange font-bold">🔐 Nova senha do piloto</p>
+                <div className="flex gap-2">
+                  <input
+                    type="password"
+                    value={newPassword}
+                    onChange={(e) => setNewPassword(e.target.value)}
+                    placeholder="Mínimo 6 caracteres"
+                    className="flex-1 rounded-lg border border-border/20 bg-card/60 px-3 py-2 font-body text-xs text-foreground placeholder:text-muted-foreground/50 outline-none focus:border-primary/40"
+                  />
+                  <button
+                    onClick={handleResetPassword}
+                    disabled={resettingPw || newPassword.length < 6}
+                    className="shrink-0 inline-flex items-center gap-1 rounded-lg bg-neon-orange/20 border border-neon-orange/30 px-3 py-2 font-display text-[10px] uppercase text-neon-orange hover:bg-neon-orange/30 transition-colors disabled:opacity-50"
+                  >
+                    {resettingPw ? <Loader2 className="h-3 w-3 animate-spin" /> : <Check className="h-3 w-3" />}
+                    Salvar
+                  </button>
+                  <button
+                    onClick={() => { setShowPwForm(false); setNewPassword(""); }}
+                    className="shrink-0 rounded-lg bg-muted/20 p-2 hover:bg-muted/40 transition-colors"
+                  >
+                    <X className="h-3.5 w-3.5 text-muted-foreground" />
+                  </button>
+                </div>
+              </div>
+            )}
+          </div>
+        )}
       </div>
 
       {/* Stats */}
@@ -349,7 +434,8 @@ const PlayerDetailModal = ({ player, onClose }: { player: PlayerDetail; onClose:
       )}
     </motion.div>
   </motion.div>
-);
+  );
+};
 
 /* ── Mobile Tab Button (bottom nav) ── */
 const MobileTabBtn = ({ icon, label, active, onClick }: {
