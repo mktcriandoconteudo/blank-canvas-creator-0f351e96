@@ -198,9 +198,13 @@ const Race = () => {
   }, [countdown, raceState, noFuel, engineBlown]);
 
   // Thunder Bolt: race ends when video ends (via onVideoEnded callback)
-  // No fixed timer — synced to actual video duration
+  const raceStateRef = useRef(raceState);
+  raceStateRef.current = raceState;
+  const raceFinishedRef = useRef(false);
+
   const handleThunderVideoEnded = useCallback(() => {
-    if (raceState !== "racing") return;
+    if (raceFinishedRef.current) return; // prevent double-fire
+    raceFinishedRef.current = true;
     setRaceState("finished");
     setNitroActive(false);
     setPlayerProgress(FINISH_LINE);
@@ -212,7 +216,7 @@ const Race = () => {
     setXpResult(result);
     // Show result 1.5s after video ends (leaderboard freezes first)
     setTimeout(() => setShowResult(true), 1500);
-  }, [raceState, preWin, rewardMultiplier, raceNumber]);
+  }, [preWin, rewardMultiplier, raceNumber]);
 
   // Non-Thunder: finale video ended → show result
   const handleFinaleVideoEnded = useCallback(() => {
@@ -250,7 +254,9 @@ const Race = () => {
         const rawH = playerStats.engineHealth / 100;
         const h = rawH > 0.5 ? rawH : 0.5 * Math.pow(rawH / 0.5, 2); // e.g. 25% health → 0.125 multiplier
         const boost = nitroActive ? 1.6 : 1;
-        return Math.min(prev + (s + a) * r * h * 0.35 * boost, FINISH_LINE);
+        // Thunder Bolt: cap at 95% — video end triggers actual finish
+        const cap = isThunder ? 95 : FINISH_LINE;
+        return Math.min(prev + (s + a) * r * h * 0.35 * boost, cap);
       });
       setOpponentProgress((prev) => {
         const oppHandling = (opponent.handling ?? 50) / 100;
@@ -259,7 +265,8 @@ const Race = () => {
         const s = (opponent.speed / 100) * 0.6;
         const a = (opponent.acceleration / 100) * 0.4;
         const h = opponent.health / 100;
-        return Math.min(prev + (s + a) * r * h * 0.35, FINISH_LINE);
+        const cap = isThunder ? 90 : FINISH_LINE;
+        return Math.min(prev + (s + a) * r * h * 0.35, cap);
       });
       setBgOffset((prev) => prev + (nitroActive ? 6 : 3));
     }, TICK_MS);
@@ -280,9 +287,9 @@ const Race = () => {
 
   // isThunder declared above after carKeyRef
 
-  // Detect finish
+  // Detect finish — skip for Thunder Bolt (handled by video end callback)
   useEffect(() => {
-    if (raceState !== "racing") return;
+    if (raceState !== "racing" || isThunder) return;
     if (playerProgress >= FINISH_LINE || opponentProgress >= FINISH_LINE) {
       setRaceState("finished");
       setNitroActive(false);
