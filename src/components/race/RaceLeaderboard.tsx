@@ -5,7 +5,7 @@
  * On finish, locks the final positions with the winner highlighted.
  */
 
-import { useState, useEffect, useRef } from "react";
+import { useState, useEffect, useRef, useMemo } from "react";
 import { motion, AnimatePresence } from "framer-motion";
 
 export interface RacerInfo {
@@ -91,27 +91,32 @@ const RaceLeaderboard = ({ player, opponent, raceState, victory, playerPosition 
   // Sort by fluctuating score
   const sorted = [...racers].sort((a, b) => b.score - a.score);
 
-  // On finish, lock player to actual position
-  const finalSorted = raceState === "finished"
-    ? (() => {
-        const playerRacer = racers.find(r => r.isPlayer)!;
-        const others = racers.filter(r => !r.isPlayer);
-        // Shuffle others for variety
-        const shuffledOthers = [...others].sort(() => Math.random() - 0.5);
-        // Insert player at correct position (0-indexed)
-        const posIdx = Math.max(0, Math.min(3, playerPosition - 1));
-        const result: typeof racers = [];
-        let otherIdx = 0;
-        for (let i = 0; i < 4; i++) {
-          if (i === posIdx) {
-            result.push(playerRacer);
-          } else {
-            result.push(shuffledOthers[otherIdx++]);
-          }
-        }
-        return result;
-      })()
-    : sorted;
+  // Lock final positions once (memoized so it doesn't reshuffle on re-render)
+  const lockedFinal = useRef<typeof racers | null>(null);
+
+  if (raceState === "finished" && !lockedFinal.current) {
+    const playerRacer = racers.find(r => r.isPlayer)!;
+    const others = racers.filter(r => !r.isPlayer);
+    const shuffledOthers = [...others].sort(() => Math.random() - 0.5);
+    const posIdx = Math.max(0, Math.min(3, playerPosition - 1));
+    const result: typeof racers = [];
+    let otherIdx = 0;
+    for (let i = 0; i < 4; i++) {
+      if (i === posIdx) {
+        result.push(playerRacer);
+      } else {
+        result.push(shuffledOthers[otherIdx++]);
+      }
+    }
+    lockedFinal.current = result;
+  }
+
+  // Reset lock when going back to countdown (new race)
+  if (raceState === "countdown") {
+    lockedFinal.current = null;
+  }
+
+  const finalSorted = lockedFinal.current ?? sorted;
 
   const isVisible = raceState === "racing" || raceState === "finished";
 
