@@ -497,11 +497,14 @@ const Admin = () => {
     isAdmin, loading, players, collisionConfig, saveCollisionConfig, saving,
     refreshPlayers, economyReport, refreshEconomy, selectedPlayer,
     loadPlayerDetail, clearSelectedPlayer, onlineCount,
+    biaConfig, saveBiaConfig,
   } = useAdmin();
 
   const { walletEnabled, setWalletEnabled } = useWalletEnabled();
   const [localConfig, setLocalConfig] = useState(collisionConfig);
   const [configDirty, setConfigDirty] = useState(false);
+  const [localBiaConfig, setLocalBiaConfig] = useState(biaConfig);
+  const [biaDirty, setBiaDirty] = useState(false);
   const [tab, setTab] = useState<TabId>("dashboard");
   const [searchQuery, setSearchQuery] = useState("");
   const [economyRulesOpen, setEconomyRulesOpen] = useState(false);
@@ -631,6 +634,10 @@ const Admin = () => {
   if (!synced && collisionConfig.collisionChancePercent !== localConfig.collisionChancePercent) {
     setLocalConfig(collisionConfig); setSynced(true);
   }
+  const [biaSynced, setBiaSynced] = useState(false);
+  if (!biaSynced && biaConfig.biaInitialDelayMin !== localBiaConfig.biaInitialDelayMin) {
+    setLocalBiaConfig(biaConfig); setBiaSynced(true);
+  }
 
   if (loading) {
     return (
@@ -655,6 +662,8 @@ const Admin = () => {
 
   const handleSaveConfig = async () => { const ok = await saveCollisionConfig(localConfig); if (ok) setConfigDirty(false); };
   const updateConfig = (key: keyof typeof localConfig, value: number) => { setLocalConfig((prev) => ({ ...prev, [key]: value })); setConfigDirty(true); };
+  const handleSaveBiaConfig = async () => { const ok = await saveBiaConfig(localBiaConfig); if (ok) setBiaDirty(false); };
+  const updateBiaConfig = (key: keyof typeof localBiaConfig, value: number) => { setLocalBiaConfig((prev) => ({ ...prev, [key]: value })); setBiaDirty(true); };
 
   const filteredPlayers = searchQuery
     ? players.filter((p) => (p.username ?? "").toLowerCase().includes(searchQuery.toLowerCase()) || p.walletAddress.toLowerCase().includes(searchQuery.toLowerCase()))
@@ -1056,6 +1065,36 @@ const Admin = () => {
                 <span className="text-neon-orange font-bold">{localConfig.collisionMinDamage}%</span>-<span className="text-destructive font-bold">{localConfig.collisionMaxDamage}%</span> motor ·{" "}
                 <span className="text-amber-400 font-bold">-{localConfig.collisionDurabilityLoss}</span> durabilidade
               </p>
+            </div>
+
+            {/* Bia Timer Config */}
+            <div className="mt-6">
+              <h2 className="font-display text-sm font-bold uppercase tracking-wider text-foreground mb-2">⏱ Timers da Bia (Corretora)</h2>
+              <p className="font-body text-xs text-muted-foreground mb-4">
+                Configure quando e por quanto tempo a Bia aparece na garagem. Valores em segundos.
+              </p>
+
+              <div className="space-y-5 rounded-xl border border-border/20 bg-card/30 backdrop-blur-sm p-4 sm:p-6">
+                {[
+                  { key: "biaInitialDelayMin" as const, label: "Delay Inicial Mín", color: "text-primary", min: 5, max: 300, suffix: "s" },
+                  { key: "biaInitialDelayMax" as const, label: "Delay Inicial Máx", color: "text-primary", min: 10, max: 600, suffix: "s" },
+                  { key: "biaVisibleDuration" as const, label: "Tempo Visível", color: "text-neon-green", min: 3, max: 60, suffix: "s" },
+                  { key: "biaReappearMin" as const, label: "Reaparecer Mín", color: "text-neon-orange", min: 10, max: 600, suffix: "s" },
+                  { key: "biaReappearMax" as const, label: "Reaparecer Máx", color: "text-neon-orange", min: 30, max: 900, suffix: "s" },
+                ].map(({ key, label, color, min, max, suffix }) => (
+                  <div key={key}>
+                    <label className="flex items-center justify-between mb-2">
+                      <span className="font-display text-xs uppercase tracking-wider text-foreground">{label}</span>
+                      <span className={`font-display text-lg font-bold ${color}`}>{localBiaConfig[key]}{suffix}</span>
+                    </label>
+                    <input type="range" min={min} max={max} value={localBiaConfig[key]} onChange={(e) => updateBiaConfig(key, Number(e.target.value))} className="w-full accent-primary" />
+                  </div>
+                ))}
+                <button onClick={handleSaveBiaConfig} disabled={!biaDirty || saving} className="w-full flex items-center justify-center gap-2 rounded-xl bg-primary px-6 py-3 font-display text-sm font-bold uppercase tracking-wider text-primary-foreground hover:bg-primary/90 disabled:opacity-50 disabled:cursor-not-allowed">
+                  <Save className="h-4 w-4" />
+                  {saving ? "Salvando..." : "Salvar Bia"}
+                </button>
+              </div>
             </div>
           </motion.div>
         )}
