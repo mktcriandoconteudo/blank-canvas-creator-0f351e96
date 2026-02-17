@@ -132,6 +132,25 @@ const PlayerDetailModal = ({ player, onClose }: { player: PlayerDetail; onClose:
   const [newPassword, setNewPassword] = useState("");
   const [resettingPw, setResettingPw] = useState(false);
   const [showPwForm, setShowPwForm] = useState(false);
+  const [resettingFuel, setResettingFuel] = useState(false);
+  const [currentFuel, setCurrentFuel] = useState(player.fuelTanks);
+
+  const handleResetFuel = async () => {
+    setResettingFuel(true);
+    try {
+      const { error } = await supabase
+        .from("users")
+        .update({ fuel_tanks: 5, last_fuel_refill: new Date().toISOString() })
+        .eq("wallet_address", player.walletAddress);
+      if (error) throw error;
+      setCurrentFuel(5);
+      toast({ title: "⛽ Combustível resetado para 5/5!" });
+    } catch (err: any) {
+      toast({ title: "Erro", description: err.message, variant: "destructive" });
+    } finally {
+      setResettingFuel(false);
+    }
+  };
 
   const handleResetPassword = async () => {
     if (!player.authId || newPassword.length < 6) return;
@@ -254,12 +273,23 @@ const PlayerDetailModal = ({ player, onClose }: { player: PlayerDetail; onClose:
             )}
           </div>
         )}
+        {/* Fuel reset button */}
+        <div className="mt-3 flex flex-wrap gap-2">
+          <button
+            onClick={handleResetFuel}
+            disabled={resettingFuel || currentFuel >= 5}
+            className="inline-flex items-center gap-1.5 rounded-lg border border-primary/30 bg-primary/10 px-3 py-1.5 font-display text-[10px] uppercase tracking-wider text-primary hover:bg-primary/20 transition-colors disabled:opacity-50"
+          >
+            {resettingFuel ? <Loader2 className="h-3.5 w-3.5 animate-spin" /> : <Fuel className="h-3.5 w-3.5" />}
+            Resetar Combustível ({currentFuel}/5)
+          </button>
+        </div>
       </div>
 
       {/* Stats */}
       <div className="grid grid-cols-2 gap-2 sm:grid-cols-4 sm:gap-3 mb-4 sm:mb-6">
         <StatCard icon={<Coins className="h-4 w-4" />} label="NP" value={player.nitroPoints} color="text-neon-orange" />
-        <StatCard icon={<Fuel className="h-4 w-4" />} label="Fuel" value={`${player.fuelTanks}/5`} color="text-primary" />
+        <StatCard icon={<Fuel className="h-4 w-4" />} label="Fuel" value={`${currentFuel}/5`} color="text-primary" />
         <StatCard icon={<Trophy className="h-4 w-4" />} label="Vitórias" value={player.totalWins} color="text-neon-green" />
         <StatCard icon={<Flame className="h-4 w-4" />} label="Corridas" value={player.totalRaces} color="text-destructive" />
       </div>
