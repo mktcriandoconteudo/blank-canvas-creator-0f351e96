@@ -152,16 +152,17 @@ const RaceLeaderboard = ({ player, opponent, raceState, victory }: Props) => {
                     {POSITION_LABELS[idx]}
                   </span>
 
-                  {/* Car info */}
                   <div className="flex-1 min-w-0">
                     <div className="flex items-center gap-1">
-                      <span className={`font-display text-[9px] sm:text-[10px] font-bold truncate ${
-                        racer.isPlayer ? "text-neon-green" : "text-foreground/80"
+                      <span className={`font-display truncate ${
+                        racer.isPlayer 
+                          ? "text-[11px] sm:text-[13px] font-black text-neon-green drop-shadow-[0_0_6px_hsl(var(--neon-green)/0.6)]" 
+                          : "text-[9px] sm:text-[10px] font-bold text-foreground/80"
                       }`}>
                         {racer.name}
                       </span>
                       {racer.isPlayer && (
-                        <span className="text-[7px] text-neon-green">★</span>
+                        <span className="text-[9px] text-neon-green animate-pulse">★</span>
                       )}
                     </div>
                     {/* Pilot name for player */}
