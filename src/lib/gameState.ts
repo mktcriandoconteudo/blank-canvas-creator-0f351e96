@@ -1,6 +1,7 @@
 import { supabase, getWalletClient } from "@/lib/supabase";
 import { processTransaction, emitTokens } from "@/lib/economy";
 import { assessRisk, type RiskAssessment } from "@/lib/antiBot";
+import { calculatePowerScore, calculateReward, getDurabilityDamageReduction, safeRewardMultiplier, STAT_CAPS } from "@/lib/balancing";
 
 export interface CarData {
   id: string;
@@ -316,7 +317,7 @@ export const addXpToCar = (
     if (won) updatedCar.wins += 1;
     updatedCar.totalKm += Math.round(8 + (updatedCar.speed / 100) * 7);
 
-    const durabilityReduction = 1 - (updatedCar.durability / 100) * 0.6;
+    const durabilityReduction = getDurabilityDamageReduction(updatedCar.durability);
     const baseEngineDmg = won ? 5 : 8;
     const oilOverdue = needsOilChange(updatedCar);
     const oilMultiplier = oilOverdue ? 1.5 : 1;
@@ -344,8 +345,16 @@ export const addXpToCar = (
     ? (won ? RENTAL_NP_WIN : RENTAL_NP_LOSS)
     : (won ? OWNED_NP_WIN : OWNED_NP_LOSS);
 
-  // Apply diminishing reward multiplier (anti-bot)
-  const earnedPoints = Math.round((basePoints * health * rewardMultiplier) / 100);
+  // PowerScore-based logarithmic reward (anti-inflation)
+  const ps = car ? calculatePowerScore({ speed: car.speed, acceleration: car.acceleration, handling: car.handling, durability: car.durability }) : 50;
+  const logReward = calculateReward(basePoints, ps, car?.handling ?? 50);
+
+  // Apply safe multiplier cap: reward can never grow faster than log(PS)
+  const safeMult = safeRewardMultiplier(ps);
+  const cappedReward = Math.round(Math.min(logReward, basePoints * safeMult * 1.15));
+
+  // Apply diminishing reward multiplier (anti-bot) + health penalty
+  const earnedPoints = Math.round((cappedReward * health * rewardMultiplier) / 100);
 
   // 60/40 split: 60% free, 40% locked for upgrades
   const freeNP = Math.round(earnedPoints * 0.6);
@@ -451,9 +460,12 @@ export const distributePoint = (
 ): GameState => {
   const newCars = state.cars.map((car) => {
     if (car.id !== carId || car.attributePoints <= 0) return car;
+    // Enforce stat caps from balancing engine
+    const cap = STAT_CAPS[attribute];
+    const newVal = Math.min(car[attribute] + 2, cap);
     return {
       ...car,
-      [attribute]: Math.min(car[attribute] + 2, 100),
+      [attribute]: newVal,
       attributePoints: car.attributePoints - 1,
     };
   });

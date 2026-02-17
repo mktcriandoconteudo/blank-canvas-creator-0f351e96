@@ -13,6 +13,15 @@ import { RENTAL_STAT_PENALTY, getMaxFuel, isEngineBlown, getRepairCost } from "@
 import { supabase } from "@/integrations/supabase/client";
 import { useCarVideos } from "@/hooks/useCarVideos";
 import { getCollisionConfig, rollCollision, logCollision, type CollisionResult } from "@/lib/collision";
+import {
+  calculatePowerScore,
+  getSpeedMultiplier,
+  getAccelerationMultiplier,
+  getHandlingVariance,
+  getDurabilityCollisionReduction,
+  generateOpponentStats,
+  getAntiFarmAdjustment,
+} from "@/lib/balancing";
 
 // Cinematic videos — starting grid + race clips + victory/defeat finales
 import raceBattleVideo1 from "@/assets/race-battle-video.mp4";
@@ -60,17 +69,27 @@ const Race = () => {
   const engineBlown = !loading && selectedCar ? isEngineBlown(selectedCar) : false;
   const blownRepairCost = selectedCar ? getRepairCost(selectedCar) : 0;
 
-  // Generate opponent based on player level
+  // Generate opponent using PowerScore-based dynamic difficulty
   const [opponent] = useState(() => {
+    const ps = selectedCar
+      ? calculatePowerScore({ speed: selectedCar.speed, acceleration: selectedCar.acceleration, handling: selectedCar.handling, durability: selectedCar.durability })
+      : 50;
     const lvl = selectedCar?.level ?? 1;
-    const base = 50 + lvl * 5;
+    const base = generateOpponentStats(ps, lvl);
+
+    // Apply anti-farm difficulty boost
+    const recentWins = selectedCar?.wins ?? 0;
+    const recentRaces = selectedCar?.racesCount ?? 0;
+    const { difficultyBoost } = getAntiFarmAdjustment(recentWins, Math.min(recentRaces, 20));
+    const clamp = (v: number) => Math.max(20, Math.min(100, Math.round(v)));
+
     return {
-      speed: Math.min(100, base + Math.round(Math.random() * 20 - 10)),
-      acceleration: Math.min(100, base + Math.round(Math.random() * 20 - 10)),
-      handling: Math.min(100, base + Math.round(Math.random() * 20 - 10)),
+      speed: clamp(base.speed + difficultyBoost),
+      acceleration: clamp(base.acceleration + difficultyBoost),
+      handling: clamp(base.handling + difficultyBoost),
       name: ["Viper MK3", "Shadow GT", "Blaze R8", "Neon Fury"][Math.floor(Math.random() * 4)],
-      health: 100,
-      level: Math.max(1, lvl + Math.floor(Math.random() * 3 - 1)),
+      health: base.health,
+      level: base.level,
     };
   });
 
@@ -244,29 +263,28 @@ const Race = () => {
     if (raceState !== "racing") return;
     const interval = setInterval(() => {
       setPlayerProgress((prev) => {
-        // Handling: higher = less variance (0.6-1.0 range narrows to 0.85-1.0 at 100)
-        const handlingFactor = (selectedCar?.handling ?? 50) / 100;
-        const variance = 0.4 * (1 - handlingFactor * 0.6); // max handling → variance 0.16
+        // Handling → variance reduction (real mechanic)
+        const variance = getHandlingVariance(selectedCar?.handling ?? 50);
         const r = (1 - variance / 2) + Math.random() * variance;
-        const s = (playerStats.speed / 100) * 0.6;
-        const a = ((selectedCar?.acceleration ?? 60) / 100) * 0.4;
+        // Speed → maxSpeed multiplier (real mechanic)
+        const s = getSpeedMultiplier(playerStats.speed) * 0.5;
+        // Acceleration → torque multiplier (real mechanic)
+        const a = getAccelerationMultiplier(selectedCar?.acceleration ?? 60) * 0.35;
         // Engine health: severe penalty below 50% (quadratic curve)
         const rawH = playerStats.engineHealth / 100;
-        const h = rawH > 0.5 ? rawH : 0.5 * Math.pow(rawH / 0.5, 2); // e.g. 25% health → 0.125 multiplier
+        const h = rawH > 0.5 ? rawH : 0.5 * Math.pow(rawH / 0.5, 2);
         const boost = nitroActive ? 1.6 : 1;
-        // Thunder Bolt: cap at 95% — video end triggers actual finish
         const cap = isThunder ? 95 : FINISH_LINE;
-        return Math.min(prev + (s + a) * r * h * 0.35 * boost, cap);
+        return Math.min(prev + (s + a) * r * h * 0.3 * boost, cap);
       });
       setOpponentProgress((prev) => {
-        const oppHandling = (opponent.handling ?? 50) / 100;
-        const variance = 0.4 * (1 - oppHandling * 0.6);
-        const r = (1 - variance / 2) + Math.random() * variance;
-        const s = (opponent.speed / 100) * 0.6;
-        const a = (opponent.acceleration / 100) * 0.4;
+        const oppVariance = getHandlingVariance(opponent.handling ?? 50);
+        const r = (1 - oppVariance / 2) + Math.random() * oppVariance;
+        const s = getSpeedMultiplier(opponent.speed) * 0.5;
+        const a = getAccelerationMultiplier(opponent.acceleration) * 0.35;
         const h = opponent.health / 100;
         const cap = isThunder ? 90 : FINISH_LINE;
-        return Math.min(prev + (s + a) * r * h * 0.35, cap);
+        return Math.min(prev + (s + a) * r * h * 0.3, cap);
       });
       setBgOffset((prev) => prev + (nitroActive ? 6 : 3));
     }, TICK_MS);
@@ -363,7 +381,7 @@ const Race = () => {
       (async () => {
         try {
           const config = await getCollisionConfig();
-          const collision = rollCollision(config);
+          const collision = rollCollision(config, selectedCar.durability);
           if (collision.occurred && selectedCar) {
             setCollisionResult(collision);
             setShowCollisionFlash(true);
