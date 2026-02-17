@@ -645,6 +645,7 @@ const Race = () => {
         }}
         raceState={raceState}
         victory={victory}
+        playerPosition={playerPosition}
       />
 
       {/* Bottom-left: Speedometer */}
