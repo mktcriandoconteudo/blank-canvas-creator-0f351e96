@@ -147,7 +147,7 @@ const Index = () => {
     "😤 \"Olha, eu sou persistente SIM! E vou continuar aparecendo até você contratar!\"",
   ];
 
-  // Bia appears randomly every 15-40 seconds, only if NOT insured
+  // Bia appears randomly, only if NOT insured — large random intervals
   useEffect(() => {
     if (isInsured) {
       setBiaVisible(false);
@@ -155,31 +155,30 @@ const Index = () => {
     }
     if (biaDismissed) return;
 
-    // Initial random delay before first appearance
+    // Initial random delay: 30-90 seconds before first appearance
     const initialDelay = setTimeout(() => {
       setBiaVisible(true);
       setBiaMessageIndex(Math.floor(Math.random() * BIA_MESSAGES.length));
-    }, 5000 + Math.random() * 10000);
+    }, 30000 + Math.random() * 60000);
 
     return () => clearTimeout(initialDelay);
   }, [isInsured, biaDismissed, selectedCar?.id]);
 
-  // Auto-cycle: disappear after 12s, reappear after 15-40s with a new message
+  // Auto-cycle: visible for 10s, then hides for 60-180s before reappearing
   useEffect(() => {
     if (!biaVisible || isInsured) return;
 
     const hideTimer = setTimeout(() => {
       setBiaVisible(false);
-      // Schedule reappearance
+      // Schedule reappearance with large random gap
       const reappearTimer = setTimeout(() => {
         if (!biaDismissed && !isInsured) {
           setBiaMessageIndex(Math.floor(Math.random() * BIA_MESSAGES.length));
           setBiaVisible(true);
         }
-      }, 15000 + Math.random() * 25000);
-      // Store cleanup ref
+      }, 60000 + Math.random() * 120000); // 1-3 minutes between appearances
       return () => clearTimeout(reappearTimer);
-    }, 12000);
+    }, 10000);
 
     return () => clearTimeout(hideTimer);
   }, [biaVisible, isInsured, biaDismissed]);
