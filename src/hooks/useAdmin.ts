@@ -48,6 +48,14 @@ export interface PlayerCar {
   lastOilChangeKm: number;
   tokenId: string;
   fuelTanks: number;
+  licensePlate: string;
+  purchasedAt: string;
+  // Rental info
+  isRental: boolean;
+  rentalRacesRemaining?: number;
+  rentalRentedAt?: string;
+  rentalExpiresAt?: string;
+  rentalIsActive?: boolean;
 }
 
 export interface PlayerInsurance {
@@ -148,35 +156,53 @@ export const useAdmin = () => {
 
   // Load player detail
   const loadPlayerDetail = useCallback(async (player: Player) => {
-    const [carsRes, insRes, collRes] = await Promise.all([
+    const [carsRes, insRes, collRes, rentalsRes] = await Promise.all([
       supabase.from("cars").select("*").eq("owner_wallet", player.walletAddress),
       supabase.from("car_insurance").select("*").eq("owner_wallet", player.walletAddress).order("created_at", { ascending: false }),
       supabase.from("collision_events").select("*").eq("owner_wallet", player.walletAddress).order("created_at", { ascending: false }).limit(10),
+      supabase.from("active_rentals").select("*").eq("owner_wallet", player.walletAddress),
     ]);
+
+    // Build rental lookup by car_id
+    const rentalMap: Record<string, any> = {};
+    (rentalsRes.data ?? []).forEach((r: any) => {
+      rentalMap[r.car_id] = r;
+    });
 
     const detail: PlayerDetail = {
       ...player,
-      cars: (carsRes.data ?? []).map((c: any) => ({
-        id: c.id,
-        name: c.name,
-        model: c.model,
-        level: c.level,
-        speed: c.speed_base,
-        acceleration: c.acceleration_base,
-        handling: c.handling_base,
-        durability: c.durability,
-        engineHealth: c.engine_health,
-        totalKm: Number(c.total_km),
-        wins: c.wins,
-        racesCount: c.races_count,
-        xp: c.xp,
-        xpToNext: c.xp_to_next,
-        attributePoints: c.attribute_points,
-        racesSinceRevision: c.races_since_revision,
-        lastOilChangeKm: Number(c.last_oil_change_km),
-        tokenId: c.token_id,
-        fuelTanks: c.fuel_tanks ?? 5,
-      })),
+      cars: (carsRes.data ?? []).map((c: any) => {
+        const rental = rentalMap[c.id];
+        const isRental = c.token_id?.startsWith("#R") || !!rental;
+        return {
+          id: c.id,
+          name: c.name,
+          model: c.model,
+          level: c.level,
+          speed: c.speed_base,
+          acceleration: c.acceleration_base,
+          handling: c.handling_base,
+          durability: c.durability,
+          engineHealth: c.engine_health,
+          totalKm: Number(c.total_km),
+          wins: c.wins,
+          racesCount: c.races_count,
+          xp: c.xp,
+          xpToNext: c.xp_to_next,
+          attributePoints: c.attribute_points,
+          racesSinceRevision: c.races_since_revision,
+          lastOilChangeKm: Number(c.last_oil_change_km),
+          tokenId: c.token_id,
+          fuelTanks: c.fuel_tanks ?? 5,
+          licensePlate: c.license_plate || "",
+          purchasedAt: c.purchased_at,
+          isRental,
+          rentalRacesRemaining: rental?.races_remaining,
+          rentalRentedAt: rental?.rented_at,
+          rentalExpiresAt: rental?.expires_at,
+          rentalIsActive: rental?.is_active,
+        };
+      }),
       insurances: (insRes.data ?? []).map((i: any) => ({
         id: i.id,
         planType: i.plan_type,

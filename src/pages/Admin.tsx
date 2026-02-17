@@ -182,22 +182,74 @@ const PlayerDetailModal = ({ player, onClose }: { player: PlayerDetail; onClose:
       {/* Cars */}
       <div className="mb-4 sm:mb-6">
         <h3 className="font-display text-xs font-bold uppercase tracking-wider text-muted-foreground mb-3">
-          🏎️ Veículos ({player.cars.length})
+          🏎️ Veículos ({player.cars.length}) {player.cars.some(c => c.isRental) && <span className="text-neon-orange ml-1">• Inclui aluguel</span>}
         </h3>
         <div className="space-y-3">
           {player.cars.map((c) => (
-            <div key={c.id} className="rounded-xl border border-border/20 bg-muted/10 p-3 sm:p-4">
+            <div key={c.id} className={`rounded-xl border p-3 sm:p-4 ${c.isRental ? "border-neon-orange/30 bg-neon-orange/5" : "border-border/20 bg-muted/10"}`}>
+              {/* Header with rental badge */}
               <div className="flex items-center justify-between mb-3">
-                <div>
-                  <span className="font-display text-sm font-bold text-foreground">{c.name}</span>
-                  <span className="ml-2 font-display text-[10px] uppercase tracking-wider text-muted-foreground capitalize">{c.model}</span>
+                <div className="flex items-center gap-2 min-w-0">
+                  <span className="font-display text-sm font-bold text-foreground truncate">{c.name}</span>
+                  <span className="font-display text-[10px] uppercase tracking-wider text-muted-foreground capitalize shrink-0">{c.model}</span>
+                  {c.isRental && (
+                    <span className="shrink-0 inline-flex items-center gap-1 rounded-full bg-neon-orange/20 border border-neon-orange/30 px-2 py-0.5 font-display text-[9px] font-bold uppercase text-neon-orange">
+                      🔑 Aluguel
+                    </span>
+                  )}
                 </div>
-                <div className="flex items-center gap-2">
+                <div className="flex items-center gap-2 shrink-0">
                   <span className="font-display text-xs text-primary font-bold">Lv.{c.level}</span>
                   <span className="font-mono text-[9px] text-muted-foreground hidden sm:inline">{c.tokenId}</span>
                 </div>
               </div>
 
+              {/* Rental details block */}
+              {c.isRental && (
+                <div className="mb-3 rounded-lg border border-neon-orange/20 bg-neon-orange/5 p-3 space-y-2">
+                  <div className="flex items-center gap-1.5 mb-1">
+                    <span className="font-display text-[10px] font-bold uppercase tracking-wider text-neon-orange">📋 Detalhes do Aluguel</span>
+                  </div>
+                  <div className="grid grid-cols-2 gap-2 text-[10px] font-body">
+                    <div>
+                      <span className="text-muted-foreground">Data aluguel:</span>
+                      <span className="ml-1 text-foreground font-bold">
+                        {c.rentalRentedAt ? new Date(c.rentalRentedAt).toLocaleString("pt-BR") : new Date(c.purchasedAt).toLocaleString("pt-BR")}
+                      </span>
+                    </div>
+                    <div>
+                      <span className="text-muted-foreground">Expira em:</span>
+                      <span className="ml-1 text-foreground font-bold">
+                        {c.rentalExpiresAt ? new Date(c.rentalExpiresAt).toLocaleString("pt-BR") : "—"}
+                      </span>
+                    </div>
+                    <div>
+                      <span className="text-muted-foreground">Corridas restantes:</span>
+                      <span className={`ml-1 font-display font-bold ${(c.rentalRacesRemaining ?? 0) <= 1 ? "text-destructive" : "text-neon-green"}`}>
+                        {c.rentalRacesRemaining ?? "—"}
+                      </span>
+                    </div>
+                    <div>
+                      <span className="text-muted-foreground">Status:</span>
+                      <span className={`ml-1 font-display font-bold ${c.rentalIsActive ? "text-neon-green" : "text-destructive"}`}>
+                        {c.rentalIsActive ? "Ativo" : "Expirado"}
+                      </span>
+                    </div>
+                  </div>
+                </div>
+              )}
+
+              {/* License plate & purchase date */}
+              <div className="flex flex-wrap items-center gap-2 mb-2 text-[10px] font-body text-muted-foreground">
+                {c.licensePlate && (
+                  <span className="inline-flex items-center gap-1 rounded-md bg-card/60 border border-border/20 px-2 py-0.5">
+                    🪪 <span className="font-mono font-bold text-foreground">{c.licensePlate}</span>
+                  </span>
+                )}
+                <span>📅 {new Date(c.purchasedAt).toLocaleDateString("pt-BR")}</span>
+              </div>
+
+              {/* Stats grid */}
               <div className="grid grid-cols-4 gap-1.5 sm:gap-2 text-[10px] font-body text-muted-foreground mb-2">
                 <div className="rounded-lg bg-primary/5 p-1.5 text-center">
                   <div className="text-[8px] uppercase tracking-wider">Speed</div>
@@ -217,6 +269,7 @@ const PlayerDetailModal = ({ player, onClose }: { player: PlayerDetail; onClose:
                 </div>
               </div>
 
+              {/* Engine & XP bars */}
               <div className="grid grid-cols-2 gap-3 mt-2">
                 <div>
                   <div className="flex items-center justify-between mb-1">
@@ -238,6 +291,7 @@ const PlayerDetailModal = ({ player, onClose }: { player: PlayerDetail; onClose:
                 </div>
               </div>
 
+              {/* Bottom stats */}
               <div className="grid grid-cols-3 gap-1.5 sm:gap-2 mt-3 text-[9px] sm:text-[10px] font-body text-muted-foreground">
                 <div>🛣️ <span className="text-foreground font-bold">{c.totalKm.toLocaleString()}</span> km</div>
                 <div>🏆 {c.wins}W / {c.racesCount}R</div>
