@@ -14,6 +14,8 @@ import bgInferno from "@/assets/garage-bg/car-inferno-bg.jpg";
 import bgSolar from "@/assets/garage-bg/car-solar-bg.jpg";
 import bgThunder from "@/assets/garage-bg/car-thunder-bg.jpg";
 import bgVenom from "@/assets/garage-bg/car-venom-bg.jpg";
+import biaAvatar from "@/assets/bia-avatar.png";
+import raulAvatar from "@/assets/raul-avatar.png";
 
 const CAR_IMAGES: Record<string, string> = {
   "phantom": bgPhantom,
@@ -407,9 +409,7 @@ const Index = () => {
                   <X className="h-3.5 w-3.5" />
                 </button>
                 <div className="flex items-start gap-3">
-                  <div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-full bg-neon-orange/20 text-lg">
-                    🔧
-                  </div>
+                  <img src={raulAvatar} alt="Mecânico Raul" className="h-10 w-10 shrink-0 rounded-full border-2 border-neon-orange/40 object-cover" />
                   <div className="flex-1 space-y-1.5 pr-4">
                     <span className="font-display text-xs font-bold text-neon-orange">
                       Mecânico diz:
@@ -635,9 +635,7 @@ const Index = () => {
                       className="mt-3 rounded-xl border border-primary/20 bg-card/30 p-3 backdrop-blur-sm"
                     >
                       <div className="flex items-start gap-3">
-                        <div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-full bg-primary/20 text-lg">
-                          🛡️
-                        </div>
+                        <img src={biaAvatar} alt="Bia Corretora" className="h-10 w-10 shrink-0 rounded-full border-2 border-primary/40 object-cover" />
                         <div className="flex-1 space-y-2">
                           <div className="flex items-center justify-between">
                             <span className="font-display text-xs font-bold text-primary">
