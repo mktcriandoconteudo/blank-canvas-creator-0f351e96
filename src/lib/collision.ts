@@ -1,4 +1,5 @@
 import { supabase } from "@/lib/supabase";
+import { getDurabilityCollisionReduction } from "@/lib/balancing";
 
 export interface CollisionConfig {
   collisionChancePercent: number;
@@ -46,9 +47,15 @@ export async function getCollisionConfig(): Promise<CollisionConfig> {
   return DEFAULT_CONFIG;
 }
 
-export function rollCollision(config: CollisionConfig): CollisionResult {
+/**
+ * Roll for collision with durability-based chance reduction.
+ * Higher durability → lower collision chance (up to -30%).
+ */
+export function rollCollision(config: CollisionConfig, durability: number = 50): CollisionResult {
+  const reduction = getDurabilityCollisionReduction(durability);
+  const effectiveChance = config.collisionChancePercent * reduction;
   const roll = Math.random() * 100;
-  if (roll >= config.collisionChancePercent) {
+  if (roll >= effectiveChance) {
     return { occurred: false, engineDamage: 0, durabilityDamage: 0 };
   }
 

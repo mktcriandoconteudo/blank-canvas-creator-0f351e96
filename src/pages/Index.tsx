@@ -43,6 +43,7 @@ import StatBar from "@/components/garage/StatBar";
 import GlowButton from "@/components/garage/GlowButton";
 import { useGameState } from "@/hooks/useGameState";
 import { needsOilChange, kmSinceOilChange, isEngineBlown } from "@/lib/gameState";
+import { calculatePowerScore } from "@/lib/balancing";
 import { useAuth } from "@/hooks/useAuth";
 import { useInsurance } from "@/hooks/useInsurance";
 import { INSURANCE_PLANS } from "@/lib/insurance";
@@ -889,6 +890,21 @@ const Index = () => {
                         </div>
                       </div>
                     </div>
+
+                    {/* PowerScore Badge */}
+                    <motion.div
+                      initial={{ opacity: 0, y: -10 }}
+                      animate={{ opacity: 1, y: 0 }}
+                      className="flex items-center justify-between rounded-xl border border-primary/20 bg-primary/5 px-4 py-2 backdrop-blur-sm"
+                    >
+                      <div className="flex items-center gap-2">
+                        <Star className="h-4 w-4 text-primary" />
+                        <span className="font-display text-xs font-bold uppercase tracking-wider text-foreground/80">PowerScore</span>
+                      </div>
+                      <span className="font-display text-lg font-black text-primary text-glow-cyan">
+                        {calculatePowerScore({ speed: selectedCar.speed, acceleration: selectedCar.acceleration, handling: selectedCar.handling, durability: selectedCar.durability }).toFixed(1)}
+                      </span>
+                    </motion.div>
 
                     <div className="space-y-2 sm:space-y-3">
                       {stats.map((stat, i) => (
