@@ -75,7 +75,7 @@ const RaceLeaderboard = ({ player, opponent, raceState, victory }: Props) => {
         Math.random() * 100,
         Math.random() * 100,
       ]);
-    }, 500); // every 0.5s
+    }, 2000); // every 2s
     return () => clearInterval(interval);
   }, [raceState]);
 
