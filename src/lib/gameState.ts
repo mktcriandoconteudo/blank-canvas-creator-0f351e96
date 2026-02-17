@@ -225,17 +225,19 @@ export async function loadGameStateFromSupabase(wallet: string = DEFAULT_WALLET)
       car.isRented = true;
       car.rentalRacesRemaining = rentalMap.get(car.id) ?? 0;
     }
-    // Per-car 24h fuel refill
-    const lastRefill = new Date(car.lastFuelRefill);
-    const hoursSinceRefill = (now.getTime() - lastRefill.getTime()) / (1000 * 60 * 60);
+    // Per-car 24h fuel refill — only triggers when tank is EMPTY
     const maxFuel = getMaxFuel(car.model);
-    if (hoursSinceRefill >= 24 && car.fuelTanks < maxFuel) {
-      car.fuelTanks = maxFuel;
-      car.lastFuelRefill = now.toISOString();
-      await wc
-        .from("cars")
-        .update({ fuel_tanks: maxFuel, last_fuel_refill: now.toISOString() })
-        .eq("id", car.id);
+    if (car.fuelTanks <= 0) {
+      const emptyAt = new Date(car.lastFuelRefill);
+      const hoursSinceEmpty = (now.getTime() - emptyAt.getTime()) / (1000 * 60 * 60);
+      if (hoursSinceEmpty >= 24) {
+        car.fuelTanks = maxFuel;
+        car.lastFuelRefill = now.toISOString();
+        await wc
+          .from("cars")
+          .update({ fuel_tanks: maxFuel, last_fuel_refill: now.toISOString() })
+          .eq("id", car.id);
+      }
     }
     return car;
   }));
@@ -349,10 +351,16 @@ export const addXpToCar = (
   const freeNP = Math.round(earnedPoints * 0.6);
   const lockedNP = earnedPoints - freeNP;
 
-  // Decrement fuel on the car that raced
+  // Decrement fuel on the car that raced; if it hits 0, record timestamp for 24h cooldown
   const newCarsWithFuel = newCars.map((c) => {
     if (c.id !== carId) return c;
-    return { ...c, fuelTanks: Math.max(0, c.fuelTanks - 1) };
+    const newFuel = Math.max(0, c.fuelTanks - 1);
+    return {
+      ...c,
+      fuelTanks: newFuel,
+      // When fuel reaches 0, mark the time (used as cooldown start)
+      lastFuelRefill: newFuel === 0 ? new Date().toISOString() : c.lastFuelRefill,
+    };
   });
 
   const newState: GameState = {
