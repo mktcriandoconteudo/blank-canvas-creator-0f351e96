@@ -197,23 +197,28 @@ const Race = () => {
     return () => clearTimeout(timer);
   }, [countdown, raceState, noFuel, engineBlown]);
 
-  // Thunder Bolt: force race to end at exactly 10 seconds
-  useEffect(() => {
-    if (raceState !== "racing" || !isThunder) return;
-    const timer = setTimeout(() => {
-      setRaceState("finished");
-      setNitroActive(false);
-      setPlayerProgress(FINISH_LINE);
-      setOpponentProgress(preWin ? FINISH_LINE * 0.9 : FINISH_LINE);
-      setVictory(preWin);
-      setPlayerPosition(preWin ? 1 : (Math.random() > 0.4 ? 2 : Math.random() > 0.5 ? 3 : 4));
-      console.log("[THUNDER] Race ended at 10s, won:", preWin);
-      const result = finishRaceRef.current(preWin, rewardMultiplier, raceNumber);
-      setXpResult(result);
-      setTimeout(() => setShowResult(true), 500);
-    }, 10000);
-    return () => clearTimeout(timer);
-  }, [raceState, isThunder]);
+  // Thunder Bolt: race ends when video ends (via onVideoEnded callback)
+  // No fixed timer — synced to actual video duration
+  const handleThunderVideoEnded = useCallback(() => {
+    if (raceState !== "racing") return;
+    setRaceState("finished");
+    setNitroActive(false);
+    setPlayerProgress(FINISH_LINE);
+    setOpponentProgress(preWin ? FINISH_LINE * 0.9 : FINISH_LINE);
+    setVictory(preWin);
+    setPlayerPosition(preWin ? 1 : (Math.random() > 0.4 ? 2 : Math.random() > 0.5 ? 3 : 4));
+    console.log("[THUNDER] Video ended → race finished, won:", preWin);
+    const result = finishRaceRef.current(preWin, rewardMultiplier, raceNumber);
+    setXpResult(result);
+    // Show result 1.5s after video ends (leaderboard freezes first)
+    setTimeout(() => setShowResult(true), 1500);
+  }, [raceState, preWin, rewardMultiplier, raceNumber]);
+
+  // Non-Thunder: finale video ended → show result
+  const handleFinaleVideoEnded = useCallback(() => {
+    console.log("[RACE] Finale video ended → showing result");
+    setShowResult(true);
+  }, []);
 
   // Start BGM when race begins — persists through finish, cleaned on unmount
   useEffect(() => {
@@ -378,7 +383,16 @@ const Race = () => {
         }
       })();
 
-      setTimeout(() => setShowResult(true), isThunder ? 10000 : 5500);
+      // For non-Thunder: result shown when finale video ends (via onFinaleEnded callback)
+      // Fallback timeout in case video event doesn't fire
+      if (!isThunder) {
+        setTimeout(() => {
+          setShowResult((prev) => {
+            if (!prev) console.log("[RACE] Fallback: showing result after 12s");
+            return true;
+          });
+        }, 12000);
+      }
     }
   }, [playerProgress, opponentProgress, raceState]);
 
@@ -433,6 +447,7 @@ const Race = () => {
           isActive={true}
           nitroActive={nitroActive}
           isRacing={isRacing}
+          onVideoEnded={handleThunderVideoEnded}
         />
       ) : (
         <RaceVideoPlayer
@@ -442,6 +457,7 @@ const Race = () => {
           poster={raceScenePlayer}
           nitroActive={nitroActive}
           isRacing={isRacing}
+          onFinaleEnded={handleFinaleVideoEnded}
         />
       )}
 
