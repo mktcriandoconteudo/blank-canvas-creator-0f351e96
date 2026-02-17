@@ -23,6 +23,7 @@ interface Props {
   opponent: RacerInfo;
   raceState: "countdown" | "racing" | "finished";
   victory: boolean;
+  playerPosition?: number; // 1-4, used to lock final position
 }
 
 const POSITION_LABELS = ["1st", "2nd", "3rd", "4th"];
@@ -50,7 +51,7 @@ function pickTwo(): [string, string] {
   return [shuffled[0], shuffled[1]];
 }
 
-const RaceLeaderboard = ({ player, opponent, raceState, victory }: Props) => {
+const RaceLeaderboard = ({ player, opponent, raceState, victory, playerPosition = 1 }: Props) => {
   const [extraNames] = useState(() => pickTwo());
 
   // Generate random stats for extras
@@ -90,16 +91,25 @@ const RaceLeaderboard = ({ player, opponent, raceState, victory }: Props) => {
   // Sort by fluctuating score
   const sorted = [...racers].sort((a, b) => b.score - a.score);
 
-  // On finish, lock player to 1st if victory, else 2nd
+  // On finish, lock player to actual position
   const finalSorted = raceState === "finished"
     ? (() => {
-        const withoutPlayer = sorted.filter(r => !r.isPlayer);
-        const playerRacer = sorted.find(r => r.isPlayer)!;
-        if (victory) {
-          return [playerRacer, ...withoutPlayer.slice(0, 3)];
-        } else {
-          return [withoutPlayer[0], playerRacer, ...withoutPlayer.slice(1, 3)];
+        const playerRacer = racers.find(r => r.isPlayer)!;
+        const others = racers.filter(r => !r.isPlayer);
+        // Shuffle others for variety
+        const shuffledOthers = [...others].sort(() => Math.random() - 0.5);
+        // Insert player at correct position (0-indexed)
+        const posIdx = Math.max(0, Math.min(3, playerPosition - 1));
+        const result: typeof racers = [];
+        let otherIdx = 0;
+        for (let i = 0; i < 4; i++) {
+          if (i === posIdx) {
+            result.push(playerRacer);
+          } else {
+            result.push(shuffledOthers[otherIdx++]);
+          }
         }
+        return result;
       })()
     : sorted;
 
