@@ -1180,6 +1180,7 @@ export type Database = {
       [_ in never]: never
     }
     Functions: {
+      admin_get_user_email: { Args: { _auth_id: string }; Returns: string }
       buy_marketplace_car: {
         Args: { _car_id: string; _wallet: string }
         Returns: Json
