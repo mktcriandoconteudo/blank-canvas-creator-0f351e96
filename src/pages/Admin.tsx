@@ -138,16 +138,18 @@ const PlayerDetailModal = ({ player, onClose }: { player: PlayerDetail; onClose:
   const handleResetFuel = async () => {
     setResettingFuel(true);
     try {
+      // Set last_fuel_refill to 48h ago so 24h cooldown is already expired
+      const pastDate = new Date(Date.now() - 48 * 60 * 60 * 1000).toISOString();
       // Fuel is per-car in the cars table
       const { error } = await supabase
         .from("cars")
-        .update({ fuel_tanks: 7, last_fuel_refill: new Date().toISOString() })
+        .update({ fuel_tanks: 7, last_fuel_refill: pastDate })
         .eq("owner_wallet", player.walletAddress);
       if (error) throw error;
       // Also update user-level fuel (legacy)
       await supabase
         .from("users")
-        .update({ fuel_tanks: 5, last_fuel_refill: new Date().toISOString() })
+        .update({ fuel_tanks: 5, last_fuel_refill: pastDate })
         .eq("wallet_address", player.walletAddress);
       setCurrentFuel(5);
       toast({ title: "⛽ Combustível resetado em todos os carros!" });
