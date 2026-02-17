@@ -52,59 +52,48 @@ function pickTwo(): [string, string] {
 
 const RaceLeaderboard = ({ player, opponent, raceState, victory }: Props) => {
   const [extraNames] = useState(() => pickTwo());
-  
-  // Simulate progress for extra racers with competitive bursts
-  const [extra1Progress, setExtra1Progress] = useState(0);
-  const [extra2Progress, setExtra2Progress] = useState(0);
-  const tickRef = useRef<ReturnType<typeof setInterval> | null>(null);
-  const burstRef = useRef({ extra1: 1, extra2: 1 });
 
-  // Generate random stats for extras — closer to player/opponent for competitive feel
+  // Generate random stats for extras
   const [extraStats] = useState(() => ({
     extra1: { speed: 50 + Math.round(Math.random() * 35), power: 50 + Math.round(Math.random() * 35), handling: 45 + Math.round(Math.random() * 30) },
     extra2: { speed: 45 + Math.round(Math.random() * 30), power: 45 + Math.round(Math.random() * 30), handling: 40 + Math.round(Math.random() * 30) },
   }));
 
-  // Periodic speed bursts to force position swaps
+  // Fluctuating position scores — updated frequently with randomness to force swaps
+  const [positionScores, setPositionScores] = useState<number[]>([0, 0, 0, 0]);
+
   useEffect(() => {
     if (raceState !== "racing") return;
-    const burstInterval = setInterval(() => {
-      burstRef.current = {
-        extra1: 0.7 + Math.random() * 1.2, // 0.7x to 1.9x multiplier
-        extra2: 0.6 + Math.random() * 1.3,
-      };
-    }, 800 + Math.random() * 600);
-    return () => clearInterval(burstInterval);
-  }, [raceState]);
-
-  // Simulate extra racers progress — competitive with player/opponent
-  useEffect(() => {
-    if (raceState !== "racing") return;
-    tickRef.current = setInterval(() => {
-      setExtra1Progress(prev => {
-        const r = 0.7 + Math.random() * 0.6;
-        const s = (extraStats.extra1.speed / 100) * 0.6 + (extraStats.extra1.power / 100) * 0.4;
-        return Math.min(prev + s * r * 0.35 * burstRef.current.extra1, 100);
+    const interval = setInterval(() => {
+      setPositionScores(() => {
+        // Base scores from actual stats (player, opponent, extra1, extra2)
+        const pBase = player.speed * 0.4 + player.power * 0.35 + player.handling * 0.25;
+        const oBase = opponent.speed * 0.4 + opponent.power * 0.35 + opponent.handling * 0.25;
+        const e1Base = extraStats.extra1.speed * 0.4 + extraStats.extra1.power * 0.35 + extraStats.extra1.handling * 0.25;
+        const e2Base = extraStats.extra2.speed * 0.4 + extraStats.extra2.power * 0.35 + extraStats.extra2.handling * 0.25;
+        // Add large random component to force frequent swaps
+        const jitter = 40;
+        return [
+          pBase + (Math.random() - 0.5) * jitter,
+          oBase + (Math.random() - 0.5) * jitter,
+          e1Base + (Math.random() - 0.5) * jitter,
+          e2Base + (Math.random() - 0.5) * jitter,
+        ];
       });
-      setExtra2Progress(prev => {
-        const r = 0.6 + Math.random() * 0.7;
-        const s = (extraStats.extra2.speed / 100) * 0.6 + (extraStats.extra2.power / 100) * 0.4;
-        return Math.min(prev + s * r * 0.33 * burstRef.current.extra2, 100);
-      });
-    }, 50);
-    return () => { if (tickRef.current) clearInterval(tickRef.current); };
-  }, [raceState, extraStats]);
+    }, 700 + Math.random() * 500); // swap every 0.7-1.2s
+    return () => clearInterval(interval);
+  }, [raceState, player, opponent, extraStats]);
 
-  // Build racers array with current progress
+  // Build racers array
   const racers = [
-    { name: player.name, pilotName: player.pilotName, progress: player.progress, isPlayer: true, speed: player.speed, power: player.power, handling: player.handling },
-    { name: opponent.name, progress: opponent.progress, isPlayer: false, speed: opponent.speed, power: opponent.power, handling: opponent.handling },
-    { name: extraNames[0], progress: extra1Progress, isPlayer: false, ...extraStats.extra1 },
-    { name: extraNames[1], progress: extra2Progress, isPlayer: false, ...extraStats.extra2 },
+    { name: player.name, pilotName: player.pilotName, isPlayer: true, speed: player.speed, power: player.power, handling: player.handling, score: positionScores[0] },
+    { name: opponent.name, isPlayer: false, speed: opponent.speed, power: opponent.power, handling: opponent.handling, score: positionScores[1] },
+    { name: extraNames[0], isPlayer: false, ...extraStats.extra1, score: positionScores[2] },
+    { name: extraNames[1], isPlayer: false, ...extraStats.extra2, score: positionScores[3] },
   ];
 
-  // Sort by progress descending to determine positions
-  const sorted = [...racers].sort((a, b) => b.progress - a.progress);
+  // Sort by fluctuating score
+  const sorted = [...racers].sort((a, b) => b.score - a.score);
 
   // On finish, lock player to 1st if victory, else 2nd
   const finalSorted = raceState === "finished"
