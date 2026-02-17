@@ -62,27 +62,22 @@ const RaceLeaderboard = ({ player, opponent, raceState, victory }: Props) => {
   // Fluctuating position scores — updated frequently with randomness to force swaps
   const [positionScores, setPositionScores] = useState<number[]>([0, 0, 0, 0]);
 
+  const tickCount = useRef(0);
+
   useEffect(() => {
     if (raceState !== "racing") return;
     const interval = setInterval(() => {
-      setPositionScores(() => {
-        // Base scores from actual stats (player, opponent, extra1, extra2)
-        const pBase = player.speed * 0.4 + player.power * 0.35 + player.handling * 0.25;
-        const oBase = opponent.speed * 0.4 + opponent.power * 0.35 + opponent.handling * 0.25;
-        const e1Base = extraStats.extra1.speed * 0.4 + extraStats.extra1.power * 0.35 + extraStats.extra1.handling * 0.25;
-        const e2Base = extraStats.extra2.speed * 0.4 + extraStats.extra2.power * 0.35 + extraStats.extra2.handling * 0.25;
-        // Add large random component to force frequent swaps
-        const jitter = 40;
-        return [
-          pBase + (Math.random() - 0.5) * jitter,
-          oBase + (Math.random() - 0.5) * jitter,
-          e1Base + (Math.random() - 0.5) * jitter,
-          e2Base + (Math.random() - 0.5) * jitter,
-        ];
-      });
-    }, 700 + Math.random() * 500); // swap every 0.7-1.2s
+      tickCount.current += 1;
+      // Pure random positions — ignore stats entirely so swaps ALWAYS happen
+      setPositionScores([
+        Math.random() * 100,
+        Math.random() * 100,
+        Math.random() * 100,
+        Math.random() * 100,
+      ]);
+    }, 500); // every 0.5s
     return () => clearInterval(interval);
-  }, [raceState, player, opponent, extraStats]);
+  }, [raceState]);
 
   // Build racers array
   const racers = [
