@@ -105,7 +105,7 @@ const Index = () => {
   const [raulHasAppeared, setRaulHasAppeared] = useState(false); // once true, all repairs go through queue
   const [raulMessageIndex, setRaulMessageIndex] = useState(0);
   const [mechanicQueue, setMechanicQueue] = useState<number | null>(null); // seconds remaining
-  
+  const [pendingMechanicAction, setPendingMechanicAction] = useState<"repair" | "oil" | null>(null);
   const [biaVisible, setBiaVisible] = useState(false);
   const [biaDismissed, setBiaDismissed] = useState(false);
   const [biaMessageIndex, setBiaMessageIndex] = useState(0);
@@ -192,6 +192,7 @@ const Index = () => {
     setRaulVisible(false);
     setRaulHasAppeared(false);
     setMechanicQueue(null);
+    setPendingMechanicAction(null);
   }, [selectedCar?.id]);
 
   // Raul pop-up timer — appears randomly, stays once appeared
@@ -205,7 +206,7 @@ const Index = () => {
     return () => clearTimeout(initialDelay);
   }, [raulHasAppeared, selectedCar?.id]);
 
-  // Mechanic queue countdown
+  // Mechanic queue countdown — execute action when it reaches 0
   useEffect(() => {
     if (mechanicQueue === null || mechanicQueue <= 0) return;
     const interval = setInterval(() => {
@@ -219,6 +220,21 @@ const Index = () => {
     }, 1000);
     return () => clearInterval(interval);
   }, [mechanicQueue]);
+
+  // When queue finishes, execute the pending action with fresh references
+  useEffect(() => {
+    if (mechanicQueue !== 0 || !pendingMechanicAction) return;
+    if (!selectedCar) return;
+    const cost = pendingMechanicAction === "repair" 
+      ? 50 + selectedCar.level * 10 
+      : 30 + selectedCar.level * 5;
+    if (pendingMechanicAction === "repair") {
+      repair(cost);
+    } else {
+      oilChange(cost);
+    }
+    setPendingMechanicAction(null);
+  }, [mechanicQueue, pendingMechanicAction, repair, oilChange, selectedCar]);
 
   const audioStartedRef = useRef(false);
 
@@ -334,13 +350,7 @@ const Index = () => {
   const startMechanicQueue = (action: "repair" | "oil") => {
     const queueTime = action === "repair" ? 30 + Math.floor(Math.random() * 60) : 20 + Math.floor(Math.random() * 40);
     setMechanicQueue(queueTime);
-    
-    setTimeout(() => {
-      if (action === "repair") repair(repairCost);
-      else oilChange(oilCost);
-      setMechanicQueue(0);
-      
-    }, queueTime * 1000);
+    setPendingMechanicAction(action);
   };
 
   // Handle repair click — instant if Raul hasn't appeared, queue otherwise
