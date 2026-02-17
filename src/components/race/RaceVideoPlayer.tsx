@@ -7,6 +7,7 @@ interface RaceVideoPlayerProps {
   poster: string;
   nitroActive: boolean;
   isRacing: boolean;
+  onFinaleEnded?: () => void;
 }
 
 /**
@@ -27,7 +28,7 @@ function setupMobileVideo(el: HTMLVideoElement) {
   el.setAttribute("x5-video-player-fullscreen", "false");
 }
 
-const RaceVideoPlayer = ({ videos, finaleVideo, isActive, poster, nitroActive, isRacing }: RaceVideoPlayerProps) => {
+const RaceVideoPlayer = ({ videos, finaleVideo, isActive, poster, nitroActive, isRacing, onFinaleEnded }: RaceVideoPlayerProps) => {
   const [playingFinale, setPlayingFinale] = useState(false);
   const [activeSlot, setActiveSlot] = useState<0 | 1>(0);
   const videoARef = useRef<HTMLVideoElement | null>(null);
@@ -191,9 +192,12 @@ const RaceVideoPlayer = ({ videos, finaleVideo, isActive, poster, nitroActive, i
         ref={finaleRef}
         muted
         playsInline
-        loop
         preload="none"
         className="absolute inset-0 w-full h-full object-cover"
+        onEnded={() => {
+          console.log("[RaceVideo] Finale video ended");
+          onFinaleEnded?.();
+        }}
         style={{
           filter: "brightness(1.1) saturate(1.2) contrast(1.05)",
           transition: "opacity 0.5s ease",

@@ -5,13 +5,14 @@ interface SimpleVideoPlayerProps {
   isActive: boolean;
   nitroActive: boolean;
   isRacing: boolean;
+  onVideoEnded?: () => void;
 }
 
 /**
  * Dead-simple single-video player for Thunder Bolt.
  * One video plays from start to finish. No crossfade, no swap, no dual slots.
  */
-const SimpleVideoPlayer = ({ videoSrc, isActive, nitroActive, isRacing }: SimpleVideoPlayerProps) => {
+const SimpleVideoPlayer = ({ videoSrc, isActive, nitroActive, isRacing, onVideoEnded }: SimpleVideoPlayerProps) => {
   const videoRef = useRef<HTMLVideoElement>(null);
 
   useEffect(() => {
@@ -46,6 +47,10 @@ const SimpleVideoPlayer = ({ videoSrc, isActive, nitroActive, isRacing }: Simple
         muted
         playsInline
         className="absolute inset-0 w-full h-full object-cover"
+        onEnded={() => {
+          console.log("[SimpleVideo] Video ended");
+          onVideoEnded?.();
+        }}
         style={{
           filter: baseFilter,
           transform: baseTransform,
