@@ -102,9 +102,10 @@ const Index = () => {
   const [lastRace, setLastRace] = useState<LastRaceResult | null>(null);
   
   const [raulVisible, setRaulVisible] = useState(false);
-  const [raulDismissed, setRaulDismissed] = useState(false);
+  const [raulHasAppeared, setRaulHasAppeared] = useState(false); // once true, all repairs go through queue
   const [raulMessageIndex, setRaulMessageIndex] = useState(0);
   const [mechanicQueue, setMechanicQueue] = useState<number | null>(null); // seconds remaining
+  
   const [biaVisible, setBiaVisible] = useState(false);
   const [biaDismissed, setBiaDismissed] = useState(false);
   const [biaMessageIndex, setBiaMessageIndex] = useState(0);
@@ -188,36 +189,21 @@ const Index = () => {
     setBiaDismissed(false);
     setBiaVisible(false);
     setShowInsurance(false);
-    setRaulDismissed(false);
     setRaulVisible(false);
+    setRaulHasAppeared(false);
     setMechanicQueue(null);
   }, [selectedCar?.id]);
 
-  // Raul pop-up timer (appears randomly like Bia)
+  // Raul pop-up timer — appears randomly, stays once appeared
   useEffect(() => {
-    if (raulDismissed) return;
+    if (raulHasAppeared) return; // already showed up, stays permanently
     const initialDelay = setTimeout(() => {
       setRaulVisible(true);
+      setRaulHasAppeared(true);
       setRaulMessageIndex(Math.floor(Math.random() * 10));
     }, 3000 + Math.random() * 8000);
     return () => clearTimeout(initialDelay);
-  }, [raulDismissed, selectedCar?.id]);
-
-  // Auto-cycle Raul: disappear after 15s, reappear after 20-50s
-  useEffect(() => {
-    if (!raulVisible) return;
-    const hideTimer = setTimeout(() => {
-      setRaulVisible(false);
-      const reappearTimer = setTimeout(() => {
-        if (!raulDismissed) {
-          setRaulMessageIndex(Math.floor(Math.random() * 10));
-          setRaulVisible(true);
-        }
-      }, 20000 + Math.random() * 30000);
-      return () => clearTimeout(reappearTimer);
-    }, 15000);
-    return () => clearTimeout(hideTimer);
-  }, [raulVisible, raulDismissed]);
+  }, [raulHasAppeared, selectedCar?.id]);
 
   // Mechanic queue countdown
   useEffect(() => {
@@ -342,6 +328,36 @@ const Index = () => {
   const oilNeeded = needsOilChange(selectedCar);
   const kmSinceOil = kmSinceOilChange(selectedCar);
   const oilCost = 30 + selectedCar.level * 5;
+  const hasMechanicalIssues = needsRevision || isEngineBlown(selectedCar) || selectedCar.engineHealth < 50 || oilNeeded;
+
+  // Helper: start mechanic queue for a repair action
+  const startMechanicQueue = (action: "repair" | "oil") => {
+    const queueTime = action === "repair" ? 30 + Math.floor(Math.random() * 60) : 20 + Math.floor(Math.random() * 40);
+    setMechanicQueue(queueTime);
+    
+    setTimeout(() => {
+      if (action === "repair") repair(repairCost);
+      else oilChange(oilCost);
+      setMechanicQueue(0);
+      
+    }, queueTime * 1000);
+  };
+
+  // Handle repair click — instant if Raul hasn't appeared, queue otherwise
+  const handleRepairClick = () => {
+    if (raulHasAppeared) {
+      startMechanicQueue("repair");
+    } else {
+      repair(repairCost);
+    }
+  };
+  const handleOilClick = () => {
+    if (raulHasAppeared) {
+      startMechanicQueue("oil");
+    } else {
+      oilChange(oilCost);
+    }
+  };
 
   const carIndex = state.cars.findIndex((c) => c.id === state.selectedCarId);
   const hasPrev = carIndex > 0;
@@ -504,7 +520,7 @@ const Index = () => {
 
             {/* Mecânico Raul — pop-up aleatório com fila de espera */}
             <AnimatePresence>
-              {raulVisible && !raulDismissed && (
+              {raulVisible && (
                 <motion.div
                   initial={{ opacity: 0, x: -30, scale: 0.9 }}
                   animate={{ opacity: 1, x: 0, scale: 1 }}
@@ -516,15 +532,9 @@ const Index = () => {
                     "border-primary/20 bg-card/30"
                   }`}
                 >
-                  <button
-                    onClick={() => { setRaulDismissed(true); setRaulVisible(false); }}
-                    className="absolute top-2 right-2 flex h-5 w-5 items-center justify-center rounded-full bg-muted/50 text-muted-foreground transition-colors hover:bg-muted hover:text-foreground"
-                  >
-                    <X className="h-3 w-3" />
-                  </button>
                   <div className="flex items-start gap-3">
                     <img src={raulAvatar} alt="Mecânico Raul" className="h-10 w-10 shrink-0 rounded-full border-2 border-neon-orange/40 object-cover" />
-                    <div className="flex-1 space-y-2 pr-4">
+                    <div className="flex-1 space-y-2">
                       <span className="font-display text-xs font-bold text-neon-orange">
                         Raul, Mecânico:
                       </span>
@@ -623,14 +633,7 @@ const Index = () => {
                         <div className="space-y-1.5">
                           {(needsRevision || isEngineBlown(selectedCar) || selectedCar.engineHealth < 50) && (
                             <button
-                              onClick={() => {
-                                const queueTime = 30 + Math.floor(Math.random() * 60);
-                                setMechanicQueue(queueTime);
-                                setTimeout(() => {
-                                  repair(repairCost);
-                                  setMechanicQueue(0);
-                                }, queueTime * 1000);
-                              }}
+                              onClick={() => startMechanicQueue("repair")}
                               className="w-full rounded-lg border border-neon-orange/30 bg-neon-orange/10 px-3 py-2 font-display text-xs font-bold text-neon-orange transition-colors hover:bg-neon-orange/20"
                             >
                               🔧 Reparar Motor ({repairCost} NP) — entrar na fila
@@ -638,14 +641,7 @@ const Index = () => {
                           )}
                           {oilNeeded && (
                             <button
-                              onClick={() => {
-                                const queueTime = 20 + Math.floor(Math.random() * 40);
-                                setMechanicQueue(queueTime);
-                                setTimeout(() => {
-                                  oilChange(oilCost);
-                                  setMechanicQueue(0);
-                                }, queueTime * 1000);
-                              }}
+                              onClick={() => startMechanicQueue("oil")}
                               className="w-full rounded-lg border border-neon-orange/30 bg-neon-orange/10 px-3 py-2 font-display text-xs font-bold text-neon-orange transition-colors hover:bg-neon-orange/20"
                             >
                               🛢️ Trocar Óleo ({oilCost} NP) — entrar na fila
@@ -790,10 +786,10 @@ const Index = () => {
                         <div className="flex flex-col gap-2 sm:flex-row sm:items-center sm:justify-between">
                           <span className="font-display text-xs font-bold text-destructive">⚠ Revisão necessária!</span>
                           <button
-                            onClick={() => repair(repairCost)}
+                            onClick={handleRepairClick}
                             className="w-full rounded-lg border border-primary/40 bg-primary/10 px-3 py-2 font-display text-xs font-bold text-primary transition-colors hover:bg-primary/20 sm:w-auto"
                           >
-                            🔧 Reparar ({repairCost} NP)
+                            🔧 Reparar ({repairCost} NP){raulHasAppeared ? " — fila" : ""}
                           </button>
                         </div>
                       </motion.div>
@@ -821,10 +817,10 @@ const Index = () => {
                             </div>
                           </div>
                           <button
-                            onClick={() => oilChange(oilCost)}
+                            onClick={handleOilClick}
                             className="w-full rounded-lg border border-neon-orange/40 bg-neon-orange/10 px-3 py-2 font-display text-xs font-bold text-neon-orange transition-colors hover:bg-neon-orange/20 sm:w-auto"
                           >
-                            🛢 Trocar Óleo ({oilCost} NP)
+                            🛢 Trocar Óleo ({oilCost} NP){raulHasAppeared ? " — fila" : ""}
                           </button>
                         </div>
                       </motion.div>
@@ -962,7 +958,19 @@ const Index = () => {
                       <GlowButton variant="purple" icon={<Wrench className="h-4 w-4" />} className="flex-1">
                         Peças
                       </GlowButton>
-                      {selectedCar.fuelTanks > 0 ? (
+                      {(mechanicQueue !== null && mechanicQueue > 0) || (hasMechanicalIssues && raulHasAppeared) ? (
+                        <div className="flex-1 flex flex-col gap-1">
+                          <button
+                            disabled
+                            className="w-full rounded-xl border border-destructive/40 bg-destructive/10 px-8 py-4 font-display text-sm font-bold uppercase tracking-widest text-destructive/70 cursor-not-allowed"
+                          >
+                            🔧 Na Oficina
+                          </button>
+                          <p className="font-body text-[10px] text-destructive/70 text-center">
+                            Corrija os defeitos mecânicos antes de correr
+                          </p>
+                        </div>
+                      ) : selectedCar.fuelTanks > 0 ? (
                         <GlowButton
                           variant="cyan"
                           icon={<Flag className="h-4 w-4" />}
