@@ -233,20 +233,7 @@ const Landing = () => {
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
   const [isAdmin, setIsAdmin] = useState(false);
   const heroRef = useRef<HTMLDivElement>(null);
-  const { logoUrl, faviconUrl } = useSiteAssets();
-
-  // Dynamic favicon
-  useEffect(() => {
-    if (faviconUrl) {
-      let link = document.querySelector("link[rel~='icon']") as HTMLLinkElement;
-      if (!link) {
-        link = document.createElement("link");
-        link.rel = "icon";
-        document.head.appendChild(link);
-      }
-      link.href = faviconUrl;
-    }
-  }, [faviconUrl]);
+  const { logoUrl } = useSiteAssets();
 
   const effectiveLogo = logoUrl || turboNitroLogo;
 
