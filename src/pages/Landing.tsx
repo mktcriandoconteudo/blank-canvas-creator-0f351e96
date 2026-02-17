@@ -2,13 +2,14 @@ import { motion, useScroll, useTransform, AnimatePresence } from "framer-motion"
 import ShaderBackground from "@/components/ui/shader-background";
 import { useNavigate } from "react-router-dom";
 import { useRef, useState, useEffect } from "react";
-import { supabase } from "@/lib/supabase";
+
 import { useAuth } from "@/hooks/useAuth";
 import { useSiteAssets } from "@/hooks/useSiteAssets";
+import MainNav from "@/components/MainNav";
 import {
   Zap, Trophy, Gauge, Shield, Coins, Fuel, Users, Star,
   ChevronRight, ArrowRight, Sparkles, Car, Wrench, Flag,
-  Twitter, MessageCircle, Globe, Github, Menu, X, ShoppingCart,
+  Twitter, MessageCircle, Globe, Github, ShoppingCart,
   TrendingUp, DollarSign
 } from "lucide-react";
 import turboNitroLogo from "@/assets/turbonitro-logo.png";
@@ -230,17 +231,11 @@ const RoadmapStep = ({
 const Landing = () => {
   const navigate = useNavigate();
   const { user, session, signOut } = useAuth();
-  const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
-  const [isAdmin, setIsAdmin] = useState(false);
   const heroRef = useRef<HTMLDivElement>(null);
   const { logoUrl } = useSiteAssets();
 
   const effectiveLogo = logoUrl || turboNitroLogo;
 
-  useEffect(() => {
-    if (!session) { setIsAdmin(false); return; }
-    supabase.rpc("check_is_admin").then(({ data }) => setIsAdmin(data === true));
-  }, [session]);
   const { scrollYProgress } = useScroll({ target: heroRef, offset: ["start start", "end start"] });
   const heroY = useTransform(scrollYProgress, [0, 1], [0, 200]);
   const heroScale = useTransform(scrollYProgress, [0, 1], [1, 1.15]);
@@ -250,128 +245,9 @@ const Landing = () => {
     <div className="relative min-h-screen bg-background text-foreground">
       <div className="relative z-10">
       {/* ─── NAV ─── */}
-      <motion.nav
-        initial={{ opacity: 0, y: -20 }}
-        animate={{ opacity: 1, y: 0 }}
-        transition={{ duration: 0.6 }}
-        className="fixed top-0 z-50 w-full border-b border-border/10 bg-background/60 backdrop-blur-2xl"
-      >
-        <div className="mx-auto flex max-w-7xl items-center justify-between px-4 py-3 sm:px-8">
-          <div className="shrink-0" />
-          <div className="hidden items-center gap-8 sm:flex">
-            <button onClick={() => window.scrollTo({ top: 0, behavior: 'smooth' })} className="font-display text-xs uppercase tracking-wider text-primary font-bold transition-colors hover:text-primary">Home</button>
-            <a href="#features" className="font-display text-xs uppercase tracking-wider text-muted-foreground transition-colors hover:text-primary">Features</a>
-            <a href="#nft" className="font-display text-xs uppercase tracking-wider text-muted-foreground transition-colors hover:text-primary">NFTs</a>
-            <a href="#roadmap" className="font-display text-xs uppercase tracking-wider text-muted-foreground transition-colors hover:text-primary">Roadmap</a>
-            <button onClick={() => navigate("/marketplace")} className="font-display text-xs uppercase tracking-wider text-muted-foreground transition-colors hover:text-primary">Marketplace</button>
-          </div>
-          <div className="flex items-center gap-2 sm:gap-3">
-            {session ? (
-              <>
-                <button
-                  onClick={() => navigate("/perfil")}
-                  className="hidden items-center gap-2 rounded-lg bg-card/30 px-2.5 py-1.5 backdrop-blur-sm border border-border/10 sm:flex"
-                >
-                  {user?.avatarUrl ? (
-                    <img src={user.avatarUrl} alt={user?.username ?? "Piloto"} className="h-6 w-6 rounded-full object-cover border border-primary/30" />
-                  ) : (
-                    <div className="flex h-6 w-6 items-center justify-center rounded-full bg-primary/20 text-primary font-display text-[10px] font-bold">
-                      {(user?.username ?? "P").charAt(0).toUpperCase()}
-                    </div>
-                  )}
-                  <span className="font-display text-xs uppercase tracking-wider text-primary">
-                    {user?.username ?? "Piloto"}
-                  </span>
-                </button>
-                <button
-                  onClick={() => navigate("/garage")}
-                  className="rounded-xl bg-primary px-4 py-2 font-display text-xs font-bold uppercase tracking-wider text-primary-foreground transition-all hover:brightness-110 glow-cyan"
-                >
-                  Garagem
-                </button>
-                {isAdmin && (
-                  <button
-                    onClick={() => navigate("/admin")}
-                    className="rounded-xl border border-neon-orange/30 bg-neon-orange/10 px-3 py-2 font-display text-[10px] font-bold uppercase tracking-wider text-neon-orange transition-all hover:bg-neon-orange/20"
-                  >
-                    🛡️ Admin
-                  </button>
-                )}
-                <button
-                  onClick={signOut}
-                  className="hidden rounded-xl border border-destructive/30 bg-destructive/10 px-3 py-2 font-display text-[10px] font-bold uppercase tracking-wider text-destructive transition-all hover:bg-destructive/20 sm:block"
-                >
-                  Sair
-                </button>
-              </>
-            ) : (
-              <>
-                <button
-                  onClick={() => navigate("/auth")}
-                  className="hidden rounded-xl border border-primary/30 bg-primary/10 px-4 py-2 font-display text-xs font-bold uppercase tracking-wider text-primary transition-all hover:bg-primary/20 hover:shadow-[0_0_20px_hsl(185_80%_55%/0.2)] sm:block"
-                >
-                  Login
-                </button>
-                <button
-                  onClick={() => navigate("/auth")}
-                  className="rounded-xl bg-primary px-4 py-2 font-display text-xs font-bold uppercase tracking-wider text-primary-foreground transition-all hover:brightness-110 glow-cyan"
-                >
-                  Jogar
-                </button>
-              </>
-            )}
-            <button
-              onClick={() => setMobileMenuOpen(!mobileMenuOpen)}
-              className="flex h-9 w-9 items-center justify-center rounded-lg border border-border/30 bg-card/30 text-foreground backdrop-blur-xl sm:hidden"
-            >
-              {mobileMenuOpen ? <X className="h-5 w-5" /> : <Menu className="h-5 w-5" />}
-            </button>
-          </div>
-        </div>
-
-        {/* Mobile menu */}
-        <AnimatePresence>
-          {mobileMenuOpen && (
-            <motion.div
-              initial={{ height: 0, opacity: 0 }}
-              animate={{ height: "auto", opacity: 1 }}
-              exit={{ height: 0, opacity: 0 }}
-              transition={{ duration: 0.25 }}
-              className="overflow-hidden border-t border-border/10 bg-background/95 backdrop-blur-2xl sm:hidden"
-            >
-              <div className="flex flex-col gap-1 px-4 py-3">
-                {session && (
-                  <div className="mb-2 rounded-lg bg-primary/5 px-3 py-2 text-center">
-                    <span className="font-display text-xs uppercase tracking-wider text-primary">{user?.username ?? "Piloto"}</span>
-                  </div>
-                )}
-                {[
-                  { label: "Features", action: () => { document.getElementById("features")?.scrollIntoView({ behavior: "smooth" }); setMobileMenuOpen(false); } },
-                  { label: "NFTs", action: () => { document.getElementById("nft")?.scrollIntoView({ behavior: "smooth" }); setMobileMenuOpen(false); } },
-                  { label: "Roadmap", action: () => { document.getElementById("roadmap")?.scrollIntoView({ behavior: "smooth" }); setMobileMenuOpen(false); } },
-                  { label: "Marketplace", action: () => { navigate("/marketplace"); setMobileMenuOpen(false); } },
-                  ...(session
-                    ? [
-                        { label: "Garagem", action: () => { navigate("/garage"); setMobileMenuOpen(false); } },
-                        ...(isAdmin ? [{ label: "🛡️ Admin", action: () => { navigate("/admin"); setMobileMenuOpen(false); } }] : []),
-                        { label: "Sair", action: () => { signOut(); setMobileMenuOpen(false); } },
-                      ]
-                    : [{ label: "Login", action: () => { navigate("/auth"); setMobileMenuOpen(false); } }]
-                  ),
-                ].map((item) => (
-                  <button
-                    key={item.label}
-                    onClick={item.action}
-                    className="rounded-lg px-3 py-2.5 text-left font-display text-sm uppercase tracking-wider text-muted-foreground transition-colors hover:bg-card/50 hover:text-primary"
-                  >
-                    {item.label}
-                  </button>
-                ))}
-              </div>
-            </motion.div>
-          )}
-        </AnimatePresence>
-      </motion.nav>
+      <div className="fixed top-0 z-50 w-full">
+        <MainNav transparent />
+      </div>
 
       {/* ─── HERO ─── */}
       <section ref={heroRef} className="relative flex min-h-screen items-end overflow-hidden pb-24 pt-16 sm:items-center sm:pb-0">
