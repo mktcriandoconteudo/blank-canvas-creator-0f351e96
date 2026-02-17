@@ -144,7 +144,7 @@ const RaceLeaderboard = ({ player, opponent, raceState, victory }: Props) => {
                   transition={{ type: "spring", stiffness: 300, damping: 30 }}
                   className={`flex items-center gap-1.5 sm:gap-2 rounded-lg border px-2 py-1.5 sm:py-2 transition-colors ${
                     racer.isPlayer 
-                      ? "border-neon-green/40 bg-neon-green/10 ring-1 ring-neon-green/30 shadow-[0_0_12px_-3px_hsl(var(--neon-green)/0.3)]" 
+                      ? POSITION_BG_COLORS[idx] + " ring-1 ring-neon-green/30 shadow-[0_0_12px_-3px_hsl(var(--neon-green)/0.3)]" 
                       : POSITION_BG_COLORS[idx]
                   }`}
                 >
