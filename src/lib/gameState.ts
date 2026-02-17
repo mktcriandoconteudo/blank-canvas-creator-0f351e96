@@ -55,12 +55,16 @@ export const calculateXpToNext = (level: number): number => {
   return Math.round(100 * Math.pow(XP_MULTIPLIER, level - 1));
 };
 
-/** Max fuel tanks based on car rarity/model */
+/** Max fuel tanks based on car model tier */
 export const getMaxFuel = (model: string): number => {
   switch (model) {
     case "legendary": return 7;
-    case "rare": return 6;
-    default: return 5;
+    case "epic": return 6;
+    case "rare":
+    case "sport": return 5;
+    case "classic":
+    case "standard":
+    default: return 4;
   }
 };
 
