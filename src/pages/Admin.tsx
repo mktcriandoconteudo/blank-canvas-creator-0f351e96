@@ -138,13 +138,19 @@ const PlayerDetailModal = ({ player, onClose }: { player: PlayerDetail; onClose:
   const handleResetFuel = async () => {
     setResettingFuel(true);
     try {
+      // Fuel is per-car in the cars table
       const { error } = await supabase
+        .from("cars")
+        .update({ fuel_tanks: 7, last_fuel_refill: new Date().toISOString() })
+        .eq("owner_wallet", player.walletAddress);
+      if (error) throw error;
+      // Also update user-level fuel (legacy)
+      await supabase
         .from("users")
         .update({ fuel_tanks: 5, last_fuel_refill: new Date().toISOString() })
         .eq("wallet_address", player.walletAddress);
-      if (error) throw error;
       setCurrentFuel(5);
-      toast({ title: "⛽ Combustível resetado para 5/5!" });
+      toast({ title: "⛽ Combustível resetado em todos os carros!" });
     } catch (err: any) {
       toast({ title: "Erro", description: err.message, variant: "destructive" });
     } finally {
