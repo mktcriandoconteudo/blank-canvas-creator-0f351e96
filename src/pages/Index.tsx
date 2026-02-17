@@ -628,107 +628,134 @@ const Index = () => {
                       </motion.div>
                     )}
 
-                    {/* Insurance Section */}
+                    {/* Insurance Section — Bia, Corretora de Seguros */}
                     <motion.div
                       initial={{ opacity: 0 }}
                       animate={{ opacity: 1 }}
                       className="mt-3 rounded-xl border border-primary/20 bg-card/30 p-3 backdrop-blur-sm"
                     >
-                      <div className="flex items-center justify-between mb-2">
-                        <div className="flex items-center gap-2">
-                          <ShieldCheck className="h-4 w-4 text-primary" />
-                          <span className="font-display text-xs font-bold uppercase tracking-wider text-foreground">
-                            Seguro
-                          </span>
+                      <div className="flex items-start gap-3">
+                        <div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-full bg-primary/20 text-lg">
+                          🛡️
                         </div>
-                        {isInsured && policy && (
-                          <span className="rounded-full bg-neon-green/20 px-2 py-0.5 font-display text-[10px] font-bold text-neon-green">
-                            ✅ {policy.planType === "basic" ? "Básico" : policy.planType === "standard" ? "Standard" : "Premium"}
-                          </span>
-                        )}
-                      </div>
+                        <div className="flex-1 space-y-2">
+                          <div className="flex items-center justify-between">
+                            <span className="font-display text-xs font-bold text-primary">
+                              Bia, Corretora:
+                            </span>
+                            {isInsured && policy && (
+                              <span className="rounded-full bg-neon-green/20 px-2 py-0.5 font-display text-[10px] font-bold text-neon-green">
+                                ✅ {policy.planType === "basic" ? "Básico" : policy.planType === "standard" ? "Standard" : "Premium"}
+                              </span>
+                            )}
+                          </div>
 
-                      {isInsured && policy ? (
-                        <div className="space-y-1.5">
-                          <div className="flex items-center justify-between text-[10px] font-body text-muted-foreground">
-                            <span>Cobertura: <span className="text-foreground font-bold">{policy.coveragePercent}%</span></span>
-                            <span>Sinistros: <span className="text-foreground font-bold">{claimsLeft} restantes</span></span>
-                          </div>
-                          <div className="flex items-center justify-between text-[10px] font-body text-muted-foreground">
-                            <span>Expira em: <span className="text-foreground font-bold">{daysLeft} dias</span></span>
-                            <span>Corridas: <span className="text-foreground font-bold">{policy.racesRemaining}</span></span>
-                          </div>
-                          <div className="relative h-1.5 w-full overflow-hidden rounded-full bg-muted/50">
-                            <div
-                              className="absolute inset-y-0 left-0 rounded-full bg-gradient-to-r from-neon-green to-emerald-400"
-                              style={{ width: `${Math.min(100, (claimsLeft / (policy.maxClaims || 1)) * 100)}%` }}
-                            />
-                          </div>
-                        </div>
-                      ) : (
-                        <div className="space-y-2">
-                          <p className="font-body text-[10px] text-muted-foreground">
-                            Proteja seu carro! O seguro cobre reparos e troca de óleo.
-                          </p>
-                          {!showInsurance ? (
-                            <button
-                              onClick={() => setShowInsurance(true)}
-                              className="w-full rounded-lg border border-primary/30 bg-primary/10 px-3 py-2 font-display text-xs font-bold text-primary transition-colors hover:bg-primary/20"
-                            >
-                              🛡️ Ver Planos de Seguro
-                            </button>
+                          {isInsured && policy ? (
+                            <div className="space-y-2">
+                              <p className="font-body text-[11px] text-primary/80">
+                                💙 "Relaxa, seu carro tá coberto! Qualquer problema, é só me chamar que a gente resolve."
+                              </p>
+                              <div className="rounded-lg border border-neon-green/20 bg-neon-green/5 p-2 space-y-1">
+                                <div className="flex items-center justify-between text-[10px] font-body text-muted-foreground">
+                                  <span>Cobertura: <span className="text-foreground font-bold">{policy.coveragePercent}%</span></span>
+                                  <span>Sinistros: <span className="text-foreground font-bold">{claimsLeft} restantes</span></span>
+                                </div>
+                                <div className="flex items-center justify-between text-[10px] font-body text-muted-foreground">
+                                  <span>Expira em: <span className="text-foreground font-bold">{daysLeft} dias</span></span>
+                                  <span>Corridas: <span className="text-foreground font-bold">{policy.racesRemaining}</span></span>
+                                </div>
+                                <div className="relative h-1.5 w-full overflow-hidden rounded-full bg-muted/50">
+                                  <div
+                                    className="absolute inset-y-0 left-0 rounded-full bg-gradient-to-r from-neon-green to-emerald-400"
+                                    style={{ width: `${Math.min(100, (claimsLeft / (policy.maxClaims || 1)) * 100)}%` }}
+                                  />
+                                </div>
+                              </div>
+                            </div>
                           ) : (
                             <div className="space-y-2">
-                              {INSURANCE_PLANS.map((plan) => (
+                              {selectedCar.engineHealth < 50 ? (
+                                <p className="font-body text-[11px] text-destructive">
+                                  😰 "Ai, tô vendo que esse motor tá sofrendo... com {selectedCar.engineHealth}% de saúde, qualquer corridinha pode fundir! Me deixa te proteger, vai!"
+                                </p>
+                              ) : selectedCar.durability < 30 ? (
+                                <p className="font-body text-[11px] text-neon-orange">
+                                  😟 "Oi! Vi que a durabilidade tá em {selectedCar.durability}%... Um seguro ia te poupar uma grana pesada no mecânico, viu?"
+                                </p>
+                              ) : oilNeeded ? (
+                                <p className="font-body text-[11px] text-neon-orange">
+                                  🤔 "Olha, seu óleo tá vencido faz {kmSinceOil - 100}km. Com um seguro, a troca de óleo sai com desconto! Que tal?"
+                                </p>
+                              ) : (
+                                <p className="font-body text-[11px] text-primary/80">
+                                  😊 "Oi, tudo bem? Seu carro tá ótimo agora, mas nunca se sabe né? Um seguro protege contra imprevistos nas corridas. Melhor prevenir!"
+                                </p>
+                              )}
+
+                              {!showInsurance ? (
                                 <button
-                                  key={plan.id}
-                                  disabled={purchasingPlan === plan.id || state.nitroPoints < plan.premium}
-                                  onClick={async () => {
-                                    setPurchasingPlan(plan.id);
-                                    try {
-                                      const result = await purchase(plan);
-                                      if (result.success) {
-                                        updateState((prev) => ({
-                                          ...prev,
-                                          nitroPoints: prev.nitroPoints - plan.premium,
-                                        }));
-                                        setShowInsurance(false);
-                                      }
-                                    } finally {
-                                      setPurchasingPlan(null);
-                                    }
-                                  }}
-                                  className={`w-full rounded-lg border p-2.5 text-left transition-all hover:scale-[1.02] disabled:opacity-50 disabled:hover:scale-100 ${
-                                    plan.id === "basic"
-                                      ? "border-emerald-500/30 bg-emerald-500/10 hover:bg-emerald-500/20"
-                                      : plan.id === "standard"
-                                      ? "border-blue-500/30 bg-blue-500/10 hover:bg-blue-500/20"
-                                      : "border-purple-500/30 bg-purple-500/10 hover:bg-purple-500/20"
-                                  }`}
+                                  onClick={() => setShowInsurance(true)}
+                                  className="w-full rounded-lg border border-primary/30 bg-primary/10 px-3 py-2 font-display text-xs font-bold text-primary transition-colors hover:bg-primary/20"
                                 >
-                                  <div className="flex items-center justify-between">
-                                    <span className="font-display text-xs font-bold text-foreground">
-                                      {plan.emoji} {plan.name}
-                                    </span>
-                                    <span className="font-display text-xs font-bold text-primary">
-                                      {plan.premium} NP
-                                    </span>
-                                  </div>
-                                  <p className="mt-0.5 font-body text-[10px] text-muted-foreground">
-                                    {plan.coveragePercent}% cobertura · {plan.maxClaims} sinistros · {plan.durationDays} dias
-                                  </p>
+                                  🛡️ Ver Planos de Seguro
                                 </button>
-                              ))}
-                              <button
-                                onClick={() => setShowInsurance(false)}
-                                className="w-full rounded-lg px-3 py-1.5 font-display text-[10px] text-muted-foreground transition-colors hover:text-foreground"
-                              >
-                                Fechar
-                              </button>
+                              ) : (
+                                <div className="space-y-2">
+                                  <p className="font-body text-[10px] text-muted-foreground italic">
+                                    "Escolhe o que cabe no bolso — qualquer um já ajuda muito!"
+                                  </p>
+                                  {INSURANCE_PLANS.map((plan) => (
+                                    <button
+                                      key={plan.id}
+                                      disabled={purchasingPlan === plan.id || state.nitroPoints < plan.premium}
+                                      onClick={async () => {
+                                        setPurchasingPlan(plan.id);
+                                        try {
+                                          const result = await purchase(plan);
+                                          if (result.success) {
+                                            updateState((prev) => ({
+                                              ...prev,
+                                              nitroPoints: prev.nitroPoints - plan.premium,
+                                            }));
+                                            setShowInsurance(false);
+                                          }
+                                        } finally {
+                                          setPurchasingPlan(null);
+                                        }
+                                      }}
+                                      className={`w-full rounded-lg border p-2.5 text-left transition-all hover:scale-[1.02] disabled:opacity-50 disabled:hover:scale-100 ${
+                                        plan.id === "basic"
+                                          ? "border-emerald-500/30 bg-emerald-500/10 hover:bg-emerald-500/20"
+                                          : plan.id === "standard"
+                                          ? "border-blue-500/30 bg-blue-500/10 hover:bg-blue-500/20"
+                                          : "border-purple-500/30 bg-purple-500/10 hover:bg-purple-500/20"
+                                      }`}
+                                    >
+                                      <div className="flex items-center justify-between">
+                                        <span className="font-display text-xs font-bold text-foreground">
+                                          {plan.emoji} {plan.name}
+                                        </span>
+                                        <span className="font-display text-xs font-bold text-primary">
+                                          {plan.premium} NP
+                                        </span>
+                                      </div>
+                                      <p className="mt-0.5 font-body text-[10px] text-muted-foreground">
+                                        {plan.coveragePercent}% cobertura · {plan.maxClaims} sinistros · {plan.durationDays} dias
+                                      </p>
+                                    </button>
+                                  ))}
+                                  <button
+                                    onClick={() => setShowInsurance(false)}
+                                    className="w-full rounded-lg px-3 py-1.5 font-display text-[10px] text-muted-foreground transition-colors hover:text-foreground"
+                                  >
+                                    Fechar
+                                  </button>
+                                </div>
+                              )}
                             </div>
                           )}
                         </div>
-                      )}
+                      </div>
                     </motion.div>
 
                     <div className="my-3 h-px w-full bg-gradient-to-r from-transparent via-border to-transparent sm:my-5" />
