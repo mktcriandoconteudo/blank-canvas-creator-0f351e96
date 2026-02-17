@@ -46,6 +46,7 @@ import { needsOilChange, kmSinceOilChange, isEngineBlown } from "@/lib/gameState
 import { useAuth } from "@/hooks/useAuth";
 import { useInsurance } from "@/hooks/useInsurance";
 import { INSURANCE_PLANS } from "@/lib/insurance";
+import { supabase } from "@/lib/supabase";
 
 
 /* ─── Per-car fuel timer ─── */
@@ -111,6 +112,22 @@ const Index = () => {
   const [biaMessageIndex, setBiaMessageIndex] = useState(0);
   const garageBgmRef = useRef<HTMLAudioElement | null>(null);
 
+  // Load Bia timer config from DB
+  const [biaTimers, setBiaTimers] = useState({ delayMin: 30, delayMax: 90, visible: 10, reappearMin: 60, reappearMax: 180 });
+  useEffect(() => {
+    supabase.from("game_config").select("*").eq("id", "default").maybeSingle().then(({ data }) => {
+      if (data) {
+        setBiaTimers({
+          delayMin: (data as any).bia_initial_delay_min ?? 30,
+          delayMax: (data as any).bia_initial_delay_max ?? 90,
+          visible: (data as any).bia_visible_duration ?? 10,
+          reappearMin: (data as any).bia_reappear_min ?? 60,
+          reappearMax: (data as any).bia_reappear_max ?? 180,
+        });
+      }
+    });
+  }, []);
+
   // Load last race result from localStorage
   useEffect(() => {
     try {
@@ -147,41 +164,34 @@ const Index = () => {
     "😤 \"Olha, eu sou persistente SIM! E vou continuar aparecendo até você contratar!\"",
   ];
 
-  // Bia appears randomly, only if NOT insured — large random intervals
+  // Bia appears randomly, only if NOT insured — uses DB config
   useEffect(() => {
-    if (isInsured) {
-      setBiaVisible(false);
-      return;
-    }
+    if (isInsured) { setBiaVisible(false); return; }
     if (biaDismissed) return;
-
-    // Initial random delay: 30-90 seconds before first appearance
+    const delayMs = (biaTimers.delayMin + Math.random() * (biaTimers.delayMax - biaTimers.delayMin)) * 1000;
     const initialDelay = setTimeout(() => {
       setBiaVisible(true);
       setBiaMessageIndex(Math.floor(Math.random() * BIA_MESSAGES.length));
-    }, 30000 + Math.random() * 60000);
-
+    }, delayMs);
     return () => clearTimeout(initialDelay);
-  }, [isInsured, biaDismissed, selectedCar?.id]);
+  }, [isInsured, biaDismissed, selectedCar?.id, biaTimers]);
 
-  // Auto-cycle: visible for 10s, then hides for 60-180s before reappearing
+  // Auto-cycle: visible for configured duration, then hides for configured interval
   useEffect(() => {
     if (!biaVisible || isInsured) return;
-
     const hideTimer = setTimeout(() => {
       setBiaVisible(false);
-      // Schedule reappearance with large random gap
+      const reappearMs = (biaTimers.reappearMin + Math.random() * (biaTimers.reappearMax - biaTimers.reappearMin)) * 1000;
       const reappearTimer = setTimeout(() => {
         if (!biaDismissed && !isInsured) {
           setBiaMessageIndex(Math.floor(Math.random() * BIA_MESSAGES.length));
           setBiaVisible(true);
         }
-      }, 60000 + Math.random() * 120000); // 1-3 minutes between appearances
+      }, reappearMs);
       return () => clearTimeout(reappearTimer);
-    }, 10000);
-
+    }, biaTimers.visible * 1000);
     return () => clearTimeout(hideTimer);
-  }, [biaVisible, isInsured, biaDismissed]);
+  }, [biaVisible, isInsured, biaDismissed, biaTimers]);
 
   // Reset Bia dismissed when switching cars
   useEffect(() => {
@@ -686,6 +696,110 @@ const Index = () => {
               )}
             </AnimatePresence>
 
+            {/* Bia, Corretora de Seguros — same position as Raul */}
+            <AnimatePresence>
+              {isInsured && policy && daysLeft <= 3 && (
+                <motion.div
+                  initial={{ opacity: 0, x: -30, scale: 0.9 }}
+                  animate={{ opacity: 1, x: 0, scale: 1 }}
+                  exit={{ opacity: 0, x: 30, scale: 0.9 }}
+                  transition={{ type: "spring", stiffness: 300, damping: 25 }}
+                  className="mt-3 w-full max-w-xs rounded-xl border border-neon-orange/30 bg-background/90 p-3 backdrop-blur-xl shadow-lg"
+                >
+                  <div className="flex items-start gap-3">
+                    <img src={biaAvatar} alt="Bia Corretora" className="h-10 w-10 shrink-0 rounded-full border-2 border-neon-orange/40 object-cover" />
+                    <div className="flex-1 space-y-2">
+                      <span className="font-display text-xs font-bold text-neon-orange">Bia, Corretora:</span>
+                      <p className="font-body text-[11px] text-neon-orange">
+                        ⏰ "Ei! Seu seguro vence em {daysLeft} dia{daysLeft !== 1 ? "s" : ""}! Renova comigo antes que expire, vai!"
+                      </p>
+                      <div className="rounded-lg border border-neon-green/20 bg-neon-green/5 p-2 space-y-1">
+                        <div className="flex items-center justify-between text-[10px] font-body text-muted-foreground">
+                          <span>Cobertura: <span className="text-foreground font-bold">{policy.coveragePercent}%</span></span>
+                          <span>Sinistros: <span className="text-foreground font-bold">{claimsLeft} restantes</span></span>
+                        </div>
+                        <div className="flex items-center justify-between text-[10px] font-body text-muted-foreground">
+                          <span>Expira em: <span className="text-destructive font-bold">{daysLeft} dias</span></span>
+                          <span>Corridas: <span className="text-foreground font-bold">{policy.racesRemaining}</span></span>
+                        </div>
+                      </div>
+                    </div>
+                  </div>
+                </motion.div>
+              )}
+
+              {!isInsured && biaVisible && !biaDismissed && (
+                <motion.div
+                  initial={{ opacity: 0, x: -30, scale: 0.9 }}
+                  animate={{ opacity: 1, x: 0, scale: 1 }}
+                  exit={{ opacity: 0, x: 30, scale: 0.9 }}
+                  transition={{ type: "spring", stiffness: 300, damping: 25 }}
+                  className="mt-3 w-full max-w-xs rounded-xl border border-primary/20 bg-background/90 p-3 backdrop-blur-xl shadow-lg"
+                >
+                  <div className="flex items-start gap-3">
+                    <img src={biaAvatar} alt="Bia Corretora" className="h-10 w-10 shrink-0 rounded-full border-2 border-primary/40 object-cover" />
+                    <div className="flex-1 space-y-2">
+                      <div className="flex items-center justify-between">
+                        <span className="font-display text-xs font-bold text-primary">Bia, Corretora:</span>
+                        <button
+                          onClick={() => { setBiaDismissed(true); setBiaVisible(false); }}
+                          className="flex h-5 w-5 items-center justify-center rounded-full bg-muted/50 text-muted-foreground transition-colors hover:bg-muted hover:text-foreground"
+                        >
+                          <X className="h-3 w-3" />
+                        </button>
+                      </div>
+                      <p className="font-body text-[11px] text-primary/80" dangerouslySetInnerHTML={{ __html: BIA_MESSAGES[biaMessageIndex] }} />
+                      {!showInsurance ? (
+                        <button
+                          onClick={() => setShowInsurance(true)}
+                          className="w-full rounded-lg border border-primary/30 bg-primary/10 px-3 py-2 font-display text-xs font-bold text-primary transition-colors hover:bg-primary/20"
+                        >
+                          💬 Tá bom Bia, me mostra os planos!
+                        </button>
+                      ) : (
+                        <div className="space-y-2">
+                          <p className="font-body text-[10px] text-muted-foreground italic">"Oba! Sabia que ia aceitar! Escolhe aí:"</p>
+                          {INSURANCE_PLANS.map((plan) => (
+                            <button
+                              key={plan.id}
+                              disabled={purchasingPlan === plan.id || state.nitroPoints < plan.premium}
+                              onClick={async () => {
+                                setPurchasingPlan(plan.id);
+                                try {
+                                  const result = await purchase(plan);
+                                  if (result.success) {
+                                    updateState((prev) => ({ ...prev, nitroPoints: prev.nitroPoints - plan.premium }));
+                                    setShowInsurance(false);
+                                    setBiaVisible(false);
+                                  }
+                                } finally { setPurchasingPlan(null); }
+                              }}
+                              className={`w-full rounded-lg border p-2.5 text-left transition-all hover:scale-[1.02] disabled:opacity-50 disabled:hover:scale-100 ${
+                                plan.id === "basic" ? "border-emerald-500/30 bg-emerald-500/10 hover:bg-emerald-500/20"
+                                : plan.id === "standard" ? "border-blue-500/30 bg-blue-500/10 hover:bg-blue-500/20"
+                                : "border-purple-500/30 bg-purple-500/10 hover:bg-purple-500/20"
+                              }`}
+                            >
+                              <div className="flex items-center justify-between">
+                                <span className="font-display text-xs font-bold text-foreground">{plan.emoji} {plan.name}</span>
+                                <span className="font-display text-xs font-bold text-primary">{plan.premium} NP</span>
+                              </div>
+                              <p className="mt-0.5 font-body text-[10px] text-muted-foreground">
+                                {plan.coveragePercent}% cobertura · {plan.maxClaims} sinistros · {plan.durationDays} dias
+                              </p>
+                            </button>
+                          ))}
+                          <button onClick={() => setShowInsurance(false)} className="w-full rounded-lg px-3 py-1.5 font-display text-[10px] text-muted-foreground transition-colors hover:text-foreground">
+                            Fechar
+                          </button>
+                        </div>
+                      )}
+                    </div>
+                  </div>
+                </motion.div>
+              )}
+            </AnimatePresence>
+
           </motion.div>
 
           {/* Right: Collapsible Stats Panel */}
@@ -851,132 +965,6 @@ const Index = () => {
                         </div>
                       </motion.div>
                     )}
-
-                    {/* Insurance Section — Bia, Corretora de Seguros (random pop-up) */}
-                    <AnimatePresence>
-                      {isInsured && policy && daysLeft <= 3 && (
-                        <motion.div
-                          initial={{ opacity: 0, x: -30, scale: 0.9 }}
-                          animate={{ opacity: 1, x: 0, scale: 1 }}
-                          exit={{ opacity: 0, x: 30, scale: 0.9 }}
-                          transition={{ type: "spring", stiffness: 300, damping: 25 }}
-                          className="mt-3 rounded-xl border border-neon-orange/30 bg-card/30 p-3 backdrop-blur-sm"
-                        >
-                          <div className="flex items-start gap-3">
-                            <img src={biaAvatar} alt="Bia Corretora" className="h-10 w-10 shrink-0 rounded-full border-2 border-neon-orange/40 object-cover" />
-                            <div className="flex-1 space-y-2">
-                              <span className="font-display text-xs font-bold text-neon-orange">
-                                Bia, Corretora:
-                              </span>
-                              <p className="font-body text-[11px] text-neon-orange">
-                                ⏰ "Ei! Seu seguro vence em {daysLeft} dia{daysLeft !== 1 ? "s" : ""}! Renova comigo antes que expire, vai!"
-                              </p>
-                              <div className="rounded-lg border border-neon-green/20 bg-neon-green/5 p-2 space-y-1">
-                                <div className="flex items-center justify-between text-[10px] font-body text-muted-foreground">
-                                  <span>Cobertura: <span className="text-foreground font-bold">{policy.coveragePercent}%</span></span>
-                                  <span>Sinistros: <span className="text-foreground font-bold">{claimsLeft} restantes</span></span>
-                                </div>
-                                <div className="flex items-center justify-between text-[10px] font-body text-muted-foreground">
-                                  <span>Expira em: <span className="text-destructive font-bold">{daysLeft} dias</span></span>
-                                  <span>Corridas: <span className="text-foreground font-bold">{policy.racesRemaining}</span></span>
-                                </div>
-                              </div>
-                            </div>
-                          </div>
-                        </motion.div>
-                      )}
-
-                      {!isInsured && biaVisible && !biaDismissed && (
-                        <motion.div
-                          initial={{ opacity: 0, x: -30, scale: 0.9 }}
-                          animate={{ opacity: 1, x: 0, scale: 1 }}
-                          exit={{ opacity: 0, x: 30, scale: 0.9 }}
-                          transition={{ type: "spring", stiffness: 300, damping: 25 }}
-                          className="mt-3 rounded-xl border border-primary/20 bg-card/30 p-3 backdrop-blur-sm"
-                        >
-                          <div className="flex items-start gap-3">
-                            <img src={biaAvatar} alt="Bia Corretora" className="h-10 w-10 shrink-0 rounded-full border-2 border-primary/40 object-cover" />
-                            <div className="flex-1 space-y-2">
-                              <div className="flex items-center justify-between">
-                                <span className="font-display text-xs font-bold text-primary">
-                                  Bia, Corretora:
-                                </span>
-                                <button
-                                  onClick={() => { setBiaDismissed(true); setBiaVisible(false); }}
-                                  className="flex h-5 w-5 items-center justify-center rounded-full bg-muted/50 text-muted-foreground transition-colors hover:bg-muted hover:text-foreground"
-                                >
-                                  <X className="h-3 w-3" />
-                                </button>
-                              </div>
-
-                              <p className="font-body text-[11px] text-primary/80" dangerouslySetInnerHTML={{ __html: BIA_MESSAGES[biaMessageIndex] }} />
-
-                              {!showInsurance ? (
-                                <button
-                                  onClick={() => setShowInsurance(true)}
-                                  className="w-full rounded-lg border border-primary/30 bg-primary/10 px-3 py-2 font-display text-xs font-bold text-primary transition-colors hover:bg-primary/20"
-                                >
-                                  💬 Tá bom Bia, me mostra os planos!
-                                </button>
-                              ) : (
-                                <div className="space-y-2">
-                                  <p className="font-body text-[10px] text-muted-foreground italic">
-                                    "Oba! Sabia que ia aceitar! Escolhe aí:"
-                                  </p>
-                                  {INSURANCE_PLANS.map((plan) => (
-                                    <button
-                                      key={plan.id}
-                                      disabled={purchasingPlan === plan.id || state.nitroPoints < plan.premium}
-                                      onClick={async () => {
-                                        setPurchasingPlan(plan.id);
-                                        try {
-                                          const result = await purchase(plan);
-                                          if (result.success) {
-                                            updateState((prev) => ({
-                                              ...prev,
-                                              nitroPoints: prev.nitroPoints - plan.premium,
-                                            }));
-                                            setShowInsurance(false);
-                                            setBiaVisible(false);
-                                          }
-                                        } finally {
-                                          setPurchasingPlan(null);
-                                        }
-                                      }}
-                                      className={`w-full rounded-lg border p-2.5 text-left transition-all hover:scale-[1.02] disabled:opacity-50 disabled:hover:scale-100 ${
-                                        plan.id === "basic"
-                                          ? "border-emerald-500/30 bg-emerald-500/10 hover:bg-emerald-500/20"
-                                          : plan.id === "standard"
-                                          ? "border-blue-500/30 bg-blue-500/10 hover:bg-blue-500/20"
-                                          : "border-purple-500/30 bg-purple-500/10 hover:bg-purple-500/20"
-                                      }`}
-                                    >
-                                      <div className="flex items-center justify-between">
-                                        <span className="font-display text-xs font-bold text-foreground">
-                                          {plan.emoji} {plan.name}
-                                        </span>
-                                        <span className="font-display text-xs font-bold text-primary">
-                                          {plan.premium} NP
-                                        </span>
-                                      </div>
-                                      <p className="mt-0.5 font-body text-[10px] text-muted-foreground">
-                                        {plan.coveragePercent}% cobertura · {plan.maxClaims} sinistros · {plan.durationDays} dias
-                                      </p>
-                                    </button>
-                                  ))}
-                                  <button
-                                    onClick={() => setShowInsurance(false)}
-                                    className="w-full rounded-lg px-3 py-1.5 font-display text-[10px] text-muted-foreground transition-colors hover:text-foreground"
-                                  >
-                                    Fechar
-                                  </button>
-                                </div>
-                              )}
-                            </div>
-                          </div>
-                        </motion.div>
-                      )}
-                    </AnimatePresence>
 
                     <div className="my-3 h-px w-full bg-gradient-to-r from-transparent via-border to-transparent sm:my-5" />
 

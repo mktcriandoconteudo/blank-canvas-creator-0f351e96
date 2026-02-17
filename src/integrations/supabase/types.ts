@@ -506,6 +506,11 @@ export type Database = {
       }
       game_config: {
         Row: {
+          bia_initial_delay_max: number
+          bia_initial_delay_min: number
+          bia_reappear_max: number
+          bia_reappear_min: number
+          bia_visible_duration: number
           collision_chance_percent: number
           collision_durability_loss: number
           collision_max_damage: number
@@ -515,6 +520,11 @@ export type Database = {
           updated_by: string | null
         }
         Insert: {
+          bia_initial_delay_max?: number
+          bia_initial_delay_min?: number
+          bia_reappear_max?: number
+          bia_reappear_min?: number
+          bia_visible_duration?: number
           collision_chance_percent?: number
           collision_durability_loss?: number
           collision_max_damage?: number
@@ -524,6 +534,11 @@ export type Database = {
           updated_by?: string | null
         }
         Update: {
+          bia_initial_delay_max?: number
+          bia_initial_delay_min?: number
+          bia_reappear_max?: number
+          bia_reappear_min?: number
+          bia_visible_duration?: number
           collision_chance_percent?: number
           collision_durability_loss?: number
           collision_max_damage?: number

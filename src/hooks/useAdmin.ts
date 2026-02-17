@@ -84,6 +84,14 @@ interface CollisionConfig {
   collisionDurabilityLoss: number;
 }
 
+interface BiaConfig {
+  biaInitialDelayMin: number;
+  biaInitialDelayMax: number;
+  biaVisibleDuration: number;
+  biaReappearMin: number;
+  biaReappearMax: number;
+}
+
 export const useAdmin = () => {
   const { session } = useAuth();
   const [isAdmin, setIsAdmin] = useState(false);
@@ -97,6 +105,10 @@ export const useAdmin = () => {
   });
   const [saving, setSaving] = useState(false);
   const [economyReport, setEconomyReport] = useState<EconomyReport | null>(null);
+  const [biaConfig, setBiaConfig] = useState<BiaConfig>({
+    biaInitialDelayMin: 30, biaInitialDelayMax: 90,
+    biaVisibleDuration: 10, biaReappearMin: 60, biaReappearMax: 180,
+  });
   const [economyState, setEconomyState] = useState<EconomyState | null>(null);
   const [selectedPlayer, setSelectedPlayer] = useState<PlayerDetail | null>(null);
 
@@ -243,6 +255,13 @@ export const useAdmin = () => {
         collisionMaxDamage: data.collision_max_damage,
         collisionDurabilityLoss: data.collision_durability_loss,
       });
+      setBiaConfig({
+        biaInitialDelayMin: (data as any).bia_initial_delay_min ?? 30,
+        biaInitialDelayMax: (data as any).bia_initial_delay_max ?? 90,
+        biaVisibleDuration: (data as any).bia_visible_duration ?? 10,
+        biaReappearMin: (data as any).bia_reappear_min ?? 60,
+        biaReappearMax: (data as any).bia_reappear_max ?? 180,
+      });
     }
   }, []);
 
@@ -290,12 +309,41 @@ export const useAdmin = () => {
     []
   );
 
+  const saveBiaConfig = useCallback(
+    async (config: BiaConfig) => {
+      setSaving(true);
+      try {
+        const { error } = await supabase
+          .from("game_config")
+          .update({
+            bia_initial_delay_min: config.biaInitialDelayMin,
+            bia_initial_delay_max: config.biaInitialDelayMax,
+            bia_visible_duration: config.biaVisibleDuration,
+            bia_reappear_min: config.biaReappearMin,
+            bia_reappear_max: config.biaReappearMax,
+            updated_at: new Date().toISOString(),
+          } as any)
+          .eq("id", "default");
+
+        if (!error) {
+          setBiaConfig(config);
+        }
+        return !error;
+      } finally {
+        setSaving(false);
+      }
+    },
+    []
+  );
+
   return {
     isAdmin,
     loading,
     players,
     collisionConfig,
     saveCollisionConfig,
+    biaConfig,
+    saveBiaConfig,
     saving,
     refreshPlayers: loadPlayers,
     onlineCount,
